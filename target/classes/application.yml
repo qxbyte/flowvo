@@ -1,0 +1,49 @@
+
+server:
+  port: 8080
+# http://localhost:8080/
+spring:
+  application:
+    name: aibot
+  devtools:
+    restart:
+      enabled: false
+  security:
+    user:
+      name: admin
+      password: 123456
+  datasource:
+    url: jdbc:mysql://localhost:3306/springaibot?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
+    username: springuser
+    password: Aa111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  ai:
+    openai:
+      api-key: sk-57897f58f81b438c968e205bae6c6a00
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.8
+          max-tokens: 2048
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+    cache: false
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.boot.devtools: 
+proxy:
+  host: 127.0.0.1
+  port: 7890
+
+
