@@ -1,7 +1,7 @@
 
 server:
   port: 8080
-# http://localhost:8080/
+# http://localhost:8080/sendStream-test
 spring:
   application:
     name: aibot
@@ -41,7 +41,7 @@ spring:
 logging:
   level:
     org.springframework.security: DEBUG
-    org.springframework.boot.devtools: 
+    org.springframework.boot.devtools: DEBUG
 proxy:
   host: 127.0.0.1
   port: 7890
