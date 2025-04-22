@@ -1,7 +1,7 @@
 
 server:
   port: 8080
-# http://localhost:8080/
+# http://localhost:8080/sendStream-test
 spring:
   application:
     name: aibot

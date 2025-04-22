@@ -14,9 +14,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // 替换为您的后端服务地址
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/chat': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
       }
     }
   }

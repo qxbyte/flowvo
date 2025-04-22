@@ -27,6 +27,8 @@ const password = ref('')
 
 const handleLogin = async () => {
   try {
+    console.log('发送登录请求:', { username: username.value, password: password.value })
+    
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: {
@@ -38,11 +40,14 @@ const handleLogin = async () => {
       })
     })
 
+    const data = await response.json()
+    console.log('登录响应:', data)
+
     if (response.ok) {
       localStorage.setItem('isAuthenticated', 'true')
       router.push('/')
     } else {
-      alert('登录失败，请检查用户名和密码')
+      alert(data.message || '登录失败，请检查用户名和密码')
     }
   } catch (error) {
     console.error('登录错误:', error)

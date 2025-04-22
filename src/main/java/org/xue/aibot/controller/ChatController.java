@@ -1,5 +1,6 @@
 package org.xue.aibot.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.xue.aibot.entity.ChatRecord;
 import org.xue.aibot.entity.Message;
 import org.xue.aibot.service.AIService;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/chat")
 public class ChatController {
@@ -68,10 +70,9 @@ public class ChatController {
     // 使用流式返回生成的 AI 回复
     @PostMapping("/sendStream")
     public Flux<String> generateStream(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
-//        response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
-//        response.setHeader("Access-Control-Allow-Credentials", "true");
+        log.info("收到流式请求: {}", message);
         Prompt prompt = new Prompt(new UserMessage(message));
-        return aiService.getChatStream(prompt); // 使用流式处理生成回复
+        return aiService.getChatStream(prompt);
     }
 
     @GetMapping("/sendStream-test")
