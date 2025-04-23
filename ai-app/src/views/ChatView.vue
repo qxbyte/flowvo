@@ -294,7 +294,7 @@ const userInput = ref('')
 const messageContainer = ref<HTMLElement | null>(null)
 const isLoading = ref(false)
 const chatRecords = ref<Array<{id: string, title: string}>>([])
-const currentChatId = ref('')  // 只保留一个声明
+// const currentChatId = ref('')  // 保留这一个声明
 
 const sendMessage = async () => {
   if (!userInput.value.trim() || isLoading.value) return
@@ -397,9 +397,6 @@ const sendMessage = async () => {
   }
 }
 
-// 添加新的状态变量
-const currentChatId = ref('')
-
 // 修改 marked 配置
 marked.setOptions({
   highlight: function(code, lang) {
@@ -421,9 +418,9 @@ const formatMessage = (content: string): string => {
   }
 }
 
-// 添加聊天记录相关的状态
-const chatRecords = ref<Array<{id: string, title: string}>>([])
-const currentChatId = ref('')
+// 删除这里重复声明的变量
+// const chatRecords = ref<Array<{id: string, title: string}>>([])
+// const currentChatId = ref('')
 
 // 加载所有对话记录
 const loadChatRecords = async () => {
@@ -538,8 +535,8 @@ button:hover {
   margin: 10px 10%;
   text-align: center;
 }
-</style>
 
+/* 将文件末尾未包含在style标签中的样式移到这里 */
 .loading-dots {
   display: flex;
   gap: 4px;
@@ -595,5 +592,9 @@ button:hover {
 
 .chat-item.active {
   background-color: rgba(255,255,255,0.2);
+}
+
+.chat-item.active {
+  background-color: rgba(255,255,255,0.9);
 }
 </style>
