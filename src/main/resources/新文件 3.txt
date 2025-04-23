@@ -1,0 +1,43 @@
+
+
+--创建数据库用户
+GRANT ALL PRIVILEGES ON springaibot.* TO 'springai'@'localhost';
+FLUSH PRIVILEGES;
+
+
+--创建users表
+create table users
+(
+    id       bigint auto_increment
+        primary key,
+    username varchar(50)                     not null,
+    password varchar(255)                    not null,
+    email    varchar(100)                    not null,
+    role     varchar(20) default 'ROLE_USER' not null,
+    constraint email
+        unique (email),
+    constraint username
+        unique (username)
+);
+
+CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'Aa111111';
+
+
+--创建数据库表
+
+CREATE TABLE chat_record (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255),
+    title VARCHAR(255),
+    create_time DATETIME,
+    update_time DATETIME
+);
+
+CREATE TABLE messages (
+    id VARCHAR(255) PRIMARY KEY,
+    chat_id VARCHAR(255),
+    role VARCHAR(20),
+    content TEXT,
+    create_time DATETIME,
+    FOREIGN KEY (chat_id) REFERENCES chat_record(id)
+);
