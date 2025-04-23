@@ -1,0 +1,14 @@
+安装node.js
+
+npm create vue@latest .
+
+npm install axios marked highlight.js
+
+npm config set registry https://registry.npmmirror.com
+
+
+安装UI组件
+npm install @heroicons/vue @headlessui/vue
+
+引入Heroicons图标组件
+npm install @heroicons/vue
