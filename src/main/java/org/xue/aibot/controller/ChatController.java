@@ -38,7 +38,8 @@ public class ChatController {
     // 获取某个聊天记录的消息
     @GetMapping("/{id}")
     public List<Messages> getMessagesByChatId(@PathVariable String id) {  // 修改为 String 类型
-        return chatService.getMessagesByChatId(id);
+        List<Messages> a = chatService.getMessagesByChatId(id);
+        return a;
     }
 
     // 创建新对话

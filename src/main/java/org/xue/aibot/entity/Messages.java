@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "messages")
 @Data
@@ -12,9 +11,8 @@ public class Messages {
     @Id
     private String id;
 
-    @ManyToOne
-    @JoinColumn(name = "chat_id")
-    private ChatRecord chatRecord;
+    @Column(name = "chat_id")
+    private String chatId;
 
     private String role;
 
