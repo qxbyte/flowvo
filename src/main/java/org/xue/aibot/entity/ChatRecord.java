@@ -2,28 +2,38 @@ package org.xue.aibot.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
-import java.time.LocalTime;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
+@Table(name = "chat_record")
+@Data
 public class ChatRecord {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-
-    @Column(name = "created_at")
-    private LocalTime createdAt = LocalTime.now();
-
-    public Long getId() {
-        return id;
+    private String id;
+    
+    @Column(name = "user_id")
+    private String userId;
+    
+    private String title;
+    
+    @Column(name = "create_time")
+    private LocalDateTime createTime;
+    
+    @Column(name = "update_time")
+    private LocalDateTime updateTime;
+    
+    @OneToMany(mappedBy = "chatRecord", cascade = CascadeType.ALL)
+    private List<Messages> messages;
+    
+    @PrePersist
+    protected void onCreate() {
+        createTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now();
     }
-
-    public void setName(String s) {
-        this.name = s;
-    }
-
-    public void setCreatedAt(LocalTime now) {
-        this.createdAt = now;
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updateTime = LocalDateTime.now();
     }
 }
