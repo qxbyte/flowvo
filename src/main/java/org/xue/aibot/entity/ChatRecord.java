@@ -3,7 +3,6 @@ package org.xue.aibot.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "chat_record")
@@ -23,8 +22,9 @@ public class ChatRecord {
     @Column(name = "update_time")
     private LocalDateTime updateTime;
     
-    @OneToMany(mappedBy = "chatRecord", cascade = CascadeType.ALL)
-    private List<Messages> messages;
+    // 移除旧的关联配置
+    // @OneToMany(mappedBy = "chatRecord", cascade = CascadeType.ALL)
+    // private java.util.List<Messages> messages;
     
     @PrePersist
     protected void onCreate() {

@@ -8,8 +8,8 @@
         </button>
       </div>
       <div class="chat-list">
-        <div v-for="record in chatRecords" 
-             :key="record.id" 
+        <div v-for="record in chatRecords"
+             :key="record.id"
              class="chat-item"
              :class="{ active: currentChatId === record.id }"
              @click="loadChat(record.id)">
@@ -281,7 +281,7 @@
 </style>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'  // 添加 onMounted 导入
+import { ref, onMounted, nextTick } from 'vue'  // 添加 nextTick
 import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import 'highlight.js/styles/github.css'
@@ -294,7 +294,7 @@ const userInput = ref('')
 const messageContainer = ref<HTMLElement | null>(null)
 const isLoading = ref(false)
 const chatRecords = ref<Array<{id: string, title: string}>>([])
-// const currentChatId = ref('')  // 保留这一个声明
+const currentChatId = ref('')  // 添加这行
 
 const sendMessage = async () => {
   if (!userInput.value.trim() || isLoading.value) return
@@ -305,7 +305,7 @@ const sendMessage = async () => {
     const userMessage = userInput.value
     userInput.value = ''
 
-    // 创建新对话
+    // 创建新对话，但不保存到数据库
     if (!currentChatId.value) {
       const response = await fetch('/chat/new', {
         method: 'POST'
@@ -314,22 +314,10 @@ const sendMessage = async () => {
       currentChatId.value = data.id
     }
 
-    // 添加用户消息到界面
-    messages.value.push({
-      role: 'user',
-      content: userMessage
-    })
-
-    // 添加空的AI回复消息
-    messages.value.push({
-      role: 'assistant',
-      content: ''
-    })
-
-    // 获取AI回复
+    // 获取AI回复，同时保存消息
     const formData = new FormData()
     formData.append('message', userMessage)
-    formData.append('chatId', currentChatId.value)  // 添加chatId
+    formData.append('chatId', currentChatId.value)
     const streamResponse = await fetch('/chat/sendStream', {
       method: 'POST',
       body: formData
@@ -343,6 +331,18 @@ const sendMessage = async () => {
     if (!streamResponse.ok) {
       throw new Error('Network response was not ok')
     }
+
+    // 添加用户消息到界面
+    messages.value.push({
+      role: 'user',
+      content: userMessage
+    })
+
+    // 添加空的AI回复消息
+    messages.value.push({
+      role: 'assistant',
+      content: ''
+    })
 
     const reader = streamResponse.body?.getReader()
     if (!reader) {
@@ -366,25 +366,31 @@ const sendMessage = async () => {
     }
 
     // 一次性保存用户消息和AI回复
-    await fetch('/chat/saveMessages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        chatId: currentChatId.value,
-        messages: [
-          {
-            role: 'user',
-            content: userMessage
-          },
-          {
-            role: 'assistant',
-            content: fullAiResponse
-          }
-        ]
-      })
-    })
+    // await fetch('/chat/saveMessages', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({
+    //     chatId: currentChatId.value,
+    //     messages: [
+    //       {
+    //         role: 'user',
+    //         content: userMessage
+    //       },
+    //       {
+    //         role: 'assistant',
+    //         content: fullAiResponse
+    //       }
+    //     ]
+    //   })
+    // })
+
+    // 移除重复的保存消息请求
+    // await fetch('/chat/saveMessages', {...})
+
+    // 更新对话列表
+    await loadChatRecords()
 
   } catch (error) {
     console.error('Error:', error)
@@ -432,10 +438,34 @@ const loadChatRecords = async () => {
 
 // 加载特定对话的消息历史
 const loadChat = async (chatId: string) => {
-  currentChatId.value = chatId
-  const response = await fetch(`/chat/${chatId}`)
-  if (response.ok) {
-    messages.value = await response.json()
+  try {
+    console.log('加载对话:', chatId)
+    currentChatId.value = chatId
+    const response = await fetch(`/chat/${chatId}`)
+    if (!response.ok) {
+      throw new Error('加载历史消息失败')
+    }
+
+    const data = await response.json()
+    console.log('历史消息数据:', data)
+
+    // 直接使用返回的数组数据
+    messages.value = data.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+
+    // 滚动到底部
+    await nextTick()
+    if (messageContainer.value) {
+      messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+    }
+  } catch (error) {
+    console.error('加载历史消息失败:', error)
+    messages.value = [{
+      role: 'system',
+      content: '加载历史消息失败，请稍后重试'
+    }]
   }
 }
 
@@ -592,6 +622,7 @@ button:hover {
 
 .chat-item.active {
   background-color: rgba(255,255,255,0.2);
+  font-weight: bold;
 }
 
 .chat-item.active {

@@ -32,7 +32,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public List<Messages> getMessagesByChatId(String chatId) {
-        return messageRepository.findByChatRecordIdOrderByCreateTimeAsc(chatId);
+        return messageRepository.findByChatIdOrderByCreateTimeAsc(chatId);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ChatServiceImpl implements ChatService {
 
         Messages message = new Messages();
         message.setId(UUID.randomUUID().toString());
-        message.setChatRecord(chatRecord);
+        message.setChatId(chatId);
         message.setRole(role);
         message.setContent(content);
         message.setCreateTime(LocalDateTime.now());
