@@ -2,10 +2,19 @@
   <div class="chat-layout">
     <div class="sidebar">
       <div class="sidebar-header">
-        <button class="new-chat">
+        <button class="new-chat" @click="createNewChat">
           <span>+</span>
           新对话
         </button>
+      </div>
+      <div class="chat-list">
+        <div v-for="record in chatRecords" 
+             :key="record.id" 
+             class="chat-item"
+             :class="{ active: currentChatId === record.id }"
+             @click="loadChat(record.id)">
+          {{ record.title }}
+        </div>
       </div>
     </div>
 
@@ -21,72 +30,70 @@
       </div>
 
       <div class="input-area">
-        <template>
-          <div class="input-container">
-            <textarea
-              v-model="userInput"
-              @keyup.enter.ctrl="sendMessage"
-              placeholder="询问任何问题..."
-              rows="1"
-              class="message-input"
-            ></textarea>
-            <button class="send-button" @click="sendMessage" :class="{ loading: isLoading }">
-              <svg v-if="!isLoading" class="send-icon" viewBox="0 0 24 24" fill="none">
-                <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <div v-else class="loading-spinner"></div>
-            </button>
-          </div>
-        </template>
-
-        <style scoped>
-          .send-button {
-            position: absolute;
-            right: 32px;
-            bottom: 14px;
-            width: 32px;
-            height: 32px;
-            padding: 6px;
-            background: #2196f3;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-          }
-
-          .send-icon {
-            width: 16px;
-            height: 16px;
-          }
-
-          .loading-spinner {
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-          }
-
-          @keyframes spin {
-            to {
-              transform: rotate(360deg);
-            }
-          }
-
-          .send-button.loading {
-            cursor: wait;
-            opacity: 0.8;
-          }
-        </style>
+        <div class="input-container">
+          <textarea
+            v-model="userInput"
+            @keyup.enter.ctrl="sendMessage"
+            placeholder="询问任何问题..."
+            rows="1"
+            class="message-input"
+          ></textarea>
+          <button class="send-button" @click="sendMessage" :class="{ loading: isLoading }">
+            <svg v-if="!isLoading" class="send-icon" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div v-else class="loading-spinner"></div>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.send-button {
+  position: absolute;
+  right: 32px;
+  bottom: 14px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  background: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.send-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.send-button.loading {
+  cursor: wait;
+  opacity: 0.8;
+}
+</style>
 
 <style scoped>
 /* 移除重复的样式定义，只保留一个 */
@@ -274,103 +281,124 @@
 </style>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'  // 添加这行
+import { ref, onMounted } from 'vue'  // 添加 onMounted 导入
+import { useRouter } from 'vue-router'
 import { marked } from 'marked'
 import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js'
 
-const router = useRouter()  // 添加这行
-// 定义消息类型接口，用于类型检查
-export interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-// 删除此处的 messages 声明，因为在下方已经有了完整的声明
-// const inputMessage = ref('')  // 删除这行
-
+const router = useRouter()
+// 状态变量声明
 const messages = ref<Array<{role: string, content: string}>>([])
-const userInput = ref('')  // 只保留这个输入变量
+const userInput = ref('')
 const messageContainer = ref<HTMLElement | null>(null)
-// 删除未使用的变量
-
 const isLoading = ref(false)
+const chatRecords = ref<Array<{id: string, title: string}>>([])
+const currentChatId = ref('')  // 只保留一个声明
 
 const sendMessage = async () => {
   if (!userInput.value.trim() || isLoading.value) return
   isLoading.value = true
+  let fullAiResponse = ''
 
   try {
-    // 先保存用户输入
     const userMessage = userInput.value
     userInput.value = ''
 
-    // 添加用户消息
+    // 创建新对话
+    if (!currentChatId.value) {
+      const response = await fetch('/chat/new', {
+        method: 'POST'
+      })
+      const data = await response.json()
+      currentChatId.value = data.id
+    }
+
+    // 添加用户消息到界面
     messages.value.push({
       role: 'user',
       content: userMessage
     })
 
-    // 添加一个空的 AI 回复消息
+    // 添加空的AI回复消息
     messages.value.push({
       role: 'assistant',
       content: ''
     })
 
-    try {
-      const formData = new FormData();
-      formData.append('message', userMessage);
-      
-      const response = await fetch('/chat/sendStream', {
-        method: 'POST',
-        body: formData
-      })
+    // 获取AI回复
+    const formData = new FormData()
+    formData.append('message', userMessage)
+    formData.append('chatId', currentChatId.value)  // 添加chatId
+    const streamResponse = await fetch('/chat/sendStream', {
+      method: 'POST',
+      body: formData
+    })
 
-      if (response.status === 401) {
-        router.push('/login')
-        return
-      }
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok')
-      }
-
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('No reader available')
-      }
-
-      // 获取最后一条消息的引用（AI 回复）
-      const lastMessage = messages.value[messages.value.length - 1]
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        // 将 Uint8Array 转换为文本
-        const text = new TextDecoder().decode(value)
-        // 更新最后一条消息的内容
-        lastMessage.content += text
-
-        // 滚动到底部
-        await import('vue').then(vue => vue.nextTick())
-        if (messageContainer.value) {
-          messageContainer.value.scrollTop = messageContainer.value.scrollHeight
-        }
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      // 添加错误提示消息
-      messages.value.push({
-        role: 'system',
-        content: '发生错误，请稍后重试'
-      })
+    if (streamResponse.status === 401) {
+      router.push('/login')
+      return
     }
+
+    if (!streamResponse.ok) {
+      throw new Error('Network response was not ok')
+    }
+
+    const reader = streamResponse.body?.getReader()
+    if (!reader) {
+      throw new Error('No reader available')
+    }
+
+    const lastMessage = messages.value[messages.value.length - 1]
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const text = new TextDecoder().decode(value)
+      lastMessage.content += text
+      fullAiResponse += text
+
+      await import('vue').then(vue => vue.nextTick())
+      if (messageContainer.value) {
+        messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+      }
+    }
+
+    // 一次性保存用户消息和AI回复
+    await fetch('/chat/saveMessages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        chatId: currentChatId.value,
+        messages: [
+          {
+            role: 'user',
+            content: userMessage
+          },
+          {
+            role: 'assistant',
+            content: fullAiResponse
+          }
+        ]
+      })
+    })
+
+  } catch (error) {
+    console.error('Error:', error)
+    messages.value.push({
+      role: 'system',
+      content: '发生错误，请稍后重试'
+    })
   } finally {
     isLoading.value = false
   }
 }
+
+// 添加新的状态变量
+const currentChatId = ref('')
 
 // 修改 marked 配置
 marked.setOptions({
@@ -392,6 +420,45 @@ const formatMessage = (content: string): string => {
     return content
   }
 }
+
+// 添加聊天记录相关的状态
+const chatRecords = ref<Array<{id: string, title: string}>>([])
+const currentChatId = ref('')
+
+// 加载所有对话记录
+const loadChatRecords = async () => {
+  const response = await fetch('/chat/records')
+  if (response.ok) {
+    chatRecords.value = await response.json()
+  }
+}
+
+// 加载特定对话的消息历史
+const loadChat = async (chatId: string) => {
+  currentChatId.value = chatId
+  const response = await fetch(`/chat/${chatId}`)
+  if (response.ok) {
+    messages.value = await response.json()
+  }
+}
+
+// 创建新对话
+const createNewChat = async () => {
+  const response = await fetch('/chat/new', {
+    method: 'POST'
+  })
+  if (response.ok) {
+    const data = await response.json()
+    currentChatId.value = data.id
+    messages.value = []
+    await loadChatRecords()
+  }
+}
+
+// 页面加载时获取对话记录列表
+onMounted(async () => {
+  await loadChatRecords()
+})
 </script>
 
 <style scoped>
@@ -503,3 +570,30 @@ button:hover {
     opacity: 1;
   }
 }
+
+/* 添加聊天记录列表样式 */
+.chat-list {
+  margin-top: 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.chat-item {
+  padding: 12px;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-item:hover {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.chat-item.active {
+  background-color: rgba(255,255,255,0.2);
+}
+</style>
