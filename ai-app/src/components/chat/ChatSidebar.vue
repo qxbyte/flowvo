@@ -3,10 +3,10 @@
     <div class="sidebar-header">
       <div class="header-buttons">
         <button class="icon-button sidebar-toggle" @click="toggleSidebar" :title="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
-          <Bars3Icon class="h-5 w-5" />
+          <Bars3Icon class="h-5 w-5" /><span class="ml-2"></span>
         </button>
         <button class="icon-button new-chat" @click="createNewChat" :title="'新建对话'">
-          <span class="ml-2"><PlusIcon class="h-5 w-5" /></span>
+          <PlusIcon class="h-5 w-5" /><span class="ml-2"></span>
         </button>
       </div>
     </div>
@@ -44,7 +44,7 @@ import {
   Bars3Icon,
   PlusIcon,
   EllipsisHorizontalIcon
-} from '@heroicons/vue/24/outline'
+} from '@heroicons/vue/24/solid'
 
 const emit = defineEmits(['update:currentChatId', 'loadChat'])
 
@@ -177,8 +177,8 @@ const loadChat = (chatId: string) => {
   width: 60px;
 }
 
-.sidebar.collapsed .button-text,
-.sidebar.collapsed .chat-list {
+.sidebar.collapsed .chat-list,
+.sidebar.collapsed .icon-button span {
   display: none;
 }
 
@@ -200,6 +200,14 @@ const loadChat = (chatId: string) => {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .icon-button.sidebar-toggle {
@@ -294,5 +302,8 @@ const loadChat = (chatId: string) => {
 
 .chat-item.active {
   background-color: rgba(0,0,0,0.1);
+}
+Bars3Icon {
+  color: #333;
 }
 </style>

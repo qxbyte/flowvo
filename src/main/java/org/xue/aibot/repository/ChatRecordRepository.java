@@ -19,6 +19,9 @@ public interface ChatRecordRepository extends JpaRepository<ChatRecord, String> 
     @Modifying
     @Query("UPDATE ChatRecord c SET c.title = :title WHERE c.id = :id")
     void updateTitle(@Param("id") String id, @Param("title") String title);
+
+    @Query("SELECT m FROM ChatRecord m ORDER BY m.createTime ASC")
+    List<ChatRecord> findAllOrderByCreateTime();
 }
 
 
