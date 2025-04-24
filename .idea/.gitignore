@@ -19,5 +19,5 @@
 /out/
 /target/
 /_app_logs/
-/.idea/
+/.idea/workspace.xml
 /_downloads/**
