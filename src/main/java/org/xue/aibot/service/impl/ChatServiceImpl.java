@@ -76,4 +76,14 @@ public class ChatServiceImpl implements ChatService {
     public void deleteChatRecord(String chatId) {
         chatRecordRepository.deleteById(chatId);
     }
+
+    @Override
+    @Transactional
+    public void renameChatRecord(String chatId, String newTitle) {
+        ChatRecord chatRecord = chatRecordRepository.findById(chatId)
+                .orElseThrow(() -> new RuntimeException("Chat record not found"));
+        chatRecord.setTitle(newTitle);
+        chatRecord.setUpdateTime(LocalDateTime.now());
+        chatRecordRepository.save(chatRecord);
+    }
 }

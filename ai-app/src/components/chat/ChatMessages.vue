@@ -79,7 +79,7 @@ watch(() => props.messages, () => {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 15%;
   background: #ffffff;
   border-radius: 8px;
   margin-bottom: 20px;
@@ -105,9 +105,9 @@ watch(() => props.messages, () => {
 }
 
 .message-content {
-  padding: 12px;
+  padding: 12px 16px;
   border-radius: 16px;
-  max-width: 80%;
+  max-width: 85%;
   display: inline-block;
 }
 

@@ -47,6 +47,7 @@ onMounted(async () => {
   position: fixed;
   top: 0;
   left: 0;
+  background-color: #ffffff;
 }
 
 .main-content {

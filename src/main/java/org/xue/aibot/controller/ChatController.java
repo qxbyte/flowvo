@@ -116,8 +116,20 @@ public class ChatController {
     }
 
     // 删除聊天记录
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteChatRecord(@PathVariable String id) {  // 修改为 String 类型
+    // 重命名聊天记录
+    @PostMapping("/{id}/rename")
+    public ResponseEntity<Void> renameChatRecord(
+        @PathVariable String id,
+        @RequestBody Map<String, String> payload
+    ) {
+        String newTitle = payload.get("title");
+        chatService.renameChatRecord(id, newTitle);
+        return ResponseEntity.ok().build();
+    }
+
+    // 删除聊天记录
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteChatRecord(@PathVariable String id) {
         chatService.deleteChatRecord(id);
         return ResponseEntity.ok().build();
     }
