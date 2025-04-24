@@ -24,7 +24,6 @@ CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'Aa111111';
 
 
 --创建数据库表
-
 CREATE TABLE chat_record (
     id VARCHAR(255) PRIMARY KEY,
     user_id VARCHAR(255),

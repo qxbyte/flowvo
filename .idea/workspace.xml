@@ -5,6 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1063b815-a97b-4321-ad7e-69d7045d419b" name="Changes" comment="配置文件">
+      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-app/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/ai-app/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-app/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/ai-app/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-app/src/components/chat/ChatMessages.vue" beforeDir="false" afterPath="$PROJECT_DIR$/ai-app/src/components/chat/ChatMessages.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-app/src/components/chat/ChatSidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/ai-app/src/components/chat/ChatSidebar.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-app/src/views/ChatView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/ai-app/src/views/ChatView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ai-app/vite.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/ai-app/vite.config.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/xue/aibot/controller/ChatController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/xue/aibot/controller/ChatController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/xue/aibot/entity/ChatRecord.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/xue/aibot/entity/ChatRecord.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/新文件 3.txt" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/新文件 3.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -23,10 +34,15 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="SYNC" />
   </component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
 }</component>
   <component name="ProjectId" id="2w2LLx9rC4IaK6JPNiXuABlFDFI" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -49,10 +65,13 @@
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "reactor",
-    "ts.external.directory.path": "D:\\Git\\aibot\\ai-app\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "/Users/xueqiang/jetbrains/IdeaProjects/aibot/ai-app/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql"
+    ],
     "vue.recent.templates": [
       "Vue Composition API Component"
     ]
@@ -64,6 +83,9 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\Git\aibot\ai-app" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/logs" />
     </key>
   </component>
   <component name="RunManager">

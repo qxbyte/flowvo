@@ -146,6 +146,11 @@ const createNewChat = async () => {
   })
   if (response.ok) {
     const data = await response.json()
+    // 将新对话添加到本地chatRecords数组
+    props.chatRecords.push({
+      id: data.id,
+      title: '新的对话'
+    })
     emit('update:currentChatId', data.id)
     emit('loadChat')
   }
@@ -154,7 +159,7 @@ const createNewChat = async () => {
 // 加载对话
 const loadChat = (chatId: string) => {
   emit('update:currentChatId', chatId)
-  emit('loadChat')
+  emit('loadChat', chatId)
 }
 </script>
 

@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, defineProps } from 'vue'
+import { ref, onMounted, nextTick, defineProps, watch } from 'vue'
 import { marked } from 'marked'
 import 'highlight.js/styles/github.css'
 import hljs from 'highlight.js'
@@ -33,7 +33,7 @@ import {
 } from '@heroicons/vue/24/outline'
 
 // Props
-defineProps<{
+const props = defineProps<{
   messages: Array<{role: string, content: string}>
 }>()
 
@@ -93,27 +93,31 @@ watch(() => props.messages, () => {
 
 .message {
   margin-bottom: 20px;
-  max-width: 80%;
+  display: flex;
 }
 
 .message.user {
-  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .message.assistant {
-  margin-right: auto;
+  justify-content: flex-start;
 }
 
 .message-content {
   padding: 12px;
-  border-radius: 8px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  max-width: 80%;
+  display: inline-block;
 }
 
 .user .message-content {
   background: #007AFF;
   color: white;
+}
+
+.assistant .message-content {
+  color: #000;
 }
 
 .message-actions {
