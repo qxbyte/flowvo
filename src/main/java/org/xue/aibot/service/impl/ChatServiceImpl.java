@@ -27,7 +27,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public List<ChatRecord> getAllChatRecords() {
-        return chatRecordRepository.findAll();
+        return chatRecordRepository.findAllOrderByCreateTime();
     }
 
     @Override
