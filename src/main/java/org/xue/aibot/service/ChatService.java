@@ -19,5 +19,6 @@ public interface ChatService {
 
     void deleteChatRecord(String chatId);  // 添加删除对话记录的方法声明
 
+    void renameChatRecord(String chatId, String newTitle);  // 添加重命名对话记录的方法声明
 }
 

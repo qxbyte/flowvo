@@ -3,10 +3,10 @@
     <div class="sidebar-header">
       <div class="header-buttons">
         <button class="icon-button sidebar-toggle" @click="toggleSidebar" :title="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
-          <Bars3Icon class="h-5 w-5" /><span class="ml-2"></span>
+          <Bars4Icon class="h-4 w-4" /><span class="ml-2"></span>
         </button>
         <button class="icon-button new-chat" @click="createNewChat" :title="'新建对话'">
-          <PlusIcon class="h-5 w-5" /><span class="ml-2"></span>
+          <PlusCircleIcon class="h-4 w-4" /><span class="ml-2"></span>
         </button>
       </div>
     </div>
@@ -19,7 +19,7 @@
           {{ record.title }}
         </div>
         <button class="chat-item-menu" @click="openMenu($event, record)">
-          <EllipsisHorizontalIcon class="h-4 w-4" />
+          <EllipsisHorizontalIcon class="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -29,9 +29,11 @@
          class="chat-menu"
          :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }">
       <button class="menu-item" @click="renameChat">
+        <PencilIcon class="h-3.5 w-3.5 mr-1" />
         重命名
       </button>
       <button class="menu-item delete" @click="deleteChat">
+        <TrashIcon class="h-3.5 w-3.5 mr-2" />
         删除
       </button>
     </div>
@@ -41,10 +43,15 @@
 <script setup lang="ts">
 import { ref, defineEmits } from 'vue'
 import {
-  Bars3Icon,
-  PlusIcon,
-  EllipsisHorizontalIcon
+  Bars4Icon,
+  PlusCircleIcon,
+  EllipsisHorizontalIcon,
+
 } from '@heroicons/vue/24/solid'
+import {
+  PencilIcon,
+  TrashIcon
+} from '@heroicons/vue/16/solid'
 
 const emit = defineEmits(['update:currentChatId', 'loadChat'])
 
@@ -103,7 +110,12 @@ const renameChat = async () => {
       })
 
       if (response.ok) {
-        emit('loadChat')
+        // 重命名成功后立即刷新聊天列表
+        const recordsResponse = await fetch('/chat/records')
+        if (recordsResponse.ok) {
+          const updatedRecords = await recordsResponse.json()
+          props.chatRecords.splice(0, props.chatRecords.length, ...updatedRecords)
+        }
       } else {
         throw new Error('重命名失败')
       }
@@ -127,7 +139,12 @@ const deleteChat = async () => {
         if (props.currentChatId === selectedChatId.value) {
           emit('update:currentChatId', '')
         }
-        emit('loadChat')
+        // 删除成功后立即刷新聊天列表
+        const recordsResponse = await fetch('/chat/records')
+        if (recordsResponse.ok) {
+          const updatedRecords = await recordsResponse.json()
+          props.chatRecords.splice(0, props.chatRecords.length, ...updatedRecords)
+        }
       } else {
         throw new Error('删除失败')
       }
@@ -171,10 +188,14 @@ const loadChat = (chatId: string) => {
   flex-direction: column;
   padding: 8px;
   transition: all 0.3s ease;
+  border-right: 1px solid #e5e7eb;
 }
 
 .sidebar.collapsed {
   width: 60px;
+  padding: 8px 4px;
+  background-color: transparent;
+  border-right: none;
 }
 
 .sidebar.collapsed .chat-list,
@@ -192,7 +213,7 @@ const loadChat = (chatId: string) => {
 .icon-button {
   padding: 8px;
   background: transparent;
-  border: 1px solid rgba(0,0,0,.1);
+  border: none;
   border-radius: 4px;
   color: #333;
   cursor: pointer;
@@ -248,31 +269,46 @@ const loadChat = (chatId: string) => {
 }
 
 .chat-item-menu {
-  padding: 2px;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
   background: transparent;
   border: none;
   border-radius: 4px;
   color: #666;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s;
+  opacity: 0.2;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 2px;
 }
 
 .chat-item:hover .chat-item-menu {
-  opacity: 1;
+  opacity: 0.8;
+}
+
+.chat-item-menu:hover {
+  opacity: 1 !important;
+  background-color: rgba(0,0,0,0.05);
 }
 
 .chat-menu {
   position: fixed;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   padding: 4px;
   z-index: 1000;
+  min-width: 120px;
+  margin-top: 4px;
+  transform: translateX(-90%);
 }
 
 .menu-item {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
   padding: 8px 16px;
   text-align: left;

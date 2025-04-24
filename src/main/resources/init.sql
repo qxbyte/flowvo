@@ -1,38 +1,48 @@
--- 创建数据库
-CREATE DATABASE springaibot CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-DROP USER IF EXISTS 'springuser'@'%';
--- 创建用户
-CREATE USER 'springuser'@'%' IDENTIFIED BY 'Aa111111';
--- 授权访问 springaibot 数据库的所有权限
-GRANT ALL PRIVILEGES ON springaibot.* TO 'springuser'@'%';
--- 刷新权限
+
+
+--创建数据库用户
+GRANT ALL PRIVILEGES ON springaibot.* TO 'springai'@'localhost';
 FLUSH PRIVILEGES;
 
-# 应用登录用户表
-CREATE TABLE users (
-                       id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                       username VARCHAR(50) NOT NULL UNIQUE,
-                       password VARCHAR(255) NOT NULL,
-                       email VARCHAR(100) NOT NULL UNIQUE,
-                       role VARCHAR(20) NOT NULL DEFAULT 'ROLE_USER'
+
+--创建users表
+create table users
+(
+    id       bigint auto_increment
+        primary key,
+    username varchar(50)                     not null,
+    password varchar(255)                    not null,
+    email    varchar(100)                    not null,
+    role     varchar(20) default 'ROLE_USER' not null,
+    constraint email
+        unique (email),
+    constraint username
+        unique (username)
 );
 
-
-CREATE TABLE IF NOT EXISTS chat_record (
-                                           id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                           name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-
-CREATE TABLE IF NOT EXISTS message (
-                                       id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                                       chat_id BIGINT NOT NULL,
-                                       sender VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (chat_id) REFERENCES chat_record(id) ON DELETE CASCADE
-    );
+CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'Aa111111';
 
 
+--创建数据库表
+CREATE TABLE chat_record (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id VARCHAR(255),
+    title VARCHAR(255),
+    create_time DATETIME,
+    update_time DATETIME
+);
 
-ALTER TABLE message MODIFY COLUMN content LONGTEXT;
+CREATE TABLE messages (
+    id VARCHAR(255) PRIMARY KEY,
+    chat_id VARCHAR(255),
+    role VARCHAR(20),
+    content TEXT,
+    create_time DATETIME,
+    FOREIGN KEY (chat_id) REFERENCES chat_record(id)
+);
+
+--添加用户
+INSERT INTO springaibot.users (id, username, password, email, role) VALUES (4, 'test', '$2a$10$sBV69kvLDnxqGJVrpmYTw.mpih48xlmMYFZ4zroO5R/ztEo9lBdvG', 'qiang_xue0@outlook.com', 'ROLE_USER');
+
+
+
