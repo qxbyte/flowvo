@@ -3,7 +3,7 @@
     <ChatSidebar
       v-model:currentChatId="currentChatId"
       :chatRecords="chatRecords"
-      @loadChat="loadChatRecords"
+      @loadChat="loadChat"
     />
     <div class="main-content">
       <ChatMessages :messages="messages" />

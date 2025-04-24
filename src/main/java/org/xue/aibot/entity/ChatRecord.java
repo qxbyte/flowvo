@@ -21,11 +21,7 @@ public class ChatRecord {
     
     @Column(name = "update_time")
     private LocalDateTime updateTime;
-    
-    // 移除旧的关联配置
-    // @OneToMany(mappedBy = "chatRecord", cascade = CascadeType.ALL)
-    // private java.util.List<Messages> messages;
-    
+
     @PrePersist
     protected void onCreate() {
         createTime = LocalDateTime.now();

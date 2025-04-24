@@ -30,9 +30,18 @@ public class ChatController {
     }
 
     // 获取所有聊天记录
-    @GetMapping("/list")
-    public List<ChatRecord> getChatList() {
-        return chatService.getAllChatRecords();
+    @GetMapping("/records")
+    public List<Map<String, Object>> getChatList() {
+        List<ChatRecord> records = chatService.getAllChatRecords();
+        return records.stream()
+            .map(record -> {
+                Map<String, Object> recordMap = new HashMap<>();
+                recordMap.put("id", record.getId());
+                recordMap.put("title", record.getTitle());
+                recordMap.put("createTime", record.getCreateTime());
+                return recordMap;
+            })
+            .collect(Collectors.toList());
     }
 
     // 获取某个聊天记录的消息
@@ -98,20 +107,7 @@ public class ChatController {
             });
     }
 
-    // 获取所有对话记录列表
-    @GetMapping("/records")
-    public List<Map<String, Object>> getChatRecordsList() {
-        List<ChatRecord> records = chatService.getAllChatRecords();
-        return records.stream()
-            .map(record -> {
-                Map<String, Object> recordMap = new HashMap<>();
-                recordMap.put("id", record.getId());
-                recordMap.put("title", record.getTitle());
-                recordMap.put("createTime", record.getCreateTime());
-                return recordMap;
-            })
-            .collect(Collectors.toList());
-    }
+
 
     @GetMapping("/sendStream-test")
     public Flux<String> generateStreamTest(@RequestParam(value = "message", defaultValue = "Tell me a joke") String message) {
