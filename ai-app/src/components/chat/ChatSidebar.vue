@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar" :class="{ 'collapsed': isSidebarCollapsed }">
+  <div class="sidebar" :class="{ 'collapsed': isSidebarCollapsed }" >
     <div class="sidebar-header">
       <div class="header-buttons">
         <button class="icon-button sidebar-toggle" @click="toggleSidebar" :title="isSidebarCollapsed ? '展开侧边栏' : '收起侧边栏'">
@@ -29,7 +29,7 @@
          class="chat-menu"
          :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }">
       <button class="menu-item" @click="renameChat">
-        <PencilIcon class="h-3.5 w-3.5 mr-1" />
+        <PencilIcon class="h-3.5 w-3.5 mr-2" />
         重命名
       </button>
       <button class="menu-item delete" @click="deleteChat">
