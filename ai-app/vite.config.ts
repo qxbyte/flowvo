@@ -16,6 +16,12 @@ export default defineConfig({
       '/chat': {
         target: 'http://localhost:8080',
         changeOrigin: true
+      },
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        // 如果后端实际路径没有 /api 前缀，需要加上这一行
+        // rewrite: path => path.replace(/^\/api/, '')
       }
     }
   }
