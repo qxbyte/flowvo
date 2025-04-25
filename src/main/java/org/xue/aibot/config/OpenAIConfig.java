@@ -14,4 +14,5 @@ public class OpenAIConfig {
     @Value("${spring.ai.openai.api-key}")
     private String apiKey;
 
+
 }
