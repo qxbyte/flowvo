@@ -1,56 +1,50 @@
 package org.xue.aibot.service.impl;
-import org.springframework.ai.document.Document;
-import org.springframework.ai.vectorstore.qdrant.QdrantVectorStore;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import io.qdrant.client.QdrantClient;
+import io.qdrant.client.http.model.Points;
+import io.qdrant.client.http.model.Points.PointStruct;
+import io.qdrant.client.http.model.Points.UpsertPoints;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.xue.aibot.service.QdrantService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
-public class QdrantServiceImpl implements QdrantService {
+public class QdrantServiceImpl {
 
-    @Autowired
-    private QdrantVectorStore qdrantVectorStore;
+    private final QdrantClient client;
+    private final String collection;
 
-    // 写入
-    @Override
-    public void saveText(String text, String docId, int chunkIndex) {
-        Document doc = new Document(text, Map.of("docId", docId, "chunkIndex", chunkIndex));
-        qdrantVectorStore.add(List.of(doc));
+    public QdrantServiceImpl(QdrantClient client,
+                             @Value("${ai.vectorstore.qdrant.collection}") String collection) {
+        this.client = client;
+        this.collection = collection;
     }
 
-    // 检索
-    @Override
-    public List<String> searchSimilar(String query, int topK) {
-        SearchRequest request = SearchRequest.builder()
-                .query(query)
-                .topK(topK)
-                .build();
-        List<Document> results = qdrantVectorStore.similaritySearch(request);
-        return results.stream()
-                .map(Document::getText)
-                .collect(Collectors.toList());
-    }
+    /**
+     * @param docId    向量在 Qdrant 中的 ID（自己保证唯一）
+     * @param vector   从本地 embedding 服务拿到的 List<Float>
+     * @param metadata 其他想绑定的 metadata
+     */
+    public void upsertVector(String docId,
+                             List<Float> vector,
+                             Map<String,Object> metadata) {
 
-    // 删除（只能按id批量删，不能直接按metadata删）
-    @Override
-    public void deleteByDocId(String docId) {
-        // 先查所有，找到目标docId的id
-        // 或设足够大的topK
-        SearchRequest request = SearchRequest.builder()
-                .query(null)
-                .topK(1000)
+        // 1) 构造要写入的点
+        PointStruct point = PointStruct.builder()
+                .id(docId)
+                .vector(vector)
+                .payload(metadata)
                 .build();
-        List<Document> docs = qdrantVectorStore.similaritySearch(request);
-        List<String> toDeleteIds = docs.stream()
-                .filter(d -> docId.equals(d.getMetadata().get("docId")))
-                .map(Document::getId)
-                .collect(Collectors.toList());
-        qdrantVectorStore.delete(toDeleteIds);
+
+        // 2) 构造批量 upsert 请求
+        UpsertPoints upsert = UpsertPoints.builder()
+                .collectionName(collection)
+                .points(List.of(point))
+                .build();
+
+        // 3) 执行写入
+        client.upsert(upsert);
     }
 }
-
