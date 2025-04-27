@@ -109,27 +109,27 @@
 <!--            <artifactId>spring-ai-openai</artifactId>-->
 <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>org.springframework.ai</groupId>-->
-<!--            <artifactId>spring-ai-starter-model-openai</artifactId>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
-            <version>1.0.0-M6</version>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
         </dependency>
 
 <!--        <dependency>-->
 <!--            <groupId>org.springframework.ai</groupId>-->
-<!--            <artifactId>spring-ai-starter-vector-store-qdrant</artifactId>-->
+<!--            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>-->
+<!--            <version>1.0.0-M6</version>-->
 <!--        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-qdrant-store-spring-boot-starter</artifactId>
-            <version>1.0.0-M6</version>
+            <artifactId>spring-ai-starter-vector-store-qdrant</artifactId>
         </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.ai</groupId>-->
+<!--            <artifactId>spring-ai-qdrant-store-spring-boot-starter</artifactId>-->
+<!--            <version>1.0.0-M6</version>-->
+<!--        </dependency>-->
 
 <!--        <dependency>-->
 <!--            <groupId>org.springframework.ai</groupId>-->
