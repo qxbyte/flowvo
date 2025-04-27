@@ -1,4 +1,4 @@
-package org.xue.chat.config;//package org.xue.aibot.config;
+package org.xue.chat.config;
 //
 //import io.qdrant.client.QdrantGrpcClient;
 //import org.springframework.beans.factory.annotation.Value;

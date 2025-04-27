@@ -15,3 +15,17 @@ milvus-standalone   /tini -- milvus run standalone   Up             0.0.0.0:1953
 ### 停止和删除 Milvus
 sudo docker compose down
 sudo rm -rf volumes
+
+
+### Milvus Insight（官方可视化工具）停止更新
+#### 拉取镜像
+docker pull milvusdb/milvus-insight:latest
+#### 一键启动
+docker run -p 3000:3000 -e MILVUS_URL={milvus server IP}:19530 zilliz/attu:v2.5
+docker run --rm -p 3000:3000 milvusdb/milvus-insight:latest
+启动 docker start 容器ID
+
+### 社区可视化工具 attu
+docker run -d --name attu -p 3000:3000 zilliz/attu
+
+
