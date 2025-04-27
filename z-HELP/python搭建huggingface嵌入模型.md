@@ -15,9 +15,12 @@ embedding_env\Scripts\activate
 # 或 Mac/Linux
 source embedding_env/bin/activate
 
-3. 安装必要 Python 库
-   pip install -U pip
-   pip install fastapi uvicorn sentence-transformers
+3. 安装必要 Python 库 
+
+pip install -U pip
+
+pip install fastapi uvicorn sentence-transformers
+
 # 推荐使用国内源加速（可选）
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple fastapi uvicorn sentence-transformers
 
@@ -52,6 +55,15 @@ uvicorn embed_server:app --host 0.0.0.0 --port 8000
 看到：
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 代表启动成功！
+
+无法启动可以设置终端代理：
+curl https://huggingface.co
+无法连接huggingface时
+export http_proxy=http://127.0.0.1:7890
+
+export https_proxy=http://127.0.0.1:7890
+
+停止服务：pkill -f "uvicorn embed_server:app"
 
 🟢 四、测试接口（用 curl/Postman/Java）
 1. curl 命令行测试
