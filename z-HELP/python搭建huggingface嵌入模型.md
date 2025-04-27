@@ -40,15 +40,15 @@ model = SentenceTransformer(MODEL_NAME)
 app = FastAPI()
 
 class EmbeddingRequest(BaseModel):
-input: list[str]  # 支持批量输入
+    input: list[str]  # 支持批量输入
 
 class EmbeddingResponse(BaseModel):
-embeddings: list[list[float]]
+    embeddings: list[list[float]]
 
 @app.post("/embed", response_model=EmbeddingResponse)
 def embed(req: EmbeddingRequest):
-embeddings = model.encode(req.input).tolist()
-return EmbeddingResponse(embeddings=embeddings)
+    embeddings = model.encode(req.input).tolist()
+    return EmbeddingResponse(embeddings=embeddings)
 
 🟢 三、启动 HTTP 服务
 uvicorn embed_server:app --host 0.0.0.0 --port 8000
