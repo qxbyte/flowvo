@@ -1,14 +1,7 @@
 <template>
-  <div class="modal-overlay" @click="$emit('close')">
-    <div class="modal-content" @click.stop>
-      <div class="modal-header">
-        <h2>文档管理</h2>
-        <button class="close-button" @click="$emit('close')">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+  <div class="document-page">
+    <div class="document-container">
+      <h1>文档管理</h1>
 
       <div
         class="upload-area"
@@ -44,13 +37,22 @@
               </svg>
             </div>
             <div class="document-info">
-              <h3>{{ doc.name }}</h3>
+              <h3>{{ doc.fileName }}</h3>
               <p>{{ formatDate(doc.uploadTime) }}</p>
-              <span class="document-type">{{ doc.type }}</span>
+              <span class="document-type">{{ doc.fileExtension }}</span>
             </div>
           </div>
         </div>
       </div>
+      <el-pagination
+        v-if="total > pageSize"
+        :current-page="page"
+        :page-size="pageSize"
+        :total="total"
+        layout="prev, pager, next, jumper"
+        @current-change="handlePageChange"
+        style="margin: 24px auto 0; text-align:center;"
+      />
     </div>
   </div>
 </template>
@@ -60,11 +62,16 @@ import { ref, onMounted } from 'vue'
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const documents = ref<Array<{
-  id: number
-  name: string
+  id: string
+  fileName: string
+  fileExtension: string
   uploadTime: string
-  type: string
-}>>([]) // 这里暂时使用静态数据，后续需要从后端获取
+}>>([])
+
+const page = ref(1)
+const pageSize = ref(8)
+const total = ref(0)
+const loading = ref(false)
 
 const triggerFileInput = () => {
   fileInput.value?.click()
@@ -72,70 +79,68 @@ const triggerFileInput = () => {
 
 const handleFileSelect = (event: Event) => {
   const files = (event.target as HTMLInputElement).files
-  if (files) {
-    handleFiles(files)
-  }
+  if (files) handleFiles(files)
 }
 
 const handleFileDrop = (event: DragEvent) => {
   const files = event.dataTransfer?.files
-  if (files) {
-    handleFiles(files)
-  }
+  if (files) handleFiles(files)
 }
 
 const handleFiles = async (files: FileList) => {
-  // 验证文件类型
   const allowedTypes = ['.doc', '.docx', '.pdf', '.txt']
   const formData = new FormData()
-
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-    
     if (!allowedTypes.includes(fileExtension)) {
       alert(`不支持的文件类型：${fileExtension}\n请上传 .doc, .docx, .pdf, .txt 格式的文件`)
       continue
     }
-
     formData.append('file', file)
   }
-
   try {
+    loading.value = true
     const response = await fetch('/api/files/upload', {
       method: 'POST',
       body: formData
     })
-
-    if (!response.ok) {
-      throw new Error('上传失败')
-    }
-
-    const result = await response.json()
-    // 更新文档列表
+    if (!response.ok) throw new Error('上传失败')
     await fetchDocuments()
   } catch (error) {
     console.error('上传错误:', error)
     alert('文件上传失败，请重试')
+  } finally {
+    loading.value = false
   }
 }
 
+// 关键：分页接口
 const fetchDocuments = async () => {
+  loading.value = true
   try {
-    const response = await fetch('/api/files/list')
-    if (!response.ok) {
-      throw new Error('获取文档列表失败')
-    }
-    documents.value = await response.json()
+    const response = await fetch(`/api/files/list?page=${page.value-1}&size=${pageSize.value}`)
+    if (!response.ok) throw new Error('获取文档列表失败')
+    const data = await response.json()
+    // 假设后端返回 Page 对象格式：{ content: [], totalElements: 100, ... }
+    documents.value = data.content || []
+    total.value = data.totalElements || 0
   } catch (error) {
     console.error('获取文档列表错误:', error)
+  } finally {
+    loading.value = false
   }
 }
 
-onMounted(async () => {
-  await fetchDocuments()
-})
+const handlePageChange = (newPage: number) => {
+  page.value = newPage
+  fetchDocuments()
+}
+
+onMounted(fetchDocuments)
+
 const formatDate = (date: string) => {
+  if (!date) return ''
   return new Date(date).toLocaleDateString('zh-CN', {
     year: 'numeric',
     month: 'long',
@@ -145,53 +150,29 @@ const formatDate = (date: string) => {
 </script>
 
 <style scoped>
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+.document-page {
+  padding: 2rem;
+  margin: 0 auto;
 }
 
-.modal-content {
+.document-container {
   background-color: white;
   border-radius: 0.5rem;
   padding: 2rem;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.document-container h1 {
   margin-bottom: 2rem;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-}
-
-.close-button svg {
-  width: 24px;
-  height: 24px;
-  color: #6b7280;
+  font-size: 1.875rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .upload-area {
   border: 2px dashed #e5e7eb;
   border-radius: 0.5rem;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
   cursor: pointer;
   margin-bottom: 2rem;
@@ -202,10 +183,10 @@ const formatDate = (date: string) => {
 }
 
 .upload-icon svg {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   color: #4f46e5;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .upload-hint {
@@ -216,17 +197,26 @@ const formatDate = (date: string) => {
 
 .document-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+  padding: 1rem;
 }
 
 .document-item {
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
-  padding: 1rem;
+  padding: 0.75rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: all 0.2s;
+  min-width: 0;
+}
+
+.document-item:hover {
+  border-color: #4f46e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .document-icon svg {

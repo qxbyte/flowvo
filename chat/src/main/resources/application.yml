@@ -67,4 +67,6 @@ proxy:
   host: 127.0.0.1
   port: 7890
 
-
+local:
+  embedding:
+    server: http://localhost:8000

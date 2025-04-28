@@ -17,7 +17,7 @@ export function useChat() {
     try {
       // 创建新对话，但不保存到数据库
       if (!currentChatId.value) {
-        const response = await fetch('/chat/new', {
+        const response = await fetch('/api/chat/new', {
           method: 'POST'
         })
         const data = await response.json()
@@ -28,7 +28,7 @@ export function useChat() {
       const formData = new FormData()
       formData.append('message', message)
       formData.append('chatId', currentChatId.value)
-      const streamResponse = await fetch('/chat/sendStream', {
+      const streamResponse = await fetch('/api/chat/sendStream', {
         method: 'POST',
         body: formData
       })
@@ -87,7 +87,7 @@ export function useChat() {
   // 加载所有对话记录
   const loadChatRecords = async () => {
     try {
-      const response = await fetch('/chat/records')
+      const response = await fetch('/api/chat/records')
       if (response.status === 401) {
         router.push('/login')
         return
@@ -107,7 +107,7 @@ export function useChat() {
     try {
       console.log('加载对话:', chatId)
       currentChatId.value = chatId
-      const response = await fetch(`/chat/${chatId}`)
+      const response = await fetch(`/api/chat/${chatId}`)
       if (response.status === 401) {
         router.push('/login')
         return
