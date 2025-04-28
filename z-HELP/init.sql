@@ -44,5 +44,10 @@ CREATE TABLE messages (
 --添加用户
 INSERT INTO springaibot.users (id, username, password, email, role) VALUES (4, 'test', '$2a$10$sBV69kvLDnxqGJVrpmYTw.mpih48xlmMYFZ4zroO5R/ztEo9lBdvG', 'qiang_xue0@outlook.com', 'ROLE_USER');
 
-
+CREATE TABLE `file_info` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `file_name` VARCHAR(255),
+  `file_extension` VARCHAR(50),
+  `upload_time` DATETIME NOT NULL
+);
 

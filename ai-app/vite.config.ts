@@ -12,6 +12,7 @@ export default defineConfig({
     }
   },
   server: {
+    historyApiFallback: true,
     proxy: {
       '/chat': {
         target: 'http://localhost:8080',

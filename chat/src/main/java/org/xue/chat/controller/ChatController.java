@@ -9,6 +9,7 @@ import org.xue.chat.entity.ChatRecord;
 import org.xue.chat.entity.Messages;
 import org.xue.chat.service.AIService;
 import org.xue.chat.service.ChatService;
+import org.xue.milvus.service.ChunkMilvusService;
 import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
@@ -18,16 +19,19 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/chat")
+@RequestMapping("/api/chat")
 public class ChatController {
 
     private final ChatService chatService;
 
     private final AIService aiService;
 
-    public ChatController( ChatService chatService, AIService aiService) {
+    private final ChunkMilvusService milvusService;
+
+    public ChatController(ChatService chatService, AIService aiService, ChunkMilvusService milvusService) {
         this.chatService = chatService;
         this.aiService = aiService;
+        this.milvusService = milvusService;
     }
 
     // 获取所有聊天记录
@@ -92,11 +96,24 @@ public class ChatController {
         
         // 先保存用户消息
         chatService.saveMessage(chatId, "user", message);
-        
+
+        // ==== 1. 检索向量库知识 ====
+        List<String> retrievedChunks = milvusService.searchSimilarChunks(message, 2);
+        //List<String> hits = chunkMilvusService.searchSimilarChunks(queryText, topK);
+        // ==== 2. 拼接prompt ====
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("【以下是相关资料，可参考作答】\n");
+        for (String chunk : retrievedChunks) {
+            promptBuilder.append(chunk).append("\n");
+        }
+        promptBuilder.append("【用户提问】\n").append(message);
+
+        String finalPromptText = promptBuilder.toString();
+
         // 创建 StringBuilder 来收集完整的 AI 响应
         StringBuilder fullResponse = new StringBuilder();
         
-        Prompt prompt = new Prompt(new UserMessage(message));
+        Prompt prompt = new Prompt(new UserMessage(finalPromptText));
         return aiService.getChatStream(prompt)
             .map(text -> {
                 fullResponse.append(text);

@@ -29,7 +29,7 @@ const handleLogin = async () => {
   try {
     console.log('发送登录请求:', { username: username.value, password: password.value })
     
-    const response = await fetch('/api/login', {
+    const response = await fetch('/api/user/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
