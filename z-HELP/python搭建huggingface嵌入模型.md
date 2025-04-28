@@ -28,6 +28,7 @@ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple fastapi uvicorn sentence
 建议新建一个目录：
 mkdir embedding_service && cd embedding_service
 
+[embed_server.py](../python/embed_server.py)
 新建 embed_server.py，内容如下：
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -52,6 +53,7 @@ def embed(req: EmbeddingRequest):
 
 🟢 三、启动 HTTP 服务
 uvicorn embed_server:app --host 0.0.0.0 --port 8000
+uvicorn embed_tools_server:app --host 0.0.0.0 --port 8000
 看到：
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 代表启动成功！

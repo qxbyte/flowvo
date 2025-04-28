@@ -86,9 +86,19 @@ export function useChat() {
 
   // 加载所有对话记录
   const loadChatRecords = async () => {
-    const response = await fetch('/chat/records')
-    if (response.ok) {
+    try {
+      const response = await fetch('/chat/records')
+      if (response.status === 401) {
+        router.push('/login')
+        return
+      }
+      if (!response.ok) {
+        throw new Error('加载对话记录失败')
+      }
       chatRecords.value = await response.json()
+    } catch (error) {
+      console.error('加载对话记录失败:', error)
+      chatRecords.value = []
     }
   }
 
@@ -98,6 +108,10 @@ export function useChat() {
       console.log('加载对话:', chatId)
       currentChatId.value = chatId
       const response = await fetch(`/chat/${chatId}`)
+      if (response.status === 401) {
+        router.push('/login')
+        return
+      }
       if (!response.ok) {
         throw new Error('加载历史消息失败')
       }

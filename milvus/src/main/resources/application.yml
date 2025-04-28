@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: milvus
+
+  main:
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    org.xue.milvus: DEBUG
+
+proxy:
+  host: 127.0.0.1
+  port: 7890
+
+local:
+  embedding:
+    server: http://localhost:8000
+
