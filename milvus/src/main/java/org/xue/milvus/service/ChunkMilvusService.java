@@ -173,10 +173,10 @@ public class ChunkMilvusService {
     /**
      * 删除（按主键/条件，可扩展）
      */
-    public void deleteById(long id) {
+    public void deleteById(String id) {
         milvusClient.delete(DeleteParam.newBuilder()
                 .withCollectionName(COLLECTION)
-                .withExpr(PK_FIELD + " == " + id)
+                .withExpr(DOC_ID + " == '" + id + "'")
                 .build());
     }
 

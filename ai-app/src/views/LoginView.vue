@@ -1,3 +1,5 @@
+import NavBar from '@/components/NavBar.vue'
+
 <template>
   <div class="login-container">
     <div class="login-box">
@@ -13,6 +15,9 @@
         </div>
         <button type="submit">登录</button>
       </form>
+      <div class="register-link">
+        <a @click.prevent="navigateToRegister">注册</a>
+      </div>
     </div>
   </div>
 </template>
@@ -28,7 +33,7 @@ const password = ref('')
 const handleLogin = async () => {
   try {
     console.log('发送登录请求:', { username: username.value, password: password.value })
-    
+
     const response = await fetch('/api/user/login', {
       method: 'POST',
       headers: {
@@ -54,53 +59,84 @@ const handleLogin = async () => {
     alert('登录过程中发生错误')
   }
 }
+
+const navigateToRegister = () => {
+  router.push('/register')
+}
 </script>
 
 <style scoped>
 .login-container {
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f5f5f5;
+  width: 100vw;         /* 确保宽度填满整个视口 */
+  height: 100vh;        /* 高度填满视口 */
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 .login-box {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 400px;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto; /* 确保容器居中 */
 }
 
-.form-group {
-  margin-bottom: 1rem;
+.login-box h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: #111827;
 }
 
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-input {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-button {
+.login-box input {
   width: 100%;
   padding: 0.75rem;
-  background: #007AFF;
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+}
+
+.login-box button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #10b981;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   cursor: pointer;
 }
 
-button:hover {
-  background: #0056b3;
+.login-box button:hover {
+  background-color: #059669;
+}
+
+.login-box .register-link {
+  text-align: center;
+  margin-top: 1rem;
+  color: #6b7280;
+}
+
+.login-box .register-link a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+.login-box .register-link a:hover {
+  text-decoration: underline;
 }
 </style>
+
+<NavBar />

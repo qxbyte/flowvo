@@ -1,4 +1,7 @@
+import NavBar from '@/components/NavBar.vue'
+
 <template>
+  <NavBar />
   <div class="home-layout">
     <div class="module-container">
       <div class="module-card" @click="$router.push('/documents')">
@@ -52,9 +55,13 @@ const navigateToChat = () => {
 
 <style scoped>
 .home-layout {
-  min-height: 100vh;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
   background-color: #ffffff;
-  padding: 2rem;
 }
 
 .module-container {
@@ -64,12 +71,13 @@ const navigateToChat = () => {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   padding: 2rem;
+  margin-top: 20vh; /* 增加顶部的margin值以实现向下移动的效果 */
 }
 
 .module-card {
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   padding: 2rem;
   text-align: center;
   cursor: pointer;
@@ -78,7 +86,10 @@ const navigateToChat = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 250px;
+  min-height: 180px;
+  min-width: 300px;
+  max-width: 300px;
+  max-height: 180px;
 }
 
 .module-card:hover {
@@ -105,3 +116,4 @@ const navigateToChat = () => {
   font-size: 1rem;
 }
 </style>
+

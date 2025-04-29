@@ -1,3 +1,5 @@
+import NavBar from '@/components/NavBar.vue'
+
 <template>
   <div class="document-page">
     <div class="document-container">
@@ -31,6 +33,11 @@
         </div>
         <div v-else class="document-grid">
           <div v-for="doc in documents" :key="doc.id" class="document-item">
+            <div class="delete-button" @click.stop="deleteDocument(doc.id)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
             <div class="document-icon">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -147,20 +154,52 @@ const formatDate = (date: string) => {
     day: 'numeric'
   })
 }
+
+const deleteDocument = async (id: string) => {
+  if (!confirm('确定要删除此文档吗？')) return
+
+  try {
+    loading.value = true
+    const response = await fetch(`/api/files/${id}`, {
+      method: 'DELETE'
+    })
+
+    if (!response.ok) throw new Error('删除文档失败')
+
+    // 删除成功后刷新文档列表
+    await fetchDocuments()
+  } catch (error) {
+    console.error('删除文档错误:', error)
+    alert('删除文档失败，请重试')
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
 .document-page {
-  padding: 2rem;
-  margin: 0 auto;
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  
 }
 
 .document-container {
-  background-color: white;
-  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto; /* ⬅⬅⬅ 让内容剧中 */
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 15vh;
 }
+
 
 .document-container h1 {
   margin-bottom: 2rem;
@@ -172,10 +211,13 @@ const formatDate = (date: string) => {
 .upload-area {
   border: 2px dashed #e5e7eb;
   border-radius: 0.5rem;
-  padding: 1rem;
-  text-align: center;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   cursor: pointer;
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .upload-area:hover {
@@ -186,7 +228,7 @@ const formatDate = (date: string) => {
   width: 32px;
   height: 32px;
   color: #4f46e5;
-  margin-bottom: 0.5rem;
+  flex-shrink: 0;
 }
 
 .upload-hint {
@@ -195,52 +237,99 @@ const formatDate = (date: string) => {
   margin-top: 0.5rem;
 }
 
+.document-list {
+  width: 100%;
+}
+
 .document-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* ✅ 自动换行 */
   gap: 1.5rem;
-  padding: 1rem;
+  justify-items: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .document-item {
+  width: 100%;
+  max-width: 240px;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  border-radius: 1rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   transition: all 0.2s;
-  min-width: 0;
+  text-align: center;
+  gap: 0.75rem;
+  min-height: 160px;
+  justify-content: center;
+  position: relative;
+  background-color: #fff;
 }
 
 .document-item:hover {
   border-color: #4f46e5;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: rgba(239, 68, 68, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.document-item:hover .delete-button {
+  opacity: 1;
+}
+
+.delete-button:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
+.delete-button svg {
+  width: 16px;
+  height: 16px;
+  color: rgb(239, 68, 68);
 }
 
 .document-icon svg {
   width: 32px;
   height: 32px;
   color: #4f46e5;
-  margin-bottom: 0.5rem;
+  flex-shrink: 0;
 }
 
 .document-info {
+  width: 100%;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .document-info h3 {
   font-size: 1rem;
   font-weight: 500;
-  margin-bottom: 0.25rem;
   color: #111827;
+  margin: 0;
 }
 
 .document-info p {
   font-size: 0.875rem;
   color: #6b7280;
-  margin-bottom: 0.5rem;
+  margin: 0;
 }
 
 .document-type {
@@ -257,4 +346,7 @@ const formatDate = (date: string) => {
   color: #6b7280;
   padding: 2rem;
 }
+
 </style>
+
+<NavBar />
