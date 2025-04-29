@@ -141,4 +141,11 @@ public class ChunkMilvusServiceTest {
         }
 
     }
+
+    @Test
+    public void deleteById() {;
+        String id = "e9aa3fb5-c95a-4e77-9e6f-30fd6b6659e6";
+        chunkMilvusService.deleteById(id);
+
+    }
 }

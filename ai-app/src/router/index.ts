@@ -3,6 +3,7 @@ import ChatView from '../views/ChatView.vue'
 import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import DocumentView from '../views/DocumentView.vue'
+import RegisterView from '../views/RegisterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,10 +26,17 @@ const router = createRouter({
       component: LoginView
     },
     {
+      path: '/register',
+      name: 'register',
+      component: RegisterView
+    },
+    {
       path: '/documents',
       name: 'documents',
       component: DocumentView,
-      meta: { requiresAuth: true }
+      meta: {
+        requiresAuth: true,
+        }
     }
   ]
 })
@@ -36,7 +44,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else {

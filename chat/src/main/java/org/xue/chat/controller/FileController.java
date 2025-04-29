@@ -32,4 +32,11 @@ public class FileController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteChatRecord(@PathVariable String id) {
+        fileService.deleteDocument(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
