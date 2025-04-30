@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: functioncall
+
+logging:
+  level:
+    root: INFO
+    org.springframework.boot.autoconfigure: WARN
+
+
+
+  file:
+    path: ../logs

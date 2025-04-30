@@ -147,7 +147,7 @@ const formatDate = (date: string) => {
 <style scoped>
 .modal-overlay {
   position: fixed;
-  top: 5px;
+  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
