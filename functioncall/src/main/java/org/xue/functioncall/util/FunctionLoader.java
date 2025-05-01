@@ -19,6 +19,10 @@ public class FunctionLoader {
         }
     }
 
+    /**
+     * @deprecated 通过启动扫描自动获取可用function列表实现
+     */
+    @Deprecated
     public static List<FunctionDescriptor> loadDefault() {
         return loadFromClasspath("functions.json");
     }

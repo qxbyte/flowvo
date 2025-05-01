@@ -27,6 +27,6 @@ public class FunctioncallApplication implements CommandLineRunner {
         List<FunctionDescriptor> list = FunctionDefinitionScanner.scan(FunctionRegistry.class);
         FunctionDefinitionRegistry.init(list);
         ObjectMapper mapper = new ObjectMapper();
-        log.info("Function definitions loaded: " + list.size() + "\nfunctions:" + mapper.writeValueAsString(list));
+        log.info("Function definitions loaded: {}\nfunctions:{}", list.size(), mapper.writeValueAsString(list));
     }
 }
