@@ -19,6 +19,10 @@ import java.util.Set;
 
 public class FunctionSchemaGenerator {
 
+    /**
+     * @deprecated 请使用 {@link # scan(Class<?> clazz)} 替代。
+     */
+    @Deprecated
     public static void generate(String basePackage, String outputFileName) {
         ObjectMapper mapper = new ObjectMapper();
         List<ObjectNode> functions = new ArrayList<>();
