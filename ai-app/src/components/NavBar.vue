@@ -14,8 +14,8 @@
 
 <style scoped>
 .navbar {
-  height: 3vh;
-  background-color: #f8f9fa;
+  height: 5vh;
+  background-color: #dddddc;
   display: flex;
   justify-content: center;
   align-items: center;

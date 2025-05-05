@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.xue.functioncall.dto.model.ChatMessage;
 import org.xue.functioncall.dto.model.FunctionDescriptor;
+import org.xue.functioncall.dto.model.Tool;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,8 @@ public class ModelRequestBuilder {
 
     private String model;
     private List<ChatMessage> messages = new ArrayList<>();
-    private List<FunctionDescriptor> functions = new ArrayList<>();
-    private String function_call = "auto";
+    private List<Tool> tools = new ArrayList<>();
+    private String tool_choice = "auto";
     private double temperature = 0.0;
     private Boolean stream = null;
 
@@ -47,13 +48,14 @@ public class ModelRequestBuilder {
         return this;
     }
 
-    public ModelRequestBuilder functions(List<FunctionDescriptor> functions) {
-        this.functions = functions;
+
+    public ModelRequestBuilder tools(List<Tool> tools) {
+        this.tools = tools;
         return this;
     }
 
     public ModelRequestBuilder functionCall(String call) {
-        this.function_call = call;
+        this.tool_choice = call;
         return this;
     }
 

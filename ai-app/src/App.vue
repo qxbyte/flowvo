@@ -11,7 +11,6 @@
   min-height: 100vh;
   background-color: var(--bg-color);  /* ✅ 使用变量 */
   color: var(--text-color);
-  padding-top: 5rem; /* 为固定导航栏留出空间 */
 }
 </style>
 
