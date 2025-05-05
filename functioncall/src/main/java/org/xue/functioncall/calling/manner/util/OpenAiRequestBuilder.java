@@ -2,6 +2,7 @@ package org.xue.functioncall.calling.manner.util;
 
 import org.xue.functioncall.client.OpenAiClient;
 import org.xue.functioncall.dto.model.FunctionDescriptor;
+import org.xue.functioncall.dto.model.Tool;
 import org.xue.functioncall.executor.FunctionRegistry;
 import org.xue.functioncall.util.FunctionDefinitionRegistry;
 import org.xue.functioncall.util.FunctionDefinitionScanner;
@@ -22,7 +23,6 @@ public class OpenAiRequestBuilder {
         .model("")
         .addMessage("user", "请告诉我今天上海的天气")
         .addMessage("system", "你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复“是”；如果不需要，请只回复“否”。不要提供任何解释或额外信息。")
-        .functions(a)  // 可选加载 functions.json
         .functionCall("auto")
         .temperature(0).build()
         .toJson();  // 输出 JSON 字符串
@@ -34,7 +34,6 @@ public class OpenAiRequestBuilder {
         .model("")
         .addMessage("user", "请告诉我今天上海的天气")
         .addMessage("system", "你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复“是”；如果不需要，请只回复“否”。不要提供任何解释或额外信息。")
-        .functions(functions)  // 可选加载 functions.json
         .functionCall("auto")
         .temperature(0)
         .toJson();  // 输出 JSON 字符串
@@ -42,14 +41,14 @@ public class OpenAiRequestBuilder {
 
     public static void main(String[] args) throws Exception {
 
-        List<FunctionDescriptor> list = FunctionDefinitionScanner.scan(FunctionRegistry.class);
+        List<Tool> list = FunctionDefinitionScanner.scan_(FunctionRegistry.class);
         FunctionDefinitionRegistry.init(list);
-        List<FunctionDescriptor> functions = FunctionDefinitionRegistry.getAll();
+        List<Tool> functions = FunctionDefinitionRegistry.getAll();
         ModelRequestBuilder s = ModelRequestBuilder.builder()
         .model("")
         .addMessage("user", "请告诉我今天上海的天气")
         .addMessage("system", "你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复“是”；如果不需要，请只回复“否”。不要提供任何解释或额外信息。")
-        .functions(FunctionDefinitionRegistry.getAll())  // 可选加载 functions.json
+        .tools(FunctionDefinitionRegistry.getAll())  // 可选加载 functions.json
         .functionCall("auto")
         .temperature(0).stream(true).build();
 //        String aa = buildFunctionDecisionRequest();

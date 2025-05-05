@@ -1,7 +1,31 @@
-import NavBar from '@/components/NavBar.vue'
-
 <template>
-  <NavBar />
+  <div class="register-container">
+    <div class="register-box">
+      <h2>注册</h2>
+      <form @submit.prevent="handleRegister">
+        <div class="form-group">
+          <label>用户名：</label>
+          <input type="text" v-model="username" required>
+        </div>
+        <div class="form-group">
+          <label>邮箱：</label>
+          <input type="email" v-model="email" required>
+        </div>
+        <div class="form-group">
+          <label>密码：</label>
+          <input type="password" v-model="password" required>
+        </div>
+        <div class="form-group">
+          <label>确认密码：</label>
+          <input type="password" v-model="confirmPassword" required>
+        </div>
+        <button type="submit">注册</button>
+      </form>
+      <div class="login-link">
+        <a @click.prevent="router.push('/login')">已有账号？去登录</a>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -84,5 +108,42 @@ const handleRegister = async () => {
   text-align: center;
   margin-bottom: 1.5rem;
   font-size: 1.5rem;
+  color: #111827;
+}
+
+.register-box input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.register-box button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.register-box button:hover {
+  background-color: #1e40af;
+}
+
+.register-box .login-link a {
+  color: #1d4ed8;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.register-box .login-link a:hover {
+  text-decoration: underline;
+  color: #1e40af;
 }
 </style>

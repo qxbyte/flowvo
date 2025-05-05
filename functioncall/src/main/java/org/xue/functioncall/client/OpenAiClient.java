@@ -2,6 +2,8 @@ package org.xue.functioncall.client;
 
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,13 +17,14 @@ import java.util.concurrent.TimeUnit;
  * 支持流式响应、非流式响应、函数调用
  */
 @Slf4j
+@Component
 public class OpenAiClient {
 
     private final String apiKey;
     private final String baseUrl;
     private final OkHttpClient httpClient;
 
-    public OpenAiClient(String apiKey, String baseUrl) {
+    public OpenAiClient(@Value("${spring.ai.openai.api-key}") String apiKey, @Value("${spring.ai.openai.base-url}") String baseUrl) {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
         this.httpClient = new OkHttpClient.Builder()

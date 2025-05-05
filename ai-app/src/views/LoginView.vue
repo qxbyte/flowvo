@@ -15,8 +15,10 @@ import NavBar from '@/components/NavBar.vue'
         </div>
         <button type="submit">登录</button>
       </form>
+      <div class="divider"></div>
       <div class="register-link">
-        <a @click.prevent="navigateToRegister">注册</a>
+        <p class="register-hint">还没有账号？</p>
+        <a @click.prevent="navigateToRegister" class="register-button">注册</a>
       </div>
     </div>
   </div>
@@ -70,8 +72,8 @@ const navigateToRegister = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100vw;         /* 确保宽度填满整个视口 */
-  height: 100vh;        /* 高度填满视口 */
+  width: 100vw;
+  height: 100vh;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -91,7 +93,7 @@ const navigateToRegister = () => {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  margin: 0 auto; /* 确保容器居中 */
+  margin: 0 auto;
 }
 
 .login-box h2 {
@@ -106,36 +108,61 @@ const navigateToRegister = () => {
   padding: 0.75rem;
   margin-bottom: 1rem;
   border: 1px solid #e5e7eb;
-  border-radius: 0.25rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .login-box button {
   width: 100%;
   padding: 0.75rem;
-  background-color: #10b981;
+  background-color: #1d4ed8;
   color: white;
   border: none;
-  border-radius: 0.25rem;
+  border-radius: 0.5rem;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .login-box button:hover {
-  background-color: #059669;
+  background-color: #1e40af;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 1.5rem 0;
 }
 
 .login-box .register-link {
+  width: 100%;
   text-align: center;
-  margin-top: 1rem;
+}
+
+.login-box .register-link .register-hint {
+  margin-bottom: 0.7rem;
   color: #6b7280;
+  font-size: 0.8rem;
 }
 
-.login-box .register-link a {
-  color: #4f46e5;
+.login-box .register-link .register-button {
+  display: inline-block;
+  width: auto;
+  padding: 0.18rem 1.5rem;
+  background-color: white;
+  color: #1d4ed8;
+  border: 1px solid #1d4ed8;
+  border-radius: 0.25rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+}
+
+.login-box .register-link .register-button:hover {
+  background-color: #1d4ed8;
+  color: white;
   text-decoration: none;
-}
-
-.login-box .register-link a:hover {
-  text-decoration: underline;
 }
 </style>
 

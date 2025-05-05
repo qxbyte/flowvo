@@ -1,6 +1,7 @@
 import NavBar from '@/components/NavBar.vue'
 
 <template>
+  <NavBar />
   <div class="chat-layout">
     <ChatSidebar
       v-model:currentChatId="currentChatId"
@@ -50,6 +51,7 @@ onMounted(async () => {
   top: 0;
   left: 0;
   background-color: #ffffff;
+  padding-top: 5vh; /* 为固定导航栏留出空间 */
 }
 
 .main-content {

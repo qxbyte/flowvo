@@ -10,8 +10,8 @@ import java.util.List;
 public class ChatCompletionRequest {
     private String model;
     private List<ChatMessage> messages;
-    private List<FunctionDescriptor> functions;
-    private String function_call;
+    private List<Tool> tools;
+    private String tool_choice;
     private double temperature;
 
     public ChatCompletionRequest(String model,
@@ -21,8 +21,7 @@ public class ChatCompletionRequest {
                                  double temperature, boolean stream) {
         this.model = model;
         this.messages = messages;
-        this.functions = functions;
-        this.function_call = function_call;
+        this.tool_choice = function_call;
         this.temperature = temperature;
     }
 

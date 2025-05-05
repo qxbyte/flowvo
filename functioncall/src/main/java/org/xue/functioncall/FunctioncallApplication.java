@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.xue.functioncall.dto.model.FunctionDescriptor;
+import org.xue.functioncall.dto.model.Tool;
 import org.xue.functioncall.executor.FunctionRegistry;
 import org.xue.functioncall.util.FunctionDefinitionRegistry;
 import org.xue.functioncall.util.FunctionDefinitionScanner;
@@ -24,7 +25,7 @@ public class FunctioncallApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws JsonProcessingException {
         log.info("✅ 日志测试：应用已启动");
-        List<FunctionDescriptor> list = FunctionDefinitionScanner.scan(FunctionRegistry.class);
+        List<Tool> list = FunctionDefinitionScanner.scan_(FunctionRegistry.class);
         FunctionDefinitionRegistry.init(list);
         ObjectMapper mapper = new ObjectMapper();
         log.info("Function definitions loaded: {}\nfunctions:{}", list.size(), mapper.writeValueAsString(list));

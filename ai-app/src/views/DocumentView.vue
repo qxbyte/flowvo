@@ -1,6 +1,7 @@
 import NavBar from '@/components/NavBar.vue'
 
 <template>
+  <NavBar />
   <div class="document-page">
     <div class="document-container">
       <h1>文档管理</h1>
