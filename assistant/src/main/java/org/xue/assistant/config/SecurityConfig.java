@@ -1,4 +1,4 @@
-package org.xue.assistant.chat.config;
+package org.xue.assistant.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,17 +24,19 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()  // 允许所有请求
-                )
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(
+                "/api/chat/**",                 // 放行前端 /chat 页面路由
+                "/api/function-call/**",        // 放行后端 AI 接口
+                "/api/**",
+                "/", "/index.html", "/js/**", "/css/**", "/assets/**")
+                    .permitAll()
 
-        return http.build();
+                    .anyRequest().authenticated())
+            .csrf(AbstractHttpConfigurer::disable)
+            .build();
     }
 
     @Bean

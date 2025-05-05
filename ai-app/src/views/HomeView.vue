@@ -14,7 +14,7 @@ import NavBar from '@/components/NavBar.vue'
         <p>上传和管理您的文档</p>
       </div>
 
-      <div class="module-card" @click="navigateToChat">
+      <div class="module-card" @click="router.push('/chat')">
         <div class="module-icon">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -24,14 +24,14 @@ import NavBar from '@/components/NavBar.vue'
         <p>开始智能对话</p>
       </div>
 
-      <div class="module-card">
+      <div class="module-card" @click="router.push('/service')">
         <div class="module-icon">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h2>更多功能</h2>
-        <p>敬请期待</p>
+        <h2>业务系统</h2>
+        <p>企业业务管理平台</p>
       </div>
     </div>
 
@@ -48,9 +48,6 @@ import DocumentModal from '@/components/document/DocumentModal.vue'
 const router = useRouter()
 const showDocumentModal = ref(false)
 
-const navigateToChat = () => {
-  router.push('/chat')
-}
 </script>
 
 <style scoped>
@@ -62,6 +59,7 @@ const navigateToChat = () => {
   top: 0;
   left: 0;
   background-color: #ffffff;
+  padding-top: 60px; /* 为固定导航栏留出空间 */
 }
 
 .module-container {

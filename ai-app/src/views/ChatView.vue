@@ -51,7 +51,7 @@ onMounted(async () => {
   top: 0;
   left: 0;
   background-color: #ffffff;
-  padding-top: 5vh; /* 为固定导航栏留出空间 */
+  padding-top: 60px; /* 为固定导航栏留出空间 */
 }
 
 .main-content {

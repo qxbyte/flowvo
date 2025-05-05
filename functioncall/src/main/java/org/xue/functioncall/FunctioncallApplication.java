@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.xue.functioncall.dto.model.FunctionDescriptor;
 import org.xue.functioncall.dto.model.Tool;
 import org.xue.functioncall.executor.FunctionRegistry;
 import org.xue.functioncall.util.FunctionDefinitionRegistry;

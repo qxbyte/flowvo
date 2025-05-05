@@ -24,10 +24,6 @@ export default defineConfig({
     port: 5173,
     historyApiFallback: true,
     proxy: {
-      '/chat': {
-        target: 'http://localhost:8080',
-        changeOrigin: true
-      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
