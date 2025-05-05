@@ -67,7 +67,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         List<Tool> allFunctions = FunctionDefinitionRegistry.getAll();
 
         try {
-            return ModelRequestBuilder.builder().model(model).stream(false).temperature(0.7).messages(messageHistory).tools(allFunctions).functionCall("auto").build().toJson();
+            return ModelRequestBuilder.builder().model(model).stream(false).temperature(0.7).messages(messageHistory).tools(allFunctions).toolChoice("auto").build().toJson();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

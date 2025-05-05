@@ -53,7 +53,7 @@ public class ModelRequestBuilder {
         return this;
     }
 
-    public ModelRequestBuilder functionCall(String call) {
+    public ModelRequestBuilder toolChoice(String call) {
         this.tool_choice = call;
         return this;
     }
