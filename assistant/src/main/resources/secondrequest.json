@@ -1,0 +1,31 @@
+{
+  "model": "gpt-4-1106-preview",
+  "messages": [
+    {
+      "role": "system",
+      "content": "你是一个助手，请根据用户问题选择并返回需要调用的函数。请直接返回function_call字段的JSON格式，**不要**返回多余解释。"
+    },
+    {
+      "role": "user",
+      "content": "请帮我查一下今天上海的天气"
+    }
+  ],
+  "functions": [
+    {
+      "name": "getWeather",
+      "description": "获取指定城市的天气信息",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "城市名称，例如：北京、上海"
+          }
+        },
+        "required": ["city"]
+      }
+    }
+  ],
+  "function_call": "auto",
+  "temperature": 0
+}

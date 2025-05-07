@@ -1,0 +1,26 @@
+{
+  "model": "gpt-4-1106-preview",
+  "messages": [
+    {
+      "role": "system",
+      "content": "你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复“是”；如果不需要，请只回复“否”。不要提供任何解释或额外信息。"
+    },
+    {
+      "role": "user",
+      "content": "请帮我查一下今天上海的天气"
+    }
+  ],
+  "functions": [
+    {
+      "name": "getWeather",
+      "description": "获取指定城市的天气信息"
+    },
+    {
+      "name": "getNews",
+      "description": "查询最新新闻摘要"
+    }
+  ],
+  "function_call": "none",
+  "temperature": 0
+}
+
