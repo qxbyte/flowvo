@@ -6,42 +6,40 @@ import io.milvus.grpc.SearchResults;
 import io.milvus.param.*;
 import io.milvus.param.collection.*;
 import io.milvus.param.dml.*;
+import io.milvus.param.index.CreateIndexParam;
 import io.milvus.response.SearchResultsWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.xue.milvus.embed.EmbeddingClient;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
-public class MilvusService {
+public class ChunkMilvusService {
 
     private final MilvusClient milvusClient;
-
-    // 你可以注入EmbeddingClient
+    // 注入EmbeddingClient
     private final EmbeddingClient embeddingClient;
 
-    // 配置你的 collection 名称和字段
+    // 配置 collection 名称和字段
     private static final String COLLECTION = "doc_chunk";
     private static final String PK_FIELD = "id";
     private static final String VECTOR_FIELD = "embedding";
     private static final String TEXT_FIELD = "chunk";
+    private static final String DOC_ID = "doc_id";
 
     // 向量维度，需与 embedding 大小一致
-    private static final int VECTOR_DIM = 768; // 例如 bge-base-zh
+    private final int VECTOR_DIM = 768; // 例如 bge-base-zh
 
-    @Autowired
-    public MilvusService(EmbeddingClient embeddingClient) {
-        this.milvusClient = new MilvusServiceClient(
-                ConnectParam.newBuilder()
-                        .withHost("localhost")
-                        .withPort(19530)
-                        .build()
-        );
+    // Index type
+    private static final IndexType VECTOR_INDEX_TYPE = IndexType.AUTOINDEX;
+    private static final IndexType SCALAR_INDEX_TYPE = IndexType.TRIE;
+    private static final MetricType METRIC_TYPE = MetricType.COSINE;
+
+    public ChunkMilvusService(MilvusClient milvusClient, EmbeddingClient embeddingClient) {
+        this.milvusClient = milvusClient;
         this.embeddingClient = embeddingClient;
-        // 启动时自动建表（可选）
-        createCollectionIfNotExists();
     }
 
     /**
@@ -52,11 +50,11 @@ public class MilvusService {
         R<Boolean> exist = milvusClient.hasCollection(
             HasCollectionParam.newBuilder().withCollectionName(COLLECTION).build()
         );
-//        if (exist.getData() != Boolean.TRUE) {
-        if (!Boolean.TRUE.equals(exist.getData())) {
+        if (exist.getData() != Boolean.TRUE) {
             FieldType pk = FieldType.newBuilder().withName(PK_FIELD).withDataType(DataType.Int64).withPrimaryKey(true).withAutoID(true).build(); //设置自增 IDwithAutoID(true)
             FieldType txt = FieldType.newBuilder().withName(TEXT_FIELD).withDataType(DataType.VarChar).withMaxLength(1024).build();
             FieldType vec = FieldType.newBuilder().withName(VECTOR_FIELD).withDataType(DataType.FloatVector).withDimension(VECTOR_DIM).build(); //设置向量维度 withDimension(VECTOR_DIM)
+            FieldType docId = FieldType.newBuilder().withName(DOC_ID).withDataType(DataType.VarChar).withMaxLength(100).build(); //用于删除文档向量数据
 
             CreateCollectionParam createParam = CreateCollectionParam.newBuilder()
                     .withCollectionName(COLLECTION)
@@ -65,33 +63,65 @@ public class MilvusService {
                     .addFieldType(pk)
                     .addFieldType(txt)
                     .addFieldType(vec)
+                    .addFieldType(docId)
                     .build();
             milvusClient.createCollection(createParam);
+
+            // Create index
+            milvusClient.createIndex(
+              CreateIndexParam.newBuilder()
+                .withCollectionName("doc_chunk")
+                .withIndexName("embedding_index")
+                .withFieldName("embedding")
+                .withIndexType(VECTOR_INDEX_TYPE)
+                .withMetricType(METRIC_TYPE)
+                .withExtraParam("{}")
+                .withSyncMode(Boolean.FALSE)
+                .build()
+            );
+
+            // Create index
+            milvusClient.createIndex(
+              CreateIndexParam.newBuilder()
+                .withCollectionName("doc_chunk")
+                .withIndexName("doc_id_index")
+                .withFieldName("chunk")
+                .withIndexType(SCALAR_INDEX_TYPE)
+                .withSyncMode(Boolean.FALSE)
+                .build()
+            );
+
+            close();
         }
     }
 
     /**
      * 写入一批文本分块及embedding
      */
-    public void insertChunks(String docText) {
+    public void insertChunks(String docText, String docId) {
+
+        //建表
+        createCollectionIfNotExists();
+
         List<EmbeddingClient.ChunkEmbedding> chunkEmbeddings = embeddingClient.splitEmbed(docText);
 
         //List<Long> ids = new ArrayList<>(); // 这里用自增ID，也可自定义
         List<String> chunks = new ArrayList<>();
         List<List<Float>> vectors = new ArrayList<>();
+        List<String> docIds = new ArrayList<>();
 
         for (EmbeddingClient.ChunkEmbedding ce : chunkEmbeddings) {
             chunks.add(ce.getChunk());
             // Milvus要求 float32 类型
-            List<Float> emb = ce.getEmbedding().stream()
-                .map(Float::floatValue)
-                .collect(Collectors.toList());
+            List<Float> emb = ce.getEmbedding();
             vectors.add(emb);
+            docIds.add(docId);
         }
 
         List<InsertParam.Field> fields = Arrays.asList(
             new InsertParam.Field(TEXT_FIELD, chunks),
-            new InsertParam.Field(VECTOR_FIELD, vectors)
+            new InsertParam.Field(VECTOR_FIELD, vectors),
+            new InsertParam.Field(DOC_ID, docIds)
         );
         InsertParam param = InsertParam.newBuilder()
                 .withCollectionName(COLLECTION)
@@ -99,19 +129,28 @@ public class MilvusService {
                 .build();
 
         milvusClient.insert(param);
+        // 加载内存
+        milvusClient.loadCollection(
+            LoadCollectionParam.newBuilder().withCollectionName(COLLECTION).build()
+        );
+
+        close();
     }
 
     /**
      * 检索：根据query文本找到最相近的chunk（topK）
      */
     public List<String> searchSimilarChunks(String queryText, int topK) {
-        List<Double> queryEmbedding = embeddingClient.embedOne(queryText);
+
+        List<Float> queryEmbedding = embeddingClient.embedOne(queryText);
+        log.info(queryEmbedding.toString());
         List<Float> vector = new ArrayList<>();
-        for (Double d : queryEmbedding) vector.add(d.floatValue());
+        for (Float d : queryEmbedding) vector.add(d.floatValue());
 
         SearchParam searchParam = SearchParam.newBuilder()
                 .withCollectionName(COLLECTION)
-                .withMetricType(MetricType.IP) // 余弦相似
+                .withMetricType(MetricType.COSINE) // 余弦相似
+//                .withMetricType(MetricType.IP) // 点积
                 .withOutFields(Arrays.asList(TEXT_FIELD))
                 .withVectors(Collections.singletonList(vector))
                 .withTopK(topK)
@@ -119,23 +158,25 @@ public class MilvusService {
                 .withParams("{\"nprobe\":10}")
                 .build();
 
-        R<SearchResults> resp = milvusClient.search(searchParam);
-        SearchResultsWrapper wrapper = new SearchResultsWrapper(resp.getData().getResults());
         List<String> hits = new ArrayList<>();
-        for (int i = 0; i < wrapper.getRowRecords().size(); i++) {
-            Object fieldData = wrapper.getFieldData(TEXT_FIELD, i);
-            hits.add(fieldData != null ? fieldData.toString() : "");
+        R<SearchResults> resp = milvusClient.search(searchParam);
+        if(resp == null || resp.getData() == null) return hits;
+        SearchResultsWrapper wrapper = new SearchResultsWrapper(resp.getData().getResults());
+        List<?> textList = wrapper.getFieldData(TEXT_FIELD, 0);
+        for (Object obj : textList) {
+            hits.add(obj != null ? obj.toString() : "");
         }
+        close();
         return hits;
     }
 
     /**
      * 删除（按主键/条件，可扩展）
      */
-    public void deleteById(long id) {
+    public void deleteById(String id) {
         milvusClient.delete(DeleteParam.newBuilder()
                 .withCollectionName(COLLECTION)
-                .withExpr(PK_FIELD + " == " + id)
+                .withExpr(DOC_ID + " == '" + id + "'")
                 .build());
     }
 
@@ -145,4 +186,8 @@ public class MilvusService {
     public void close() {
         milvusClient.close();
     }
+
+
+
+
 }

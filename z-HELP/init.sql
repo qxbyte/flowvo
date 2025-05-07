@@ -44,5 +44,26 @@ CREATE TABLE messages (
 --添加用户
 INSERT INTO springaibot.users (id, username, password, email, role) VALUES (4, 'test', '$2a$10$sBV69kvLDnxqGJVrpmYTw.mpih48xlmMYFZ4zroO5R/ztEo9lBdvG', 'qiang_xue0@outlook.com', 'ROLE_USER');
 
+CREATE TABLE `file_info` (
+  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
+  `file_name` VARCHAR(255),
+  `file_extension` VARCHAR(50),
+  `upload_time` DATETIME NOT NULL
+);
 
 
+# function call多轮对话记录
+CREATE TABLE call_message (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键 ID',
+
+    chat_id BIGINT NOT NULL COMMENT '所属对话 ID，可用于区分不同对话',
+    role VARCHAR(20) NOT NULL COMMENT '角色：user / assistant / tool',
+
+    content TEXT COMMENT '普通对话内容，如果是 tool_calls 则为 null',
+    name VARCHAR(100) COMMENT '函数名，仅 tool 用到',
+    tool_call_id VARCHAR(100) COMMENT '函数调用 ID，仅 tool 用到',
+
+    tool_calls JSON COMMENT '如果是 assistant 且使用了 tool_calls，完整 JSON 存这里',
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+) COMMENT='聊天记录表（支持函数调用）';

@@ -29,12 +29,12 @@
          class="chat-menu"
          :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }">
       <button class="menu-item" @click="renameChat">
-        <PencilIcon class="h-3.5 w-3.5 mr-2" />
-        重命名
+        <span>重命名</span>
+        <img src="@/assets/edit.png" />
       </button>
       <button class="menu-item delete" @click="deleteChat">
-        <TrashIcon class="h-3.5 w-3.5 mr-2" />
-        删除
+        <span>删除</span>
+        <img src="@/assets/trash.png" />
       </button>
     </div>
   </div>
@@ -101,7 +101,7 @@ const renameChat = async () => {
   const newTitle = prompt('请输入新的对话名称', selectedChatTitle.value)
   if (newTitle && newTitle !== selectedChatTitle.value) {
     try {
-      const response = await fetch(`/chat/${selectedChatId.value}/rename`, {
+      const response = await fetch(`/api/chat/${selectedChatId.value}/rename`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,7 +111,7 @@ const renameChat = async () => {
 
       if (response.ok) {
         // 重命名成功后立即刷新聊天列表
-        const recordsResponse = await fetch('/chat/records')
+        const recordsResponse = await fetch('/api/chat/records')
         if (recordsResponse.ok) {
           const updatedRecords = await recordsResponse.json()
           props.chatRecords.splice(0, props.chatRecords.length, ...updatedRecords)
@@ -131,7 +131,7 @@ const renameChat = async () => {
 const deleteChat = async () => {
   if (confirm('确定要删除这个对话吗？')) {
     try {
-      const response = await fetch(`/chat/${selectedChatId.value}`, {
+      const response = await fetch(`/api/chat/${selectedChatId.value}`, {
         method: 'DELETE'
       })
 
@@ -140,7 +140,7 @@ const deleteChat = async () => {
           emit('update:currentChatId', '')
         }
         // 删除成功后立即刷新聊天列表
-        const recordsResponse = await fetch('/chat/records')
+        const recordsResponse = await fetch('/api/chat/records')
         if (recordsResponse.ok) {
           const updatedRecords = await recordsResponse.json()
           props.chatRecords.splice(0, props.chatRecords.length, ...updatedRecords)
@@ -158,7 +158,7 @@ const deleteChat = async () => {
 
 // 创建新对话
 const createNewChat = async () => {
-  const response = await fetch('/chat/new', {
+  const response = await fetch('/api/chat/new', {
     method: 'POST'
   })
   if (response.ok) {
@@ -318,6 +318,7 @@ const loadChat = (chatId: string) => {
   color: #333;
   cursor: pointer;
   transition: background-color 0.2s;
+  justify-content: space-between;
 }
 
 .menu-item:hover {
