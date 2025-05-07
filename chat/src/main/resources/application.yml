@@ -31,6 +31,7 @@ spring:
       chat:
         options:
           model: deepseek-chat
+#          model: deepseek-chat
           temperature: 0.8
           max-tokens: 2048
       embedding:
@@ -67,4 +68,6 @@ proxy:
   host: 127.0.0.1
   port: 7890
 
-
+local:
+  embedding:
+    server: http://localhost:8000
