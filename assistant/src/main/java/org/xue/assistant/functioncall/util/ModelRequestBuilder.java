@@ -23,7 +23,7 @@ public class ModelRequestBuilder {
     private String model;
     private List<ChatMessage> messages = new ArrayList<>();
     private List<Tool> tools = new ArrayList<>();
-    private String tool_choice = "auto";
+    private String tool_choice = "auto";// auto/none
     private double temperature = 0.0;
     private Boolean stream = null;
 
@@ -53,8 +53,8 @@ public class ModelRequestBuilder {
         return this;
     }
 
-    public ModelRequestBuilder toolChoice(String call) {
-        this.tool_choice = call;
+    public ModelRequestBuilder toolChoice(String toolChoice) {
+        this.tool_choice = toolChoice;
         return this;
     }
 
@@ -74,6 +74,7 @@ public class ModelRequestBuilder {
     public String toJson() throws Exception {
 
         ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         return mapper.writeValueAsString(this);
     }
 
