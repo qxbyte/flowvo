@@ -15,8 +15,7 @@
     <description>aibot</description>
     <packaging>pom</packaging>  <!-- 关键点，聚合用 -->
     <modules>
-        <module>chat</module>
-        <module>milvus</module>
+        <module>assistant</module>
         <!-- 你有其他子模块可以加在这里 -->
     </modules>
 
