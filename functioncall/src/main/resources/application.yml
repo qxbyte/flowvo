@@ -1,0 +1,39 @@
+server:
+  port: 8080
+# http://localhost:8080/sendStream-test
+
+spring:
+  application:
+    name: functioncall
+
+  devtools:
+    restart:
+      enabled: false
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/springaibot?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
+    username: springuser
+    password: Aa111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  ai:
+    openai:
+#      api-key: sk-741ef1518f0945c78157f4926c2ddde6
+      api-key: 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
+      base-url: https://api.openai.com/v1
+#      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: gpt-4-turbo
+          temperature: 0.8
+          max-tokens: 2048
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    root: INFO
+    org.springframework.boot.autoconfigure: WARN
