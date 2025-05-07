@@ -3,6 +3,7 @@ package org.xue.assistant.functioncall.executor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.xue.assistant.functioncall.annotation.FunctionCallable;
+import org.xue.assistant.functioncall.executor.functions.TestFunction;
 import org.xue.assistant.functioncall.util.FunctionCallParser;
 
 import java.lang.reflect.Method;
@@ -83,7 +84,7 @@ public class FunctionDispatcher {
         String method = FunctionCallParser.extractFunctionName(json);
         Map<String, Object> arguments = FunctionCallParser.extractArgumentsAsMap(json);
 
-        FunctionDispatcher dispatcher = new FunctionDispatcher(new FunctionRegistry());
+        FunctionDispatcher dispatcher = new FunctionDispatcher(new TestFunction());
         Object result = dispatcher.dispatch(method, arguments);
 
         System.out.println("函数执行结果: " + result);

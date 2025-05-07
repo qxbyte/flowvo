@@ -10,11 +10,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ChatMessage {
     private String role;
-    private String toolCallId;
+    private String tool_call_id;
     private String name;
     private String content;
     // ✅ 新增字段：用于 assistant 消息保存 tool_calls
-    private JsonNode toolCalls;
+    private JsonNode tool_calls;
 
     public ChatMessage(String role, String content) {
         this.role = role;
@@ -23,7 +23,7 @@ public class ChatMessage {
 
     public ChatMessage(String role, String tool_call_id, String content) {
         this.role = role;
-        this.toolCallId = tool_call_id;
+        this.tool_call_id = tool_call_id;
         this.content = content;
     }
 }

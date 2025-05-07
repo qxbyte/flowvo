@@ -11,17 +11,22 @@ import org.xue.assistant.chat.service.ChatService;
 import org.xue.assistant.functioncall.client.OpenAiClient;
 import org.xue.assistant.functioncall.dto.model.ChatMessage;
 import org.xue.assistant.functioncall.dto.model.Tool;
-import org.xue.assistant.functioncall.entity.CallMessage;
-import org.xue.assistant.functioncall.repository.CallMessageRepository;
 import org.xue.assistant.functioncall.service.FunctionCallService;
 import org.xue.assistant.functioncall.util.FunctionDefinitionRegistry;
 import org.xue.assistant.functioncall.util.ModelRequestBuilder;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * 2.0 模式：
+ * 请求里只有 tools + tool_choice，不 带 functions/function_call。
+ * messages 里用 "role":"tool" 来传函数结果，前提是紧跟在带 tool_calls 的 assistant 消息之后。
+ *
+ * 1.0 模式：
+ * 请求里只有 functions + function_call，不带 tools/tool_choice。
+ * messages 里若要回传函数结果，要用 "role":"function"（注意旧版是 function）。
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -51,7 +56,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
 //        redisTemplate.opsForList().rightPush(redisKey, new ChatMessage("system", "你是一个助手，如果需要调用函数，请使用 function_call 返回 JSON。，请务必要按照以下格式返回：{\"function_call\": {\"name\": \"getWeather\",\"arguments\": {\"city\": \"上海\"}}}"));
 
         // 构建请求 JSON
-        String requestJson = buildRequestJson();
+        String requestJson = buildRequestJson("auto");
 
         try {
             String result = openAiClient.chatSync(requestJson);
@@ -61,13 +66,13 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         }
     }
 
-    private String buildRequestJson() {
+    private String buildRequestJson(String value) {
 
-        // 如果你有 Function schema，可加入
+        // 如果有 Function schema，可加入
         List<Tool> allFunctions = FunctionDefinitionRegistry.getAll();
 
         try {
-            return ModelRequestBuilder.builder().model(model).stream(false).temperature(0.7).messages(messageHistory).tools(allFunctions).toolChoice("auto").build().toJson();
+            return ModelRequestBuilder.builder().model(model).stream(false).temperature(0.7).messages(messageHistory).tools(allFunctions).toolChoice(value).build().toJson();// 使用tool_choice
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -84,7 +89,8 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         if (toolCalls != null && toolCalls.isArray()) {
             ChatMessage assistantMsg = new ChatMessage();
             assistantMsg.setRole("assistant");
-            assistantMsg.setToolCalls(toolCalls);  // 这里你需要支持 JsonNode 或序列化为字符串
+            assistantMsg.setContent("");
+            assistantMsg.setTool_calls(toolCalls);  // 这里你需要支持 JsonNode 或序列化为字符串
             messageHistory.add(assistantMsg);
             // 遍历每一个函数调用
             for (JsonNode toolCall : toolCalls) {
@@ -100,14 +106,14 @@ public class FunctionCallServiceImpl implements FunctionCallService {
                 // 构造 tool 类型的回复并添加到 messageHistory
                 ChatMessage toolReply = new ChatMessage();
                 toolReply.setRole("tool");
-                toolReply.setToolCallId(toolCallId); // 这是关键，必须加上！
+                toolReply.setTool_call_id(toolCallId); // 这是关键，必须加上！
                 toolReply.setName(functionName);
                 toolReply.setContent(functionResult);
                 messageHistory.add(toolReply);
             }
 
             // 构造新的请求，让 AI 继续基于函数结果回复
-            String newRequest = buildRequestJson();
+            String newRequest = buildRequestJson("none");
             String newResponse = openAiClient.chatSync(newRequest);
             String finalReply = objectMapper.readTree(newResponse)
                     .path("choices").get(0).path("message").path("content").asText();
@@ -129,7 +135,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         // TODO: 替换为你自己的本地方法映射逻辑
         // 临时演示用
         return switch (functionName) {
-            case "getWeather" -> "{\"city\":\"上海\",\"weather\":\"晴天\",\"temperature\":\"26°C\"}";
+            case "getWeather" -> "{\"city\":\"上海\",\"weather\":\"晴天\",\"temperature\":\"26°C\"}";//模拟业务处理返回JSON
             default -> "{\"error\":\"未实现函数: " + functionName + "\"}";
         };
     }
