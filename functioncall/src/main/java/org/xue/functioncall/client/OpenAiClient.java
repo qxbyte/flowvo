@@ -42,7 +42,7 @@ public class OpenAiClient {
 
     public String chatSync(String requestJson) throws Exception {
         Request request = new Request.Builder()
-                .url(baseUrl + "/chat/completions")
+                .url(baseUrl + "/v1/chat/completions")
                 .addHeader("Authorization", "Bearer " + apiKey)
                 .addHeader("Content-Type", "application/json")
                 .post(RequestBody.create(requestJson, MediaType.parse("application/json")))
@@ -58,7 +58,7 @@ public class OpenAiClient {
 
     public void chatStream(String requestJson) {
         Request request = new Request.Builder()
-                .url(baseUrl + "/chat/completions")
+                .url(baseUrl + "/v1/chat/completions")
                 .addHeader("Authorization", "Bearer " + apiKey)
                 .addHeader("Content-Type", "application/json")
                 .post(RequestBody.create(requestJson, MediaType.parse("application/json")))

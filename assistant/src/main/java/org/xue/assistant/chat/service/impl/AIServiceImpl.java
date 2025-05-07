@@ -27,10 +27,14 @@ public class AIServiceImpl implements AIService {
     // 使用流式处理生成 AI 回复
     public Flux<String> getChatStream(Prompt prompt) {
         return chatModel.stream(prompt)
-                .map(response -> {
-                    Generation generation = response.getResult();  // 获取生成的第一个响应对象
-                    return generation != null && generation.getOutput() != null ? generation.getOutput().getText() : "";
-                });
+        .map(response -> {
+            if (response == null) return ""; // 防御 null
+            Generation generation = response.getResult();
+            if (generation == null || generation.getOutput() == null || generation.getOutput().getText() == null) {
+                return "";
+            }
+            return generation.getOutput().getText();
+        });
     }
 }
 

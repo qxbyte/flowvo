@@ -73,13 +73,13 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteChatRecord(String chatId) {
         chatRecordRepository.deleteById(chatId);
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void renameChatRecord(String chatId, String newTitle) {
         ChatRecord chatRecord = chatRecordRepository.findById(chatId)
                 .orElseThrow(() -> new RuntimeException("Chat record not found"));

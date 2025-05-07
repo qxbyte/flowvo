@@ -27,6 +27,7 @@ import NavBar from '@/components/NavBar.vue'
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const username = ref('')
@@ -36,21 +37,15 @@ const handleLogin = async () => {
   try {
     console.log('发送登录请求:', { username: username.value, password: password.value })
 
-    const response = await fetch('/api/user/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value
-      })
+    const response = await axios.post('/api/user/login', {
+      username: username.value,
+      password: password.value
     })
 
-    const data = await response.json()
+    const data = response.data
     console.log('登录响应:', data)
 
-    if (response.ok) {
+    if (response.status === 200) {
       localStorage.setItem('isAuthenticated', 'true')
       router.push('/')
     } else {

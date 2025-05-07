@@ -3,6 +3,8 @@ package org.xue.assistant.chat.controller;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.xue.assistant.chat.entity.ChatRecord;
 import org.xue.assistant.chat.entity.Messages;
@@ -39,6 +41,10 @@ public class ChatController {
     // 获取所有聊天记录
     @GetMapping("/records")
     public List<Map<String, Object>> getChatList() {
+
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        String userId = ((CustomUserDetails) authentication.getPrincipal()).getId();
+
         List<ChatRecord> records = chatService.getAllChatRecords();
         return records.stream()
             .map(record -> {

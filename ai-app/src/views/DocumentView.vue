@@ -5,7 +5,6 @@ import NavBar from '@/components/NavBar.vue'
   <div class="document-page">
     <div class="document-container">
       <h1>文档管理</h1>
-
       <div
         class="upload-area"
         @dragover.prevent
@@ -66,7 +65,9 @@ import NavBar from '@/components/NavBar.vue'
 </template>
 
 <script setup lang="ts">
+import axios from 'axios'
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const documents = ref<Array<{
@@ -102,22 +103,19 @@ const handleFiles = async (files: FileList) => {
     const file = files[i]
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
     if (!allowedTypes.includes(fileExtension)) {
-      alert(`不支持的文件类型：${fileExtension}\n请上传 .doc, .docx, .pdf, .txt 格式的文件`)
+      ElMessage.warning(`不支持的文件类型：${fileExtension}\n请上传 .doc, .docx, .pdf, .txt 格式的文件`)
       continue
     }
     formData.append('file', file)
   }
   try {
     loading.value = true
-    const response = await fetch('/api/files/upload', {
-      method: 'POST',
-      body: formData
-    })
-    if (!response.ok) throw new Error('上传失败')
+    const response = await axios.post('/api/files/upload', formData)
+    if (response.status !== 200) throw new Error('上传失败')
     await fetchDocuments()
   } catch (error) {
     console.error('上传错误:', error)
-    alert('文件上传失败，请重试')
+    ElMessage.error('文件上传失败，请重试')
   } finally {
     loading.value = false
   }
@@ -127,9 +125,13 @@ const handleFiles = async (files: FileList) => {
 const fetchDocuments = async () => {
   loading.value = true
   try {
-    const response = await fetch(`/api/files/list?page=${page.value-1}&size=${pageSize.value}`)
-    if (!response.ok) throw new Error('获取文档列表失败')
-    const data = await response.json()
+    const response = await axios.get('/api/files/list', {
+      params: {
+        page: page.value - 1,
+        size: pageSize.value
+      }
+    })
+    const data = response.data
     // 假设后端返回 Page 对象格式：{ content: [], totalElements: 100, ... }
     documents.value = data.content || []
     total.value = data.totalElements || 0
@@ -161,17 +163,21 @@ const deleteDocument = async (id: string) => {
 
   try {
     loading.value = true
-    const response = await fetch(`/api/files/${id}`, {
-      method: 'DELETE'
-    })
+    const response = await axios.delete(`/api/files/${id}`)
 
-    if (!response.ok) throw new Error('删除文档失败')
+    if (response.status !== 200) throw new Error('删除文档失败')
 
     // 删除成功后刷新文档列表
     await fetchDocuments()
+
+    // 使用Element Plus的消息组件显示成功提示
+    ElMessage({
+      message: '删除成功！',
+      type: 'success',
+    })
   } catch (error) {
     console.error('删除文档错误:', error)
-    alert('删除文档失败，请重试')
+    ElMessage.error('删除文档失败，请重试')
   } finally {
     loading.value = false
   }
@@ -181,24 +187,26 @@ const deleteDocument = async (id: string) => {
 <style scoped>
 .document-page {
   display: flex;
-  height: 100vh;
-  width: 100vw;
+  height: 120%;
+  width: 100%;
   position: fixed;
-  top: 0;
+  top: -10vh;
   left: 0;
   background-color: #ffffff;
-  padding-top: 60px; /* 为固定导航栏留出空间 */
+  padding-top: 5vh; /* 为固定导航栏留出空间 */
 }
 
 .document-container {
   width: 100%;
   max-width: 960px;
-  margin: 0 auto; /* ⬅⬅⬅ 让内容剧中 */
+  /*  让内容剧中 */
   padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 15vh;
+  margin: 15vh auto 0;
+  top: -30vh;
+
 }
 
 
