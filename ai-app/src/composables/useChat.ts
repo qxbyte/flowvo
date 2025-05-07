@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 export function useChat() {
   const router = useRouter()
@@ -17,10 +18,8 @@ export function useChat() {
     try {
       // 创建新对话，但不保存到数据库
       if (!currentChatId.value) {
-        const response = await fetch('/api/chat/new', {
-          method: 'POST'
-        })
-        const data = await response.json()
+        const response = await axios.post('/api/chat/new')
+        const data = response.data
         currentChatId.value = data.id
       }
 
@@ -28,9 +27,8 @@ export function useChat() {
       const formData = new FormData()
       formData.append('message', message)
       formData.append('chatId', currentChatId.value)
-      const streamResponse = await fetch('/api/chat/sendStream', {
-        method: 'POST',
-        body: formData
+      const streamResponse = await axios.post('/api/chat/sendStream', formData, {
+        responseType: 'stream'
       })
 
       if (streamResponse.status === 401) {
@@ -38,7 +36,7 @@ export function useChat() {
         return
       }
 
-      if (!streamResponse.ok) {
+      if (streamResponse.status !== 200) {
         throw new Error('Network response was not ok')
       }
 
@@ -54,7 +52,7 @@ export function useChat() {
         content: ''
       })
 
-      const reader = streamResponse.body?.getReader()
+      const reader = streamResponse.data?.getReader()
       if (!reader) {
         throw new Error('No reader available')
       }
@@ -87,15 +85,12 @@ export function useChat() {
   // 加载所有对话记录
   const loadChatRecords = async () => {
     try {
-      const response = await fetch('/api/chat/records')
+      const response = await axios.get('/api/chat/records')
       if (response.status === 401) {
         router.push('/login')
         return
       }
-      if (!response.ok) {
-        throw new Error('加载对话记录失败')
-      }
-      chatRecords.value = await response.json()
+      chatRecords.value = response.data
     } catch (error) {
       console.error('加载对话记录失败:', error)
       chatRecords.value = []
@@ -107,16 +102,13 @@ export function useChat() {
     try {
       console.log('加载对话:', chatId)
       currentChatId.value = chatId
-      const response = await fetch(`/api/chat/${chatId}`)
+      const response = await axios.get(`/api/chat/${chatId}`)
       if (response.status === 401) {
         router.push('/login')
         return
       }
-      if (!response.ok) {
-        throw new Error('加载历史消息失败')
-      }
 
-      const data = await response.json()
+      const data = response.data
       console.log('历史消息数据:', data)
 
       // 直接使用返回的数组数据

@@ -39,7 +39,8 @@ spring:
   ai:
     openai:
       api-key: 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
-      base-url: https://api.openai.com/v1
+#      api-key: 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
+      base-url: https://api.openai.com
       chat:
         options:
           model: gpt-4-turbo

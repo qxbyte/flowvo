@@ -84,7 +84,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         if (toolCalls != null && toolCalls.isArray()) {
             ChatMessage assistantMsg = new ChatMessage();
             assistantMsg.setRole("assistant");
-            assistantMsg.setToolCalls(toolCalls);  // 👈 这里你需要支持 JsonNode 或序列化为字符串
+            assistantMsg.setToolCalls(toolCalls);  // 这里你需要支持 JsonNode 或序列化为字符串
             messageHistory.add(assistantMsg);
             // 遍历每一个函数调用
             for (JsonNode toolCall : toolCalls) {
@@ -100,7 +100,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
                 // 构造 tool 类型的回复并添加到 messageHistory
                 ChatMessage toolReply = new ChatMessage();
                 toolReply.setRole("tool");
-                toolReply.setToolCallId(toolCallId); // ⚠️ 这是关键，必须加上！
+                toolReply.setToolCallId(toolCallId); // 这是关键，必须加上！
                 toolReply.setName(functionName);
                 toolReply.setContent(functionResult);
                 messageHistory.add(toolReply);

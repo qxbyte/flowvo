@@ -2,6 +2,7 @@ package org.xue.assistant.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -27,14 +28,15 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .authorizeHttpRequests(auth -> auth
-                            .requestMatchers(
-                "/api/chat/**",                 // 放行前端 /chat 页面路由
-                "/api/function-call/**",        // 放行后端 AI 接口
-                "/api/**",
-                "/", "/index.html", "/js/**", "/css/**", "/assets/**")
-                    .permitAll()
-
-                    .anyRequest().authenticated())
+                    .requestMatchers(
+                    "/api/chat/**",
+                    "/api/function-call/**",
+                    "/api/**",
+                    "/api/customer/**",
+                    "/api/order/**",
+                    "/index.html", "/js/**", "/css/**", "/assets/**"
+                ).permitAll()
+            .anyRequest().authenticated())
             .csrf(AbstractHttpConfigurer::disable)
             .build();
     }
@@ -43,7 +45,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setExposedHeaders(Arrays.asList("Authorization"));  // 允许前端访问 Authorization 头

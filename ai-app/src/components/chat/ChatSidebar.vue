@@ -29,12 +29,12 @@
          class="chat-menu"
          :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }">
       <button class="menu-item" @click="renameChat">
-        <PencilIcon class="h-3.5 w-3.5 mr-2" />
-        重命名
+        <span>重命名</span>
+        <img src="@/assets/edit.png" />
       </button>
       <button class="menu-item delete" @click="deleteChat">
-        <TrashIcon class="h-3.5 w-3.5 mr-2" />
-        删除
+        <span>删除</span>
+        <img src="@/assets/trash.png" />
       </button>
     </div>
   </div>
@@ -318,6 +318,7 @@ const loadChat = (chatId: string) => {
   color: #333;
   cursor: pointer;
   transition: background-color 0.2s;
+  justify-content: space-between;
 }
 
 .menu-item:hover {

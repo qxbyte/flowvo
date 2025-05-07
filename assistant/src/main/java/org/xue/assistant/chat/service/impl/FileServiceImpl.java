@@ -26,7 +26,7 @@ public class FileServiceImpl implements FileService {
         this.milvusService = milvusService;
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public FileInfo uploadAndParseFile(MultipartFile file) throws IOException {
         // 获取文件名和扩展名
         String originalFilename = file.getOriginalFilename();
@@ -60,7 +60,7 @@ public class FileServiceImpl implements FileService {
         return fileInfoRepository.findAll(PageRequest.of(page, size));
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteDocument(String id) {
         fileInfoRepository.deleteById(id);
         milvusService.deleteById(id);

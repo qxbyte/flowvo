@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 const username = ref('')
@@ -47,22 +48,16 @@ const handleRegister = async () => {
   try {
     console.log('发送注册请求:', { username: username.value, email: email.value, password: password.value })
 
-    const response = await fetch('/api/user/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        email: email.value,
-        password: password.value
-      })
+    const response = await axios.post('/api/user/register', {
+      username: username.value,
+      email: email.value,
+      password: password.value
     })
 
-    const data = await response.json()
+    const data = response.data
     console.log('注册响应:', data)
 
-    if (response.ok) {
+    if (response.status === 200) {
       alert('注册成功，请使用新账户登录')
       router.push('/login')
     } else {

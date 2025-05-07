@@ -24,18 +24,8 @@
             <el-button class="notification-btn" :icon="Bell" circle />
           </el-badge>
 
-          <!-- 语言切换 -->
-          <el-dropdown trigger="click" class="language-dropdown">
-            <el-button circle>
-              <el-icon><LanguageIcon /></el-icon>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="switchLanguage('zh')">中文</el-dropdown-item>
-                <el-dropdown-item @click="switchLanguage('en')">English</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <!-- 浅色/深色模式 -->
+
 
           <!-- 用户头像和下拉菜单 -->
           <el-dropdown trigger="click" class="user-dropdown">
