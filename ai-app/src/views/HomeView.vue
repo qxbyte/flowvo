@@ -4,7 +4,7 @@ import NavBar from '@/components/NavBar.vue'
   <NavBar />
   <div class="home-layout">
     <div class="module-container">
-      <div class="module-card" @click="$router.push('/documents')">
+      <div class="module-card" @click="$router.push('/documents')" @mousemove="handleMouseMove">
         <div class="module-icon">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -14,7 +14,7 @@ import NavBar from '@/components/NavBar.vue'
         <p>上传和管理您的文档</p>
       </div>
 
-      <div class="module-card" @click="router.push('/chat')">
+      <div class="module-card" @click="router.push('/chat')" @mousemove="handleMouseMove">
         <div class="module-icon">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -24,7 +24,7 @@ import NavBar from '@/components/NavBar.vue'
         <p>开始智能对话</p>
       </div>
 
-      <div class="module-card" @click="router.push('/service')">
+      <div class="module-card" @click="router.push('/service')" @mousemove="handleMouseMove">
         <div class="module-icon">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -48,69 +48,142 @@ import DocumentModal from '@/components/document/DocumentModal.vue'
 const router = useRouter()
 const showDocumentModal = ref(false)
 
+// 处理鼠标移动事件，更新边框效果位置
+const handleMouseMove = (event: MouseEvent) => {
+  const target = event.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  
+  const x = event.clientX - rect.left
+  const y = event.clientY - rect.top
+  
+  target.style.setProperty('--mouse-x', `${x}px`)
+  target.style.setProperty('--mouse-y', `${y}px`)
+}
 </script>
 
 <style scoped>
 .home-layout {
   display: flex;
-  height: 100vh;
-  width: 100vw;
-  top: 0;
-  left: 0;
-  background-color: #ffffff;
-  padding-top: 60px; /* 为固定导航栏留出空间 */
+  min-height: 100vh;
+  width: 100%;
+  background-color: #f5f5f5;
+  padding-top: 60px;
+  padding-bottom: 40px;
 }
 
 .module-container {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
   padding: 2rem;
-  margin-top: 20vh; /* 增加顶部的margin值以实现向下移动的效果 */
+  margin-top: 10vh;
+  justify-content: center;
 }
 
 .module-card {
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-  padding: 2rem;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 180px;
-  min-width: 300px;
-  max-width: 300px;
-  max-height: 180px;
+  max-height: 200px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+  --mouse-x: 0px;
+  --mouse-y: 0px;
 }
 
+/* 卡片悬停效果 */
 .module-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-3px);
+}
+
+/* 卡片边框效果：使用伪元素实现 */
+.module-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0.75rem;
+  border: 2px solid black;
+  opacity: 0;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  clip-path: circle(70px at var(--mouse-x) var(--mouse-y));
+}
+
+/* 创建渐变遮罩层，让边框两端淡化 */
+.module-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 0.75rem;
+  background: radial-gradient(
+    circle at var(--mouse-x) var(--mouse-y),
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0.8) 80%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  opacity: 0;
+  z-index: 11;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+  clip-path: circle(70px at var(--mouse-x) var(--mouse-y));
+}
+
+.module-card:hover::before {
+  opacity: 1;
+}
+
+.module-card:hover::after {
+  opacity: 1;
 }
 
 .module-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 1rem;
-  color: #4f46e5;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 0.75rem;
+  color: #6366f1;
+  position: relative;
+  z-index: 2;
 }
 
 .module-card h2 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   color: #111827;
+  position: relative;
+  z-index: 2;
 }
 
 .module-card p {
   color: #6b7280;
-  font-size: 1rem;
+  font-size: 0.875rem;
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 768px) {
+  .module-container {
+    grid-template-columns: repeat(1, 1fr);
+  }
 }
 </style>
 
