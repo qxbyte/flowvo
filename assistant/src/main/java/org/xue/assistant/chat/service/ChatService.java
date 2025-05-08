@@ -4,7 +4,9 @@ import org.springframework.stereotype.Service;
 import org.xue.assistant.chat.entity.ChatRecord;
 import org.xue.assistant.chat.entity.Messages;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public interface ChatService {
@@ -13,12 +15,22 @@ public interface ChatService {
 
     List<Messages> getMessagesByChatId(String chatId);
 
-    ChatRecord createNewChatRecord();  // 添加这行，声明方法
+    ChatRecord createNewChatRecord();
+    
+    /**
+     * 创建或获取指定类型的聊天记录
+     * @param userId 用户ID
+     * @param type 聊天类型
+     * @return 聊天记录
+     */
+    ChatRecord getOrCreateChatRecordByType(String userId, String type);
 
     void saveMessage(String chatId, String role, String content);
 
-    void deleteChatRecord(String chatId);  // 添加删除对话记录的方法声明
+    void saveMessage(String chatId, String role, String content, LocalDateTime dateTime);
 
-    void renameChatRecord(String chatId, String newTitle);  // 添加重命名对话记录的方法声明
+    void deleteChatRecord(String chatId);
+
+    void renameChatRecord(String chatId, String newTitle);
 }
 

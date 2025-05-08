@@ -32,3 +32,16 @@ CREATE TABLE orders (
   update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   CONSTRAINT fk_customer FOREIGN KEY (customer_id) REFERENCES customer(id)
 );
+
+-- chat_record 表：创建时间、更新时间
+ALTER TABLE chat_record
+  MODIFY COLUMN create_time DATETIME(3),
+  MODIFY COLUMN update_time DATETIME(3);
+
+-- messages 表：创建时间
+ALTER TABLE messages
+  MODIFY COLUMN create_time DATETIME(3);
+
+-- call_message（如有此函数调用对话表）
+ALTER TABLE call_message
+  MODIFY COLUMN created_at DATETIME(3);

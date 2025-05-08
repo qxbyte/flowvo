@@ -25,6 +25,6 @@ public class Messages {
 
     @PrePersist
     protected void onCreate() {
-        createTime = LocalDateTime.now();
+        createTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
     }
 }

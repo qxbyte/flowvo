@@ -2,6 +2,9 @@
   <div class="chat-messages" ref="messageContainer">
     <div v-for="(message, index) in messages" :key="index" class="message-wrapper">
       <div class="message" :class="message.role">
+        <div class="message-timestamp" v-if="message.createTime">
+          {{ formatTime(message.createTime) }}
+        </div>
         <div class="message-content">
           <div v-html="formatMessage(message.content)"></div>
           <div v-if="message.role === 'assistant'" class="message-actions">
@@ -34,7 +37,7 @@ import {
 
 // Props
 const props = defineProps<{
-  messages: Array<{role: string, content: string}>
+  messages: Array<{role: string, content: string, createTime?: string}>
 }>()
 
 // 消息容器引用
@@ -58,6 +61,18 @@ const formatMessage = (content: string): string => {
   } catch (error) {
     console.error('Markdown parsing error:', error)
     return content
+  }
+}
+
+// 格式化时间戳
+const formatTime = (timeStr: string): string => {
+  if (!timeStr) return ''
+  try {
+    const date = new Date(timeStr)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  } catch (error) {
+    console.error('Time formatting error:', error)
+    return ''
   }
 }
 
@@ -91,17 +106,21 @@ watch(() => props.messages, () => {
   display: none; /* Chrome, Safari and Opera */
 }
 
-.message {
+.message-wrapper {
   margin-bottom: 20px;
+}
+
+.message {
   display: flex;
+  flex-direction: column;
 }
 
 .message.user {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 
 .message.assistant {
-  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .message-content {
@@ -109,6 +128,7 @@ watch(() => props.messages, () => {
   border-radius: 16px;
   max-width: 85%;
   display: inline-block;
+  margin-top: 4px;
 }
 
 .user .message-content {
@@ -152,5 +172,39 @@ watch(() => props.messages, () => {
   background-color: #ffebee;
   margin: 10px 10%;
   text-align: center;
+}
+
+/* 时间戳样式 */
+.message-timestamp {
+  font-size: 12px;
+  color: #9e9e9e;
+  opacity: 0.5;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.message-wrapper {
+  margin-bottom: 20px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+}
+
+.message.user {
+  align-items: flex-end;
+}
+
+.message.assistant {
+  align-items: flex-start;
+}
+
+.message.user .message-timestamp {
+  margin-right: 8px;
+}
+
+.message.assistant .message-timestamp {
+  margin-left: 8px;
 }
 </style>

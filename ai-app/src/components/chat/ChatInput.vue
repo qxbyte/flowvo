@@ -11,9 +11,9 @@
         @input="autoResize"
         ref="inputElement"
       ></textarea>
-      <button class="send-button" @click="handleSend" :disabled="isLoading">
+      <button class="send-button" @click="handleSend">
         <PaperAirplaneIcon v-if="!isLoading" class="h-5 w-5" />
-        <div v-else class="loading-spinner"></div>
+        <div v-else class="loading-spinner" title="点击终止响应"></div>
       </button>
     </div>
   </div>
@@ -23,10 +23,10 @@
 import { ref, defineEmits } from 'vue'
 import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 
-const emit = defineEmits(['send'])
+const emit = defineEmits(['send', 'stop'])
 
 // Props
-defineProps<{
+const props = defineProps<{
   isLoading: boolean
 }>()
 
@@ -42,8 +42,15 @@ const autoResize = () => {
   }
 }
 
-// 处理发送消息
+// 处理发送消息或终止响应
 const handleSend = () => {
+  // 如果正在加载中，则触发终止操作
+  if (props.isLoading) {
+    emit('stop')
+    return
+  }
+  
+  // 否则发送新消息
   if (!inputValue.value.trim()) return
   emit('send', inputValue.value)
   inputValue.value = ''
