@@ -18,6 +18,9 @@ public class FileInfo {
 
     @Column(name = "upload_time")
     private java.time.LocalDateTime uploadTime;
+    
+    @Column(name = "user_id")
+    private Long userId;
 
     @PrePersist
     protected void onCreate() {

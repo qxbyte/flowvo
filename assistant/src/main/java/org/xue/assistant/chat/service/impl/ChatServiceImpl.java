@@ -30,6 +30,21 @@ public class ChatServiceImpl implements ChatService {
     public List<ChatRecord> getAllChatRecords() {
         return chatRecordRepository.findAllOrderByCreateTime();
     }
+    
+    @Override
+    public List<ChatRecord> getChatRecordsByUserId(String userId) {
+        return chatRecordRepository.findByUserIdOrderByUpdateTimeDesc(userId);
+    }
+    
+    @Override
+    public ChatRecord getChatRecordById(String id) {
+        return chatRecordRepository.findById(id).orElse(null);
+    }
+    
+    @Override
+    public ChatRecord saveChatRecord(ChatRecord chatRecord) {
+        return chatRecordRepository.save(chatRecord);
+    }
 
     @Override
     public List<Messages> getMessagesByChatId(String chatId) {
@@ -43,7 +58,7 @@ public class ChatServiceImpl implements ChatService {
         newRecord.setTitle("新的对话");
         newRecord.setCreateTime(LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000));
         newRecord.setUpdateTime(LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000));
-        return chatRecordRepository.save(newRecord);
+        return newRecord;
     }
 
     @Override

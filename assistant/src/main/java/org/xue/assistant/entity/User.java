@@ -1,4 +1,4 @@
-package org.xue.assistant.chat.entity;
+package org.xue.assistant.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

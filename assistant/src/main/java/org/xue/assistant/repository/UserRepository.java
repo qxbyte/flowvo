@@ -1,8 +1,8 @@
-package org.xue.assistant.chat.repository;
+package org.xue.assistant.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import org.xue.assistant.chat.entity.User;
+import org.xue.assistant.entity.User;
 
 import java.util.Optional;
 

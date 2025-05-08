@@ -47,7 +47,14 @@ const handleLogin = async () => {
 
     if (response.status === 200) {
       localStorage.setItem('isAuthenticated', 'true')
-      router.push('/')
+      // 保存token和用户信息
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('userId', data.userId)
+      localStorage.setItem('username', data.username)
+      
+      // 检查是否有重定向参数
+      const redirectPath = router.currentRoute.value.query.redirect as string
+      router.push(redirectPath || '/')
     } else {
       alert(data.message || '登录失败，请检查用户名和密码')
     }

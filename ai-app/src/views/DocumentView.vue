@@ -23,8 +23,10 @@ import NavBar from '@/components/NavBar.vue'
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
         </div>
-        <p>拖拽文件到此处或点击上传</p>
-        <p class="upload-hint">支持 .doc, .docx, .pdf, .txt 格式</p>
+        <div class="upload-text">
+          <p>拖拽文件到此处或点击上传</p>
+          <p class="upload-hint">支持 .doc, .docx, .pdf, .txt 格式</p>
+        </div>
       </div>
 
       <div class="document-list">
@@ -58,7 +60,7 @@ import NavBar from '@/components/NavBar.vue'
         :total="total"
         layout="prev, pager, next, jumper"
         @current-change="handlePageChange"
-        style="margin: 24px auto 0; text-align:center;"
+        class="pagination-control"
       />
     </div>
   </div>
@@ -68,6 +70,7 @@ import NavBar from '@/components/NavBar.vue'
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const documents = ref<Array<{
@@ -81,6 +84,7 @@ const page = ref(1)
 const pageSize = ref(8)
 const total = ref(0)
 const loading = ref(false)
+const router = useRouter()
 
 const triggerFileInput = () => {
   fileInput.value?.click()
@@ -110,12 +114,20 @@ const handleFiles = async (files: FileList) => {
   }
   try {
     loading.value = true
-    const response = await axios.post('/api/files/upload', formData)
+    const response = await axios.post('/api/files/upload', formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
     if (response.status !== 200) throw new Error('上传失败')
     await fetchDocuments()
   } catch (error) {
     console.error('上传错误:', error)
-    ElMessage.error('文件上传失败，请重试')
+    if (error.response && error.response.status === 401) {
+      router.push('/login')
+    } else {
+      ElMessage.error('文件上传失败，请重试')
+    }
   } finally {
     loading.value = false
   }
@@ -129,6 +141,9 @@ const fetchDocuments = async () => {
       params: {
         page: page.value - 1,
         size: pageSize.value
+      },
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       }
     })
     const data = response.data
@@ -137,6 +152,9 @@ const fetchDocuments = async () => {
     total.value = data.totalElements || 0
   } catch (error) {
     console.error('获取文档列表错误:', error)
+    if (error.response && error.response.status === 401) {
+      router.push('/login')
+    }
   } finally {
     loading.value = false
   }
@@ -163,7 +181,11 @@ const deleteDocument = async (id: string) => {
 
   try {
     loading.value = true
-    const response = await axios.delete(`/api/files/${id}`)
+    const response = await axios.delete(`/api/files/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
 
     if (response.status !== 200) throw new Error('删除文档失败')
 
@@ -177,7 +199,11 @@ const deleteDocument = async (id: string) => {
     })
   } catch (error) {
     console.error('删除文档错误:', error)
-    ElMessage.error('删除文档失败，请重试')
+    if (error.response && error.response.status === 401) {
+      router.push('/login')
+    } else {
+      ElMessage.error('删除文档失败，请重试')
+    }
   } finally {
     loading.value = false
   }
@@ -185,52 +211,62 @@ const deleteDocument = async (id: string) => {
 </script>
 
 <style scoped>
+/* 页面基础样式 */
 .document-page {
   display: flex;
-  height: 120%;
+  justify-content: center; /* 水平居中 */
   width: 100%;
-  position: fixed;
-  top: -10vh;
-  left: 0;
+  min-height: 100vh;
   background-color: #ffffff;
-  padding-top: 5vh; /* 为固定导航栏留出空间 */
+  padding-top: 60px; /* 为固定导航栏留出空间 */
+  overflow-y: auto;
 }
 
+/* 内容容器样式 */
 .document-container {
-  width: 100%;
-  max-width: 960px;
-  /*  让内容剧中 */
-  padding: 2rem;
+  width: 100%; 
+  max-width: 1200px; /* 设置一个合理的最大宽度 */
+  padding: 1rem;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin: 15vh auto 0;
-  top: -30vh;
-
+  align-items: center; /* 内容居中 */
+  margin: 0 auto;
 }
 
-
 .document-container h1 {
+  width: 100%;
   margin-bottom: 2rem;
   font-size: 1.875rem;
   font-weight: 600;
   color: #111827;
+  text-align: center;
 }
 
+/* 上传区域 */
 .upload-area {
+  width: 70%;
   border: 2px dashed #e5e7eb;
   border-radius: 0.5rem;
   padding: 1.5rem;
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
   cursor: pointer;
   margin-bottom: 2rem;
-  width: 100%;
+  text-align: center;
 }
 
 .upload-area:hover {
   border-color: #4f46e5;
+}
+
+.upload-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .upload-icon svg {
@@ -240,28 +276,40 @@ const deleteDocument = async (id: string) => {
   flex-shrink: 0;
 }
 
+/* 上传区域内的文本部分 */
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
 .upload-hint {
   color: #6b7280;
   font-size: 0.875rem;
   margin-top: 0.5rem;
 }
 
+/* 文档列表 */
 .document-list {
   width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
+/* 自适应网格布局 */
 .document-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); /* ✅ 自动换行 */
+  grid-template-columns: repeat(3, minmax(240px, 300px)); /* 固定3列，限制最大宽度 */
   gap: 1.5rem;
-  justify-items: center;
-  width: 100%;
+  width: 80%; /* 控制网格整体宽度 */
   box-sizing: border-box;
+  justify-content: center; /* 网格内容居中 */
 }
 
+/* 文档项目 */
 .document-item {
   width: 100%;
-  max-width: 240px;
+  max-width: 300px; /* 限制最大宽度 */
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
   padding: 1rem;
@@ -275,6 +323,7 @@ const deleteDocument = async (id: string) => {
   justify-content: center;
   position: relative;
   background-color: #fff;
+  margin: 0 auto;
 }
 
 .document-item:hover {
@@ -356,6 +405,67 @@ const deleteDocument = async (id: string) => {
   padding: 2rem;
 }
 
+.pagination-control {
+  margin: 24px 0 0 0;
+  text-align: center;
+  width: 100%;
+}
+
+/* 媒体查询 - 针对特大屏幕 */
+@media (min-width: 1600px) {
+  .document-container {
+    max-width: 85%; /* 在超宽屏幕上进一步扩大内容区域 */
+  }
+
+  .document-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* 更大的卡片，可能容纳更多列 */
+  }
+}
+
+/* 适配较小屏幕 */
+@media (max-width: 768px) {
+  .document-grid {
+    grid-template-columns: repeat(2, 1fr); /* 平板上显示两列 */
+  }
+}
+
+@media (max-width: 480px) {
+  .document-grid {
+    grid-template-columns: 1fr; /* 手机上显示单列 */
+  }
+}
+
+/* 暗黑模式适配 */
+@media (prefers-color-scheme: dark) {
+  .document-page {
+    background-color: #1a1a1a;
+  }
+
+  .document-container h1 {
+    color: #e5e7eb;
+  }
+
+  .document-item {
+    background-color: #2a2a2a;
+    border-color: #333;
+  }
+
+  .document-info h3 {
+    color: #e5e7eb;
+  }
+
+  .document-info p {
+    color: #9ca3af;
+  }
+
+  .document-type {
+    background-color: #374151;
+    color: #d1d5db;
+  }
+
+  .no-documents {
+    color: #9ca3af;
+  }
+}
 </style>
 
-<NavBar />

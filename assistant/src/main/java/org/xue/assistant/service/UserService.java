@@ -1,6 +1,6 @@
-package org.xue.assistant.chat.service;
+package org.xue.assistant.service;
 
-import org.xue.assistant.chat.entity.User;
+import org.xue.assistant.entity.User;
 
 import java.util.Optional;
 
@@ -10,6 +10,9 @@ public interface UserService {
     
     // 根据用户名查找用户
     Optional<User> findByUsername(String username);
+    
+    // 根据用户名直接获取用户，不存在时抛出异常
+    User getUserByUsername(String username);
     
     // 保存用户
     User saveUser(User user);
