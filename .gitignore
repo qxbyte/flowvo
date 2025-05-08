@@ -17,9 +17,10 @@
 
 # Generated files
 /out/
-/target/
 /_logs/
 /.idea/
 /_downloads/
 
 /.vscode/
+/.venv/
+/Floreo/.vscode/
