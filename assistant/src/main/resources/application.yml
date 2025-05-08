@@ -63,6 +63,11 @@ spring:
     mode: HTML5
     cache: false
 
+# JWT配置
+jwt:
+  secret: bTn5CjmhDSqFdBvKWLhPcCmH4n42jKnZeY6LzmNKRnawT2JyX9dM3h5L6qTVczK8
+  expiration: 86400000  # 24小时有效期（毫秒）
+
 # OkHttp实现openai api调用
 ai:
   openai:

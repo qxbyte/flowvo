@@ -1,11 +1,11 @@
-package org.xue.assistant.chat.service.impl;
+package org.xue.assistant.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.xue.assistant.chat.entity.User;
-import org.xue.assistant.chat.repository.UserRepository;
-import org.xue.assistant.chat.service.UserService;
+import org.xue.assistant.entity.User;
+import org.xue.assistant.repository.UserRepository;
+import org.xue.assistant.service.UserService;
 
 import java.util.Optional;
 
@@ -31,6 +31,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
     }
 
     @Override

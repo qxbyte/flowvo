@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 export function useChat() {
   const router = useRouter()
@@ -39,12 +40,11 @@ export function useChat() {
       // 创建新对话，但不保存到数据库
       if (!currentChatId.value) {
         const response = await fetch('/api/chat/new', {
-          method: 'POST'
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         })
-        if (response.status === 401) {
-          router.push('/login')
-          return
-        }
         if (!response.ok) {
           throw new Error('Network response was not ok')
         }
@@ -58,13 +58,11 @@ export function useChat() {
       formData.append('chatId', currentChatId.value)
       const streamResponse = await fetch('/api/chat/sendStream', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: formData
       })
-
-      if (streamResponse.status === 401) {
-        router.push('/login')
-        return
-      }
 
       if (!streamResponse.ok) {
         throw new Error('Network response was not ok')
@@ -84,7 +82,7 @@ export function useChat() {
         createTime: new Date().toISOString()
       })
 
-      currentReader = streamResponse.body?.getReader()
+      currentReader = streamResponse.body?.getReader() || null
       if (!currentReader) {
         throw new Error('No reader available')
       }
@@ -100,7 +98,7 @@ export function useChat() {
           lastMessage.content += text
           fullAiResponse += text
         }
-      } catch (error) {
+      } catch (error: any) {
         if (error.name !== 'AbortError') {
           console.error('读取流时出错:', error)
         }
@@ -124,11 +122,11 @@ export function useChat() {
   // 加载所有对话记录
   const loadChatRecords = async () => {
     try {
-      const response = await fetch('/api/chat/records')
-      if (response.status === 401) {
-        router.push('/login')
-        return
-      }
+      const response = await fetch('/api/chat/records', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       if (!response.ok) {
         throw new Error('Network response was not ok')
       }
@@ -144,11 +142,12 @@ export function useChat() {
     try {
       console.log('加载对话:', chatId)
       currentChatId.value = chatId
-      const response = await fetch(`/api/chat/${chatId}`)
-      if (response.status === 401) {
-        router.push('/login')
-        return
-      }
+      const response = await fetch(`/api/chat/${chatId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      
       if (!response.ok) {
         throw new Error('Network response was not ok')
       }
@@ -157,7 +156,7 @@ export function useChat() {
       console.log('历史消息数据:', data)
 
       // 直接使用返回的数组数据
-      messages.value = data.map(msg => ({
+      messages.value = data.map((msg: any) => ({
         role: msg.role,
         content: msg.content,
         createTime: msg.createTime

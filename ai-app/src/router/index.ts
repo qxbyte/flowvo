@@ -50,10 +50,23 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
+  // 检查是否存在有效token
+  const token = localStorage.getItem('token')
+  const isAuthenticated = token && localStorage.getItem('isAuthenticated') === 'true'
 
+  // 需要鉴权的路由，但没有有效的token
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
+    // 清除无效的认证信息
+    localStorage.removeItem('isAuthenticated')
+    localStorage.removeItem('token')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('username')
+    
+    // 重定向到登录页面，并记录原始目标路由
+    next({ 
+      path: '/login', 
+      query: { redirect: to.fullPath } 
+    })
   } else {
     next()
   }

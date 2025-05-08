@@ -8,8 +8,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.xue.assistant.chat.entity.ChatRecord;
 import org.xue.assistant.chat.entity.Messages;
+import org.xue.assistant.entity.User;
 import org.xue.assistant.chat.service.AIService;
 import org.xue.assistant.chat.service.ChatService;
+import org.xue.assistant.service.UserService;
 import org.xue.assistant.milvus.service.ChunkMilvusService;
 import reactor.core.publisher.Flux;
 
@@ -30,22 +32,34 @@ public class ChatController {
 
     private final AIService aiService;
 
+    private final UserService userService;
+
     private final ChunkMilvusService milvusService;
 
-    public ChatController(ChatService chatService, AIService aiService, ChunkMilvusService milvusService) {
+    public ChatController(ChatService chatService, AIService aiService, UserService userService, ChunkMilvusService milvusService) {
         this.chatService = chatService;
         this.aiService = aiService;
+        this.userService = userService;
         this.milvusService = milvusService;
+    }
+
+    // 获取当前登录用户
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new SecurityException("未授权的访问");
+        }
+        
+        String username = authentication.getName();
+        return userService.getUserByUsername(username);
     }
 
     // 获取所有聊天记录
     @GetMapping("/records")
     public List<Map<String, Object>> getChatList() {
-
-//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//        String userId = ((CustomUserDetails) authentication.getPrincipal()).getId();
-
-        List<ChatRecord> records = chatService.getAllChatRecords();
+        User user = getCurrentUser();
+        
+        List<ChatRecord> records = chatService.getChatRecordsByUserId(user.getId().toString());
         return records.stream()
             .map(record -> {
                 Map<String, Object> recordMap = new HashMap<>();
@@ -59,17 +73,30 @@ public class ChatController {
 
     // 获取某个聊天记录的消息
     @GetMapping("/{id}")
-    public List<Messages> getMessagesByChatId(@PathVariable String id) {  // 修改为 String 类型
-        List<Messages> a = chatService.getMessagesByChatId(id);
-        return a;
+    public List<Messages> getMessagesByChatId(@PathVariable String id) {
+        User user = getCurrentUser();
+        
+        // 验证聊天记录是否属于当前用户
+        ChatRecord record = chatService.getChatRecordById(id);
+        if (record == null || !user.getId().toString().equals(record.getUserId())) {
+            throw new SecurityException("无权访问该聊天记录");
+        }
+        
+        return chatService.getMessagesByChatId(id);
     }
 
     // 创建新对话
     @PostMapping("/new")
-    public ResponseEntity<Map<String, String>> createNewChat() {  // 修改返回类型
+    public ResponseEntity<Map<String, String>> createNewChat() {
+        User user = getCurrentUser();
+        
         ChatRecord newRecord = chatService.createNewChatRecord();
+        // 设置用户ID
+        newRecord.setUserId(user.getId().toString());
+        newRecord = chatService.saveChatRecord(newRecord);
+        
         Map<String, String> response = new HashMap<>();
-        response.put("id", newRecord.getId());  // ChatRecord 的 id 现在是 String 类型
+        response.put("id", newRecord.getId());
         return ResponseEntity.ok(response);
     }
 

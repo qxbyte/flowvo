@@ -58,7 +58,13 @@ const switchLanguage = (lang: string) => {
 }
 
 const handleLogout = () => {
-  // 实现登出逻辑
+  // 清除所有认证信息
+  localStorage.removeItem('isAuthenticated')
+  localStorage.removeItem('token')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('username')
+  
+  // 重定向到登录页面
   router.push('/login')
 }
 </script>
