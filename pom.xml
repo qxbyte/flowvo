@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.xue</groupId>
-    <artifactId>aibot</artifactId>
+    <artifactId>flowvo</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>aibot</name>
-    <description>aibot</description>
+    <name>flowvo</name>
+    <description>flowvo</description>
     <packaging>pom</packaging>  <!-- 关键点，聚合用 -->
     <modules>
         <module>assistant</module>
