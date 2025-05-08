@@ -21,31 +21,20 @@ spring:
     password: Aa111111
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-#  ai:
-#    openai:
-#      api-key: sk-741ef1518f0945c78157f4926c2ddde6
-#      base-url: https://api.deepseek.com
-#      chat:
-#        options:
-#          model: deepseek-chat
-#          temperature: 0.8
-#          max-tokens: 2048
-#      embedding:
-#        options:
-#          model: deepseek-embedding
-#          # max-tokens: 8191         # 按照 deepseek embedding API 要求（可以省略，按需添加）
-
-
   ai:
     openai:
-      api-key: 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
-#      api-key: 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
-      base-url: https://api.openai.com
+      api-key: sk-741ef1518f0945c78157f4926c2ddde6
+      base-url: https://api.deepseek.com
       chat:
         options:
-          model: gpt-4-turbo
+          model: deepseek-chat
           temperature: 0.8
           max-tokens: 2048
+      embedding:
+        options:
+          model: deepseek-embedding
+          # max-tokens: 8191         # 按照 deepseek embedding API 要求（可以省略，按需添加）
+
 
   data:
     redis:
@@ -73,6 +62,18 @@ spring:
     suffix: .html
     mode: HTML5
     cache: false
+
+# OkHttp实现openai api调用
+ai:
+  openai:
+    api-key: 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
+#      api-key: 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
+    base-url: https://api.openai.com
+    chat:
+      options:
+        model: gpt-4-turbo
+        temperature: 0.8
+        max-tokens: 2048
 
 logging:
   level:

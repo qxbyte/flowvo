@@ -25,12 +25,12 @@ public class ChatRecord {
 
     @PrePersist
     protected void onCreate() {
-        createTime = LocalDateTime.now();
-        updateTime = LocalDateTime.now();
+        createTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
+        updateTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
     }
     
     @PreUpdate
     protected void onUpdate() {
-        updateTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
     }
 }

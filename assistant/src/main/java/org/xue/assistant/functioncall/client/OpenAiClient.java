@@ -24,7 +24,7 @@ public class OpenAiClient {
     private final String baseUrl;
     private final OkHttpClient httpClient;
 
-    public OpenAiClient(@Value("${spring.ai.openai.api-key}") String apiKey, @Value("${spring.ai.openai.base-url}") String baseUrl) {
+    public OpenAiClient(@Value("${ai.openai.api-key}") String apiKey, @Value("${ai.openai.base-url}") String baseUrl) {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
         this.httpClient = new OkHttpClient.Builder()

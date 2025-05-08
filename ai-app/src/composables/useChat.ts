@@ -1,25 +1,54 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 
 export function useChat() {
   const router = useRouter()
-  const messages = ref<Array<{role: string, content: string}>>([])
+  const messages = ref<Array<{role: string, content: string, createTime?: string}>>([])
   const isLoading = ref(false)
   const chatRecords = ref<Array<{id: string, title: string}>>([])
   const currentChatId = ref('')
+  // 用于存储当前的reader，以便可以中止流式响应
+  let currentReader: ReadableStreamDefaultReader<Uint8Array> | null = null
+
+  // 终止当前的流式响应
+  const stopResponse = async () => {
+    if (currentReader) {
+      try {
+        await currentReader.cancel('用户终止了响应')
+        currentReader = null
+        isLoading.value = false
+      } catch (error) {
+        console.error('终止响应时出错:', error)
+      }
+    }
+  }
 
   // 发送消息
   const sendMessage = async (message: string) => {
-    if (!message.trim() || isLoading.value) return
+    // 如果正在加载中，则终止当前响应
+    if (isLoading.value) {
+      await stopResponse()
+      return
+    }
+    
+    if (!message.trim()) return
     isLoading.value = true
     let fullAiResponse = ''
 
     try {
       // 创建新对话，但不保存到数据库
       if (!currentChatId.value) {
-        const response = await axios.post('/api/chat/new')
-        const data = response.data
+        const response = await fetch('/api/chat/new', {
+          method: 'POST'
+        })
+        if (response.status === 401) {
+          router.push('/login')
+          return
+        }
+        if (!response.ok) {
+          throw new Error('Network response was not ok')
+        }
+        const data = await response.json()
         currentChatId.value = data.id
       }
 
@@ -27,8 +56,9 @@ export function useChat() {
       const formData = new FormData()
       formData.append('message', message)
       formData.append('chatId', currentChatId.value)
-      const streamResponse = await axios.post('/api/chat/sendStream', formData, {
-        responseType: 'stream'
+      const streamResponse = await fetch('/api/chat/sendStream', {
+        method: 'POST',
+        body: formData
       })
 
       if (streamResponse.status === 401) {
@@ -36,36 +66,44 @@ export function useChat() {
         return
       }
 
-      if (streamResponse.status !== 200) {
+      if (!streamResponse.ok) {
         throw new Error('Network response was not ok')
       }
 
       // 添加用户消息到界面
       messages.value.push({
         role: 'user',
-        content: message
+        content: message,
+        createTime: new Date().toISOString()
       })
 
       // 添加空的AI回复消息
       messages.value.push({
         role: 'assistant',
-        content: ''
+        content: '',
+        createTime: new Date().toISOString()
       })
 
-      const reader = streamResponse.data?.getReader()
-      if (!reader) {
+      currentReader = streamResponse.body?.getReader()
+      if (!currentReader) {
         throw new Error('No reader available')
       }
 
       const lastMessage = messages.value[messages.value.length - 1]
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+      try {
+        while (true) {
+          const { done, value } = await currentReader.read()
+          if (done) break
 
-        const text = new TextDecoder().decode(value)
-        lastMessage.content += text
-        fullAiResponse += text
+          const text = new TextDecoder().decode(value)
+          lastMessage.content += text
+          fullAiResponse += text
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          console.error('读取流时出错:', error)
+        }
       }
 
       // 更新对话列表
@@ -79,18 +117,22 @@ export function useChat() {
       })
     } finally {
       isLoading.value = false
+      currentReader = null
     }
   }
 
   // 加载所有对话记录
   const loadChatRecords = async () => {
     try {
-      const response = await axios.get('/api/chat/records')
+      const response = await fetch('/api/chat/records')
       if (response.status === 401) {
         router.push('/login')
         return
       }
-      chatRecords.value = response.data
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
+      chatRecords.value = await response.json()
     } catch (error) {
       console.error('加载对话记录失败:', error)
       chatRecords.value = []
@@ -102,19 +144,23 @@ export function useChat() {
     try {
       console.log('加载对话:', chatId)
       currentChatId.value = chatId
-      const response = await axios.get(`/api/chat/${chatId}`)
+      const response = await fetch(`/api/chat/${chatId}`)
       if (response.status === 401) {
         router.push('/login')
         return
       }
+      if (!response.ok) {
+        throw new Error('Network response was not ok')
+      }
 
-      const data = response.data
+      const data = await response.json()
       console.log('历史消息数据:', data)
 
       // 直接使用返回的数组数据
       messages.value = data.map(msg => ({
         role: msg.role,
-        content: msg.content
+        content: msg.content,
+        createTime: msg.createTime
       }))
 
     } catch (error) {
@@ -132,6 +178,7 @@ export function useChat() {
     chatRecords,
     currentChatId,
     sendMessage,
+    stopResponse,
     loadChatRecords,
     loadChat
   }

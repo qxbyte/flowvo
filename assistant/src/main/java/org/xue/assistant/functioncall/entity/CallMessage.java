@@ -17,7 +17,7 @@ public class CallMessage {
     private Long id;
 
     @Column(name = "chat_id", nullable = false)
-    private Long chatId;
+    private String chatId;
 
     @Column(nullable = false)
     private String role; // user / assistant / tool

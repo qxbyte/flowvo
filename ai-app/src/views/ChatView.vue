@@ -13,6 +13,7 @@ import NavBar from '@/components/NavBar.vue'
       <ChatInput
         :isLoading="isLoading"
         @send="sendMessage"
+        @stop="stopResponse"
       />
     </div>
   </div>
@@ -32,6 +33,7 @@ const {
   chatRecords,
   currentChatId,
   sendMessage,
+  stopResponse,
   loadChatRecords,
   loadChat
 } = useChat()

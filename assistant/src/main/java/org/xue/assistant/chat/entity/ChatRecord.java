@@ -22,15 +22,18 @@ public class ChatRecord {
     
     @Column(name = "update_time")
     private LocalDateTime updateTime;
+    
+    @Column
+    private String type; // 对话类型：chat-普通对话，AIPROCESS-系统业务对话
 
     @PrePersist
     protected void onCreate() {
-        createTime = LocalDateTime.now();
-        updateTime = LocalDateTime.now();
+        createTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
+        updateTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
     }
     
     @PreUpdate
     protected void onUpdate() {
-        updateTime = LocalDateTime.now();
+        updateTime = LocalDateTime.now().withNano((LocalDateTime.now().getNano() / 1_000_000) * 1_000_000);
     }
 }

@@ -6,9 +6,7 @@ import org.xue.assistant.functioncall.entity.CallMessage;
 import java.util.List;
 
 public interface CallMessageRepository extends JpaRepository<CallMessage, Long> {
-
-    List<CallMessage> findByChatIdOrderByCreatedAtAsc(Long chatId);
-
-    void deleteByChatId(Long chatId);
+    // 根据chatId查询所有消息，按创建时间排序
+    List<CallMessage> findByChatIdOrderByCreatedAtAsc(String chatId);
 }
 

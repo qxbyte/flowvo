@@ -2,13 +2,15 @@ package org.xue.assistant.functioncall.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.xue.assistant.functioncall.client.OpenAiClient;
 
-public class OpenAiClientConfig {
+@Configuration
+public class OpenAiConfig {
 
-    @Value("${spring.ai.openai.api-key}")
+    @Value("${ai.openai.api-key}")
     private String apiKey;
-    @Value("${spring.ai.openai.base-url}")
+    @Value("${ai.openai.base-url}")
     private String baseUrl;
     @Bean
     public OpenAiClient openAiClient() {
