@@ -192,5 +192,83 @@ public class FunctionCallController {
 
         return functionCallService.handleUserQuestionStream(question, chatId);
     }
+
+    /**
+     * 重命名对话
+     */
+    @PostMapping("/{chatId}/rename")
+    @CrossOrigin(origins = "*")
+    public Map<String, String> renameChat(
+        @PathVariable String chatId,
+        @RequestBody Map<String, String> request
+    ) {
+        // 获取当前登录用户，如果未登录会抛出异常
+        User user = getCurrentUser();
+        String userId = user.getId().toString();
+        String newTitle = request.get("title");
+        
+        log.info("收到重命名对话请求: chatId={}, newTitle={}", chatId, newTitle);
+        
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            throw new IllegalArgumentException("标题不能为空");
+        }
+        
+        try {
+            // 验证对话是否属于当前用户
+            ChatRecord chatRecord = chatService.getChatRecordByIdAndUserId(chatId, userId);
+            
+            if (chatRecord == null) {
+                log.error("对话不存在或不属于当前用户");
+                throw new RuntimeException("对话不存在或不属于当前用户");
+            }
+            
+            // 更新对话标题
+            chatService.renameChatRecord(chatId, newTitle);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("id", chatId);
+            response.put("title", newTitle);
+            log.info("重命名对话成功: {}", chatId);
+            return response;
+        } catch (Exception e) {
+            log.error("重命名对话失败", e);
+            throw new RuntimeException("重命名对话失败: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 删除对话
+     */
+    @DeleteMapping("/{chatId}")
+    @CrossOrigin(origins = "*")
+    public Map<String, String> deleteChat(@PathVariable String chatId) {
+        // 获取当前登录用户，如果未登录会抛出异常
+        User user = getCurrentUser();
+        String userId = user.getId().toString();
+        
+        log.info("收到删除对话请求: chatId={}", chatId);
+        
+        try {
+            // 验证对话是否属于当前用户
+            ChatRecord chatRecord = chatService.getChatRecordByIdAndUserId(chatId, userId);
+            
+            if (chatRecord == null) {
+                log.error("对话不存在或不属于当前用户");
+                throw new RuntimeException("对话不存在或不属于当前用户");
+            }
+            
+            // 删除对话
+            chatService.deleteChatRecord(chatId);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("id", chatId);
+            response.put("status", "success");
+            log.info("删除对话成功: {}", chatId);
+            return response;
+        } catch (Exception e) {
+            log.error("删除对话失败", e);
+            throw new RuntimeException("删除对话失败: " + e.getMessage(), e);
+        }
+    }
 }
 
