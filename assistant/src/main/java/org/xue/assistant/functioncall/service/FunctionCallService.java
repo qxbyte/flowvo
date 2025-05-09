@@ -1,6 +1,7 @@
 package org.xue.assistant.functioncall.service;
 
 import org.xue.assistant.functioncall.entity.CallMessage;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -10,6 +11,14 @@ public interface FunctionCallService {
      * @param question 用户问题文本
      */
     void handleUserQuestion(String question);
+    
+    /**
+     * 处理用户问题流式处理
+     * @param question 用户问题文本
+     * @param chatId 聊天ID
+     * @return 流式处理结果
+     */
+    Flux<String> handleUserQuestionStream(String question, String chatId);
     
     /**
      * 获取聊天历史记录

@@ -1,5 +1,6 @@
 package org.xue.assistant.chat.controller;
 
+import lombok.AllArgsConstructor;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/chat")
+@AllArgsConstructor
 public class ChatController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
@@ -35,13 +37,6 @@ public class ChatController {
     private final UserService userService;
 
     private final ChunkMilvusService milvusService;
-
-    public ChatController(ChatService chatService, AIService aiService, UserService userService, ChunkMilvusService milvusService) {
-        this.chatService = chatService;
-        this.aiService = aiService;
-        this.userService = userService;
-        this.milvusService = milvusService;
-    }
 
     // 获取当前登录用户
     private User getCurrentUser() {
