@@ -5,7 +5,7 @@
       <el-badge :value="unreadCount > 0 ? unreadCount : ''" :hidden="unreadCount === 0">
         <div class="chatgpt-icon">
           <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707ZM22.4978 37.8849C20.7443 37.8874 19.0459 37.2733 17.6994 36.1501C17.7601 36.117 17.8666 36.0586 17.936 36.0161L25.9004 31.4156C26.1003 31.3019 26.2663 31.137 26.3813 30.9378C26.4964 30.7386 26.5563 30.5124 26.5549 30.2825V19.0542L29.9213 20.998C29.9389 21.0068 29.9541 21.0198 29.9656 21.0359C29.977 21.052 29.9842 21.0707 29.9867 21.0902V30.3889C29.9842 32.375 29.1946 34.2791 27.7909 35.6841C26.3872 37.0892 24.4838 37.8806 22.4978 37.8849ZM6.39227 31.0064C5.51397 29.5047 5.19742 27.7511 5.49804 26.0429C5.55718 26.0832 5.66048 26.1425 5.73461 26.1839L13.699 30.7844C13.8975 30.8985 14.1233 30.9533 14.3532 30.9533C14.583 30.9533 14.8088 30.8985 15.0073 30.7844L24.731 25.1121V28.9979C24.7321 29.0177 24.7283 29.0376 24.7199 29.0556C24.7115 29.0736 24.6988 29.0893 24.6829 29.1012L16.6317 33.7497C14.9096 34.7416 12.8643 35.0097 10.9447 34.4954C9.02506 33.9811 7.38785 32.7263 6.39227 31.0064ZM4.29707 13.6194C5.17156 12.0998 6.55279 10.9364 8.19885 10.3327C8.19885 10.4013 8.19491 10.5228 8.19491 10.6071V19.808C8.19351 20.0378 8.25334 20.2638 8.36823 20.4629C8.48312 20.6619 8.64893 20.8267 8.84863 20.9404L18.5723 26.6127L15.206 28.5566C15.1894 28.5653 15.1703 28.5695 15.1505 28.5686C15.1307 28.5677 15.1119 28.5618 15.0965 28.5516L7.04532 23.9031C5.16375 22.8533 3.79597 21.1011 3.18553 19.0508C2.57509 17.0005 2.76235 14.7979 3.70216 12.8816C3.88761 12.5006 4.11225 12.1383 4.37099 11.7998L4.29707 13.6194ZM20.0522 24.6611L16.9738 22.8134V15.4047C16.9724 15.2311 16.9994 15.0589 17.0537 14.8963C17.108 14.7337 17.1884 14.5843 17.2903 14.4562C17.3922 14.328 17.5142 14.2242 17.6494 14.1509C17.7846 14.0777 17.9308 14.0366 18.0803 14.0298C18.5932 14.0158 19.0992 14.1511 19.5366 14.4211L26.935 18.7312L23.5687 20.6751C23.5377 20.6923 23.5126 20.7163 23.4964 20.7452C23.4803 20.7741 23.4738 20.8065 23.4779 20.8385V24.6611H20.0522ZM35.7031 26.3725C34.8282 27.8889 33.4455 29.0553 31.7991 29.6604C31.7991 29.5917 31.7991 29.4702 31.7991 29.386V20.1851C31.7991 19.9553 31.7393 19.7303 31.6244 19.5313C31.5096 19.3322 31.3437 19.1675 31.144 19.0538L21.4203 13.3815L24.7866 11.4376C24.8032 11.4288 24.8223 11.4247 24.8421 11.4256C24.8619 11.4264 24.8807 11.4324 24.8961 11.4425L32.9473 16.091C34.0602 16.7249 35.0096 17.6332 35.7025 18.7262C36.3955 19.8193 36.8109 21.0659 36.9073 22.3588C37.0037 23.6517 36.7779 24.9473 36.2522 26.1203C36.1032 26.5139 35.9176 26.8928 35.7031 27.2546V26.3725ZM37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707Z" fill="#10a37f"/>
+            <path d="M37.5324 16.8707C37.9808 15.5241 38.1363 14.0974 37.9886 12.6859C37.8409 11.2744 37.3934 9.91076 36.676 8.68622C35.6126 6.83404 33.9882 5.3676 32.0373 4.4985C30.0864 3.62941 27.9098 3.40259 25.8215 3.85078C24.8796 2.7893 23.7219 1.94125 22.4257 1.36341C21.1295 0.785575 19.7249 0.491269 18.3058 0.500197C16.1708 0.495044 14.0893 1.16803 12.3614 2.42214C10.6335 3.67624 9.34853 5.44666 8.6917 7.47815C7.30085 7.76286 5.98686 8.3414 4.8377 9.17505C3.68854 10.0087 2.73073 11.0782 2.02839 12.312C0.956464 14.1591 0.498905 16.2988 0.721698 18.4228C0.944492 20.5467 1.83612 22.5449 3.268 24.1293C2.81966 25.4759 2.66413 26.9026 2.81182 28.3141C2.95951 29.7256 3.40701 31.0892 4.12437 32.3138C5.18791 34.1659 6.8123 35.6322 8.76321 36.5013C10.7141 37.3704 12.8907 37.5973 14.9789 37.1492C15.9208 38.2107 17.0786 39.0587 18.3747 39.6366C19.6709 40.2144 21.0755 40.5087 22.4946 40.4998C24.6307 40.5054 26.7133 39.8321 28.4418 38.5772C30.1704 37.3223 31.4556 35.5506 32.1119 33.5179C33.5027 33.2332 34.8167 32.6547 35.9659 31.821C37.115 30.9874 38.0728 29.9178 38.7752 28.684C39.8458 26.8371 40.3023 24.6979 40.0789 22.5748C39.8556 20.4517 38.9639 18.4544 37.5324 16.8707Z" fill="#10a37f"/>
           </svg>
         </div>
       </el-badge>
@@ -14,8 +14,30 @@
     <!-- 展开的聊天窗口 -->
     <div class="chat-panel" v-else>
       <div class="chat-header">
-        <h3>ChatOne</h3>
+        <div class="chat-header-left">
+          <el-dropdown @command="handleChatSelect" trigger="click">
+            <span class="chat-title-dropdown">
+              <h3>{{ currentChatTitle || 'AI对话' }}</h3>
+              <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-for="chat in userChats" :key="chat.id" :command="chat.id">
+                  <span :class="{'current-chat': chat.id === currentChatId}">
+                    {{ chat.title || '未命名对话' }}
+                  </span>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="userChats.length === 0" disabled>无对话记录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
         <div class="chat-actions">
+          <el-tooltip content="新建对话" placement="bottom" :enterable="false">
+            <el-button type="text" @click="createNewChat" :loading="isCreatingChat">
+              <el-icon><Plus /></el-icon>
+            </el-button>
+          </el-tooltip>
           <el-button type="text" @click="toggleChat">
             <el-icon><Close /></el-icon>
           </el-button>
@@ -60,7 +82,7 @@
 
 <script setup>
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
-import { Close } from '@element-plus/icons-vue'
+import { Close, ArrowDown, Plus } from '@element-plus/icons-vue'
 
 // 滚动到底部
 function scrollToBottom() {
@@ -162,7 +184,10 @@ const unreadCount = ref(0)
 const messagesContainer = ref(null)
 const isLoading = ref(false)
 const currentChatId = ref('')
+const currentChatTitle = ref('') // 当前对话标题
 const inputRef = ref(null) // 添加对输入框的引用
+const userChats = ref([]) // 用户AIPROCESS类型的所有对话记录
+const isCreatingChat = ref(false) // 是否正在创建新对话
 let controller = null
 // 添加响应等待状态，用于处理关闭窗口后的消息接收
 const pendingResponse = ref(false)
@@ -198,15 +223,22 @@ function getCurrentUserId() {
 }
 
 // 获取存储键
-function getStorageKey() {
+function getStorageKey(chatId = null) {
   const userId = getCurrentUserId()
-  return `${MESSAGES_STORAGE_KEY_PREFIX}${userId}`
+  const id = chatId || currentChatId.value || 'default'
+  return `${MESSAGES_STORAGE_KEY_PREFIX}${userId}_${id}`
 }
 
 // 保存消息到本地存储
 function saveMessagesToStorage() {
   try {
     const storageKey = getStorageKey()
+    
+    // 如果没有当前对话ID，不保存
+    if (!currentChatId.value) {
+      logWarn('保存消息到本地存储失败: 没有当前对话ID')
+      return
+    }
     
     // 在保存前确保所有AI消息的内容都是完整的
     const messagesForStorage = messages.value.map((msg, index) => {
@@ -224,9 +256,9 @@ function saveMessagesToStorage() {
 }
 
 // 从本地存储加载消息
-function loadMessagesFromStorage() {
+function loadMessagesFromStorage(chatId = null) {
   try {
-    const storageKey = getStorageKey()
+    const storageKey = getStorageKey(chatId)
     const savedMessages = localStorage.getItem(storageKey)
     if (savedMessages) {
       const parsedMessages = JSON.parse(savedMessages)
@@ -239,9 +271,9 @@ function loadMessagesFromStorage() {
         scrollToBottom()
       })
     } else {
-      // 如果没有找到当前用户的消息，清空消息列表
+      // 如果没有找到当前对话的消息，清空消息列表
       messages.value = []
-      logInfo('未找到当前用户的消息记录，已清空消息列表')
+      logInfo('未找到当前对话的消息记录，已清空消息列表')
     }
   } catch (e) {
     logError('从本地存储加载消息失败:', e)
@@ -389,6 +421,13 @@ function toggleChat() {
       logInfo('关闭聊天窗口时仍在等待响应')
     }
     
+    // 保存当前对话列表到本地存储
+    try {
+      localStorage.setItem('user_chat_list', JSON.stringify(userChats.value))
+    } catch (e) {
+      logError('保存对话列表失败:', e)
+    }
+    
     // 保存当前消息到本地存储
     saveMessagesToStorage()
   }
@@ -406,13 +445,21 @@ async function sendMessage() {
   }
 
   if (!input.value.trim()) return
+  
+  // 如果没有当前对话ID，创建一个新的对话
+  if (!currentChatId.value) {
+    try {
+      await createNewChat()
+    } catch (error) {
+      logError('创建对话失败，无法发送消息:', error)
+      return
+    }
+  }
 
   // 添加用户消息
   const userMessage = input.value
   messages.value.push({ role: 'user', content: userMessage })
   logInfo('添加用户消息:', userMessage)
-
-  // 注意：不再立即添加AI消息占位符，而是等待第一个有效响应时再添加
 
   // 暂存用户输入并清空输入框，提供更好的体验
   input.value = ''
@@ -995,6 +1042,175 @@ function setupMessagesCheck() {
   });
 }
 
+// 从API获取用户的所有AIPROCESS对话
+async function fetchUserChats() {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      logWarn('获取用户对话记录失败: 未找到用户令牌')
+      return
+    }
+
+    // 获取用户的所有AIPROCESS类型对话记录
+    const response = await fetch('/api/function-call/user-chats', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`获取用户对话记录失败: ${response.status}`)
+    }
+
+    const chatList = await response.json()
+    userChats.value = chatList
+    logInfo('成功获取用户对话记录, 共', chatList.length, '条记录')
+    
+    // 如果当前没有选择对话但有对话记录，选择第一个
+    if (!currentChatId.value && chatList.length > 0) {
+      selectChat(chatList[0].id, chatList[0].title)
+    }
+  } catch (error) {
+    logError('获取用户对话记录失败:', error)
+  }
+}
+
+// 获取指定对话的历史消息
+async function fetchChatHistory(chatId) {
+  if (!chatId) {
+    logWarn('获取对话历史消息失败: 未提供对话ID')
+    return
+  }
+
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      logWarn('获取对话历史消息失败: 未找到用户令牌')
+      return
+    }
+
+    // 获取指定对话的历史消息
+    const response = await fetch(`/api/function-call/chat-history?chatId=${chatId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`获取对话历史消息失败: ${response.status}`)
+    }
+
+    const messageList = await response.json()
+    logInfo('成功获取对话历史消息, 共', messageList.length, '条消息')
+    
+    // 清空当前消息列表
+    messages.value = []
+    fullResponses.value = {}
+    
+    // 加载历史消息
+    messageList.forEach((msg, index) => {
+      // 添加到消息列表，不使用打字机效果
+      messages.value.push({
+        role: msg.role,
+        content: msg.content
+      })
+      
+      // 保存完整响应
+      if (msg.role === 'assistant') {
+        fullResponses.value[index] = msg.content
+      }
+    })
+    
+    // 保存到本地存储
+    saveMessagesToStorage()
+    
+    // 滚动到底部
+    nextTick(() => {
+      scrollToBottom()
+    })
+  } catch (error) {
+    logError('获取对话历史消息失败:', error)
+  }
+}
+
+// 选择对话
+function selectChat(chatId, chatTitle) {
+  if (chatId === currentChatId.value) {
+    return // 已经是当前对话，不需要切换
+  }
+  
+  logInfo('切换到对话:', chatId)
+  currentChatId.value = chatId
+  currentChatTitle.value = chatTitle
+  
+  // 获取对话历史消息
+  fetchChatHistory(chatId)
+  
+  // 更新本地存储的当前对话ID
+  localStorage.setItem('current_chat_id', chatId)
+}
+
+// 处理对话选择
+function handleChatSelect(chatId) {
+  const selectedChat = userChats.value.find(chat => chat.id === chatId)
+  if (selectedChat) {
+    selectChat(chatId, selectedChat.title)
+  }
+}
+
+// 创建新对话
+async function createNewChat() {
+  try {
+    isCreatingChat.value = true
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('未找到用户令牌')
+    }
+
+    // 创建新的对话
+    const response = await fetch('/api/function-call/create-chat', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      throw new Error(`创建对话失败: ${response.status}`)
+    }
+
+    const data = await response.json()
+    logInfo('创建新对话成功, ID:', data.id)
+    
+    // 获取最新的对话列表
+    await fetchUserChats()
+    
+    // 选择新创建的对话
+    const newChat = userChats.value.find(chat => chat.id === data.id)
+    if (newChat) {
+      selectChat(data.id, newChat.title || 'AI对话')
+    }
+    
+    // 清空消息列表
+    messages.value = []
+    fullResponses.value = {}
+    
+    // 聚焦输入框
+    focusInput()
+  } catch (error) {
+    logError('创建新对话失败:', error)
+    // 显示错误消息
+    ElMessage.error('创建新对话失败，请稍后重试')
+  } finally {
+    isCreatingChat.value = false
+  }
+}
+
 // 组件挂载完成后执行
 onMounted(() => {
   logInfo('FloatingChat组件已挂载')
@@ -1002,8 +1218,8 @@ onMounted(() => {
   // 清除旧格式的消息存储
   clearOldMessageStorage()
 
-  // 从本地存储加载消息
-  loadMessagesFromStorage()
+  // 获取用户的所有对话记录
+  fetchUserChats()
   
   // 确保所有AI消息内容完整显示
   setTimeout(() => {
@@ -1128,9 +1344,32 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
-  background-color: #fff;
-  border-bottom: 1px solid #eaeaea;
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.chat-header-left {
+  display: flex;
+  align-items: center;
+}
+
+.chat-title-dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.chat-title-dropdown h3 {
+  margin: 0;
+  font-size: 16px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown-icon {
+  margin-left: 5px;
 }
 
 .chat-header h3 {
@@ -1139,42 +1378,62 @@ watch(
   font-size: 16px;
 }
 
+.chat-actions {
+  display: flex;
+  align-items: center;
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
-  background-color: #fff;
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
 }
 
 .message {
-  padding: 10px 14px;
   margin-bottom: 10px;
-  border-radius: 18px;
-  display: inline-block;
-  max-width: 80%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 85%;
   word-break: break-word;
-  white-space: pre-wrap; /* 保留换行和空格 */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  clear: both;
 }
 
-.user {
-  float: right;
-  text-align: left;
-  margin-left: auto;
-  background-color: #d9ecff;
-  color: #2b5998;
-  border-bottom-right-radius: 4px;
+.message.user {
+  align-self: flex-end;
+  background-color: #10a37f;
+  color: white;
 }
 
-.assistant {
-  float: left;
-  text-align: left;
-  margin-right: auto;
-  background-color: #e4f2e4;
-  color: #1a1a1a;
-  border-bottom-left-radius: 4px;
+.message.assistant {
+  align-self: flex-start;
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.message.tool {
+  align-self: flex-start;
+  background-color: #e6f7ff;
+  color: #333;
+  font-family: monospace;
+}
+
+.chat-input {
+  padding: 10px 15px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+}
+
+.message-input {
+  flex: 1;
+}
+
+.send-button {
+  margin-left: 10px;
 }
 
 .loading-dots span {
@@ -1205,64 +1464,6 @@ watch(
   }
 }
 
-.chat-input {
-  padding: 12px;
-  background-color: #fff;
-  border-top: 1px solid #eaeaea;
-}
-
-.input-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.message-input {
-  flex: 1;
-}
-
-.send-button {
-  flex-shrink: 0;
-}
-
-.message-input :deep(.el-input__wrapper) {
-  border-radius: 24px;
-  box-shadow: 0 0 0 1px #dcdfe6 inset;
-  padding: 0 15px;
-}
-
-.message-input :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #409eff inset;
-}
-
-.rounded-input :deep(.el-input-group__append) {
-  padding: 0;
-  background-color: transparent;
-  border: none;
-}
-
-.send-button {
-  margin-left: 8px;
-  transition: all 0.3s;
-}
-
-.send-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
-}
-
-/* 动画效果 */
-.collapsed-enter-active,
-.collapsed-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-.collapsed-enter-from,
-.collapsed-leave-to {
-  opacity: 0;
-  transform: scale(0.8);
-}
-
 .typing-cursor::after {
   content: '|';
   animation: blink 1s step-start infinite;
@@ -1275,5 +1476,10 @@ watch(
   50% {
     opacity: 0;
   }
+}
+
+.current-chat {
+  color: #10a37f;
+  font-weight: bold;
 }
 </style>
