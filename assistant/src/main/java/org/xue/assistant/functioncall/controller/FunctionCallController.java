@@ -15,7 +15,9 @@ import org.xue.assistant.service.UserService;
 import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @Slf4j
@@ -75,6 +77,74 @@ public class FunctionCallController {
         } catch (Exception e) {
             log.error("创建聊天记录时出错", e);
             throw new RuntimeException("创建聊天记录失败: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 获取用户的所有AIPROCESS类型对话记录
+     */
+    @GetMapping("/user-chats")
+    @CrossOrigin(origins = "*")
+    public List<Map<String, String>> getUserChats() {
+        // 获取当前登录用户，如果未登录会抛出异常
+        User user = getCurrentUser();
+        log.info("获取用户AIPROCESS对话记录");
+        
+        // 获取用户的AIPROCESS类型聊天记录
+        String userId = user.getId().toString();
+        String type = "AIPROCESS"; // 默认类型
+        
+        try {
+            List<ChatRecord> chatRecords = chatService.getChatRecordsByUserIdAndType(userId, type);
+            
+            // 转换为前端需要的格式
+            return chatRecords.stream()
+                .map(record -> {
+                    Map<String, String> chat = new HashMap<>();
+                    chat.put("id", record.getId());
+                    chat.put("title", StringUtils.isNotBlank(record.getTitle()) ? record.getTitle() : "AI对话");
+                    chat.put("createTime", record.getCreateTime().toString());
+                    return chat;
+                })
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("获取用户对话记录失败", e);
+            throw new RuntimeException("获取用户对话记录失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 获取指定对话的历史消息
+     */
+    @GetMapping("/chat-history")
+    @CrossOrigin(origins = "*")
+    public List<Map<String, String>> getChatHistory(@RequestParam String chatId) {
+        // 获取当前登录用户，如果未登录会抛出异常
+        User user = getCurrentUser();
+        log.info("获取对话历史消息: {}", chatId);
+        
+        try {
+            // 验证对话是否属于当前用户
+            String userId = user.getId().toString();
+            ChatRecord chatRecord = chatService.getChatRecordByIdAndUserId(chatId, userId);
+            
+            if (chatRecord == null) {
+                log.error("对话不存在或不属于当前用户");
+                throw new RuntimeException("对话不存在或不属于当前用户");
+            }
+            
+            // 从Messages表获取对话历史消息，而不是从CallMessage表
+            return chatService.getMessagesByChatId(chatId).stream()
+                .map(message -> {
+                    Map<String, String> msg = new HashMap<>();
+                    msg.put("role", message.getRole());
+                    msg.put("content", message.getContent());
+                    return msg;
+                })
+                .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("获取对话历史消息失败", e);
+            throw new RuntimeException("获取对话历史消息失败: " + e.getMessage(), e);
         }
     }
     
