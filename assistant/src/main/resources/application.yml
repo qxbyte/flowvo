@@ -17,7 +17,7 @@ spring:
 
   datasource:
     url: jdbc:mysql://localhost:3306/springaibot?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
-    username: springuser
+    username: flowvouser
     password: Aa111111
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -74,6 +74,14 @@ ai:
     api-key: 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
 #      api-key: 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
     base-url: https://api.openai.com
+    # 网络连接超时设置（秒）
+    connect-timeout: 30
+    read-timeout: 120
+    # 代理设置
+    proxy:
+      enabled: true  # 是否启用代理
+      host: 127.0.0.1
+      port: 7890
     chat:
       options:
         model: gpt-4-turbo

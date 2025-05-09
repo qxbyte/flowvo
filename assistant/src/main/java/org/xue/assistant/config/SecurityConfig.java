@@ -67,10 +67,15 @@ public class SecurityConfig {
                     "/api/user/login",
                     "/api/user/register",
                     "/api/user/check",
+                    "/api/function-call/create-chat",
+                    "/api/function-call/invoke-stream",
+                    "/api/function-call/invoke",
+                    "/api/function-call/**",
                     "/index.html", "/js/**", "/css/**", "/assets/**"
                 ).permitAll()
                 .anyRequest().authenticated())
             .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .authenticationProvider(authenticationProvider())
@@ -86,11 +91,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        configuration.setAllowedOrigins(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));  // 允许前端访问 Authorization 头
+        configuration.setAllowCredentials(false);
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
