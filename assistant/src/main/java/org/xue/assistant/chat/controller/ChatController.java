@@ -84,12 +84,10 @@ public class ChatController {
     @PostMapping("/new")
     public ResponseEntity<Map<String, String>> createNewChat() {
         User user = getCurrentUser();
-        
-        ChatRecord newRecord = chatService.createNewChatRecord();
+
         // 设置用户ID
-        newRecord.setUserId(user.getId().toString());
-        newRecord = chatService.saveChatRecord(newRecord);
-        
+        ChatRecord newRecord = chatService.createNewChatRecord(user.getId().toString());
+
         Map<String, String> response = new HashMap<>();
         response.put("id", newRecord.getId());
         return ResponseEntity.ok(response);
@@ -124,35 +122,72 @@ public class ChatController {
     ) {
         log.info("收到流式请求: {}, chatId: {}", message, chatId);
         
-        // 先保存用户消息
-        chatService.saveMessage(chatId, "user", message);
-
-        // ==== 1. 检索向量库知识 ====
-        List<String> retrievedChunks = milvusService.searchSimilarChunks(message, 2);
-        //List<String> hits = chunkMilvusService.searchSimilarChunks(queryText, topK);
-        // ==== 2. 拼接prompt ====
-        StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("【以下是相关资料，可参考作答】\n");
-        for (String chunk : retrievedChunks) {
-            promptBuilder.append(chunk).append("\n");
+        try {
+            // 验证用户是否有权限访问此聊天
+            User user = getCurrentUser();
+            
+            // 验证聊天记录是否属于当前用户
+            ChatRecord record = chatService.getChatRecordById(chatId);
+            if (record == null || !user.getId().toString().equals(record.getUserId())) {
+                return Flux.error(new SecurityException("无权访问该聊天记录"));
+            }
+            
+            // 先保存用户消息
+            chatService.saveMessage(chatId, "user", message);
+    
+            // ==== 1. 检索向量库知识 ====
+            List<String> retrievedChunks = milvusService.searchSimilarChunks(message, 2);
+            
+            // ==== 2. 拼接prompt ====
+            StringBuilder promptBuilder = new StringBuilder();
+            promptBuilder.append("【以下是相关资料，可参考作答】\n");
+            for (String chunk : retrievedChunks) {
+                promptBuilder.append(chunk).append("\n");
+            }
+            promptBuilder.append("【用户提问】\n").append(message);
+    
+            String finalPromptText = promptBuilder.toString();
+    
+            // 创建 StringBuilder 来收集完整的 AI 响应
+            StringBuilder fullResponse = new StringBuilder();
+            
+            Prompt prompt = new Prompt(new UserMessage(finalPromptText));
+            
+            // 移除timeout和retry，允许流自然结束
+            return aiService.getChatStream(prompt)
+                .map(text -> {
+                    // 确保文本不为空
+                    if (text == null) return "";
+                    
+                    // 将文本添加到完整响应
+                    fullResponse.append(text);
+                    
+                    // 确保返回的文本不包含data:前缀
+                    if (text.startsWith("data:")) {
+                        text = text.substring(5).trim();
+                    }
+                    
+                    return text;
+                })
+                .doOnComplete(() -> {
+                    // 流结束时保存 AI 回复到数据库
+                    String response = fullResponse.toString();
+                    if (response.length() > 0) {
+                        try {
+                            chatService.saveMessage(chatId, "assistant", response);
+                            log.info("对话完成，消息已保存，长度: {}", response.length());
+                        } catch (Exception e) {
+                            log.error("保存AI回复失败: {}", e.getMessage(), e);
+                        }
+                    }
+                });
+        } catch (SecurityException e) {
+            log.error("访问无权限的聊天记录: {}", e.getMessage());
+            return Flux.error(new SecurityException(e.getMessage()));
+        } catch (Exception e) {
+            log.error("处理流式请求时发生错误: {}", e.getMessage(), e);
+            return Flux.error(e);
         }
-        promptBuilder.append("【用户提问】\n").append(message);
-
-        String finalPromptText = promptBuilder.toString();
-
-        // 创建 StringBuilder 来收集完整的 AI 响应
-        StringBuilder fullResponse = new StringBuilder();
-        
-        Prompt prompt = new Prompt(new UserMessage(finalPromptText));
-        return aiService.getChatStream(prompt)
-            .map(text -> {
-                fullResponse.append(text);
-                return text;
-            })
-            .doOnComplete(() -> {
-                // 流结束时保存 AI 回复
-                chatService.saveMessage(chatId, "assistant", fullResponse.toString());
-            });
     }
 
 

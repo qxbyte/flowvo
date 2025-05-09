@@ -224,7 +224,7 @@ const deleteDocument = async (id: string) => {
 
 /* 内容容器样式 */
 .document-container {
-  width: 100%; 
+  width: 100%;
   max-width: 1200px; /* 设置一个合理的最大宽度 */
   padding: 1rem;
   box-sizing: border-box;
@@ -435,37 +435,5 @@ const deleteDocument = async (id: string) => {
   }
 }
 
-/* 暗黑模式适配 */
-@media (prefers-color-scheme: dark) {
-  .document-page {
-    background-color: #1a1a1a;
-  }
-
-  .document-container h1 {
-    color: #e5e7eb;
-  }
-
-  .document-item {
-    background-color: #2a2a2a;
-    border-color: #333;
-  }
-
-  .document-info h3 {
-    color: #e5e7eb;
-  }
-
-  .document-info p {
-    color: #9ca3af;
-  }
-
-  .document-type {
-    background-color: #374151;
-    color: #d1d5db;
-  }
-
-  .no-documents {
-    color: #9ca3af;
-  }
-}
 </style>
 

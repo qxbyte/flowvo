@@ -11,16 +11,21 @@
         @input="autoResize"
         ref="inputElement"
       ></textarea>
-      <button class="send-button" @click="handleSend">
-        <PaperAirplaneIcon v-if="!isLoading" class="h-5 w-5" />
-        <div v-else class="loading-spinner" title="点击终止响应"></div>
+      <button 
+        class="send-button" 
+        @click="handleSend"
+        :class="{ 'loading': props.isLoading }"
+        :title="props.isLoading ? '点击停止生成' : '发送'"
+      >
+        <PaperAirplaneIcon v-if="!props.isLoading" class="h-5 w-5" />
+        <div v-else class="loading-spinner" @click.stop="handleStop"></div>
       </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineEmits } from 'vue'
+import { ref, defineEmits, watch } from 'vue'
 import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 
 const emit = defineEmits(['send', 'stop'])
@@ -34,6 +39,18 @@ const props = defineProps<{
 const inputValue = ref('')
 const inputElement = ref<HTMLTextAreaElement | null>(null)
 
+// 监听isLoading状态变化
+watch(() => props.isLoading, (newValue, oldValue) => {
+  console.log('ChatInput组件检测到isLoading状态变化:', oldValue, '->', newValue)
+  
+  // 如果状态从loading变为非loading，确保UI更新
+  if (oldValue && !newValue) {
+    console.log('按钮状态已从加载中恢复为正常')
+  }
+  
+  // 移除所有自动停止的定时逻辑，让响应流自然结束
+})
+
 // 自动调整文本框高度
 const autoResize = () => {
   if (inputElement.value) {
@@ -42,16 +59,24 @@ const autoResize = () => {
   }
 }
 
+// 处理停止响应
+const handleStop = () => {
+  console.log('用户点击停止生成按钮')
+  emit('stop')
+}
+
 // 处理发送消息或终止响应
 const handleSend = () => {
   // 如果正在加载中，则触发终止操作
   if (props.isLoading) {
+    console.log('正在生成中，用户点击按钮终止操作')
     emit('stop')
     return
   }
   
   // 否则发送新消息
   if (!inputValue.value.trim()) return
+  console.log('发送新消息:', inputValue.value)
   emit('send', inputValue.value)
   inputValue.value = ''
   if (inputElement.value) {
@@ -129,6 +154,7 @@ const handleSend = () => {
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+  cursor: pointer;
 }
 
 @keyframes spin {
@@ -138,7 +164,7 @@ const handleSend = () => {
 }
 
 .send-button.loading {
-  cursor: wait;
-  opacity: 0.8;
+  background-color: #ff5722;
+  cursor: pointer;
 }
 </style>

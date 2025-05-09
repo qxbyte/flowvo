@@ -7,20 +7,23 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.xue.assistant.chat.entity.ChatRecord;
 
-
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface ChatRecordRepository extends JpaRepository<ChatRecord, String> {
     List<ChatRecord> findByUserIdOrderByUpdateTimeDesc(String userId);
-
+    
+    List<ChatRecord> findByUserIdAndTypeOrderByUpdateTimeDesc(String userId, String type);
+    
+    Optional<ChatRecord> findFirstByUserIdAndTypeOrderByUpdateTimeDesc(String userId, String type);
+    
     Optional<ChatRecord> findByIdAndUserId(String id, String userId);
     
     Optional<ChatRecord> findByUserIdAndType(String userId, String type);
 
-    @Modifying
     @Query("UPDATE ChatRecord c SET c.title = :title WHERE c.id = :id")
+    @Modifying
     void updateTitle(@Param("id") String id, @Param("title") String title);
 
     @Query("SELECT m FROM ChatRecord m ORDER BY m.createTime ASC")

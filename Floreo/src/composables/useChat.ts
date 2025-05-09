@@ -19,7 +19,7 @@ export function useChat() {
         await currentReader.cancel('用户终止了响应')
         currentReader = null
         isLoading.value = false
-        
+
         // 添加提示消息，表明响应被用户中断
         if (messages.value.length > 0 && messages.value[messages.value.length - 1].role === 'assistant') {
           // 如果最后一条消息内容为空，添加提示
@@ -48,14 +48,14 @@ export function useChat() {
       // 允许UI更新后再继续
       await new Promise(resolve => setTimeout(resolve, 100))
     }
-    
+
     // 强制安全检查，确保之前的请求已完全结束
     if (isLoading.value) {
       console.error('上一个请求未正确结束，强制重置状态')
       isLoading.value = false
       currentReader = null
     }
-    
+
     if (!message.trim()) return
     isLoading.value = true
     let fullAiResponse = ''
@@ -73,7 +73,7 @@ export function useChat() {
           isLoading.value = false
           return
         }
-        
+
         try {
           const response = await fetch('/api/chat/new', {
             method: 'POST',
@@ -109,7 +109,7 @@ export function useChat() {
       const formData = new FormData()
       formData.append('message', message)
       formData.append('chatId', currentChatId.value)
-      
+
       // 获取授权token
       const token = localStorage.getItem('token')
       if (!token) {
@@ -120,7 +120,7 @@ export function useChat() {
         isLoading.value = false
         return
       }
-      
+
       const streamResponse = await fetch('/api/chat/sendStream', {
         method: 'POST',
         headers: {
@@ -163,29 +163,14 @@ export function useChat() {
       }
 
       const lastMessage = messages.value[messages.value.length - 1]
-      
-      // 设置超时处理，防止流一直不结束
-      let streamTimeout: number | null = setTimeout(() => {
-        console.log('流响应超时，强制结束')
-        isLoading.value = false
-        if (currentReader) {
-          currentReader.cancel('响应超时').catch(err => {
-            console.error('取消流读取时出错:', err)
-          })
-          currentReader = null
-        }
-      }, 30000) // 30秒超时
-      
+
+      // 移除超时处理，允许流自然结束
       try {
+        console.log('开始读取响应流...')
         while (true) {
           const { done, value } = await currentReader.read()
           if (done) {
-            console.log('流响应接收完成')
-            // 清除超时定时器
-            if (streamTimeout) {
-              clearTimeout(streamTimeout)
-              streamTimeout = null
-            }
+            console.log('流响应自然结束')
             break
           }
 
@@ -201,11 +186,6 @@ export function useChat() {
         // 确保无论如何都会重置加载状态和reader
         isLoading.value = false
         currentReader = null
-        // 清除可能存在的超时定时器
-        if (streamTimeout) {
-          clearTimeout(streamTimeout)
-          streamTimeout = null
-        }
       }
 
       // 更新对话列表
@@ -234,13 +214,13 @@ export function useChat() {
         chatRecords.value = []
         return
       }
-      
+
       const response = await fetch('/api/chat/records', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           console.error('登录已过期，请重新登录')
@@ -249,7 +229,7 @@ export function useChat() {
         }
         throw new Error(`加载对话记录失败，状态码: ${response.status}`)
       }
-      
+
       chatRecords.value = await response.json()
     } catch (error) {
       console.error('加载对话记录失败:', error)
@@ -262,7 +242,7 @@ export function useChat() {
     try {
       console.log('加载对话:', chatId)
       currentChatId.value = chatId
-      
+
       // 获取授权token
       const token = localStorage.getItem('token')
       if (!token) {
@@ -273,13 +253,13 @@ export function useChat() {
         }]
         return
       }
-      
+
       const response = await fetch(`/api/chat/${chatId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
-      
+
       if (!response.ok) {
         if (response.status === 401) {
           messages.value = [{
@@ -310,6 +290,100 @@ export function useChat() {
     }
   }
 
+  // 创建新对话
+  const createNewChat = async () => {
+    try {
+      // 获取授权token
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('未登录，无法创建新对话')
+        return null
+      }
+
+      const response = await fetch('/api/chat/new', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`创建新对话失败，状态码: ${response.status}`)
+      }
+
+      const data = await response.json()
+      currentChatId.value = data.id
+      return data.id
+    } catch (error) {
+      console.error('创建新对话失败:', error)
+      return null
+    }
+  }
+
+  // 重命名对话
+  const renameChat = async (chatId: string, newTitle: string) => {
+    try {
+      // 获取授权token
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('未登录，无法重命名对话')
+        return false
+      }
+
+      const response = await fetch(`/api/chat/${chatId}/rename`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ title: newTitle })
+      })
+
+      if (!response.ok) {
+        throw new Error(`重命名对话失败，状态码: ${response.status}`)
+      }
+
+      return true
+    } catch (error) {
+      console.error('重命名对话失败:', error)
+      return false
+    }
+  }
+
+  // 删除对话
+  const deleteChat = async (chatId: string) => {
+    try {
+      // 获取授权token
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('未登录，无法删除对话')
+        return false
+      }
+
+      const response = await fetch(`/api/chat/${chatId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`删除对话失败，状态码: ${response.status}`)
+      }
+
+      // 如果删除的是当前对话，重置当前对话ID
+      if (currentChatId.value === chatId) {
+        currentChatId.value = ''
+        messages.value = []
+      }
+
+      return true
+    } catch (error) {
+      console.error('删除对话失败:', error)
+      return false
+    }
+  }
+
   return {
     messages,
     isLoading,
@@ -318,6 +392,9 @@ export function useChat() {
     sendMessage,
     stopResponse,
     loadChatRecords,
-    loadChat
+    loadChat,
+    createNewChat,
+    renameChat,
+    deleteChat
   }
 }

@@ -90,7 +90,7 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
     // 使用流式返回生成的 AI 回复
-    @PostMapping("/sendStream")
+    @PostMapping(value = "/sendStream", produces = "text/event-stream;charset=UTF-8")
     public Flux<String> generateStream(
         @RequestParam("message") String message,
         @RequestParam("chatId") String chatId  // 添加chatId参数
@@ -120,10 +120,12 @@ public class ChatController {
         return aiService.getChatStream(prompt)
             .map(text -> {
                 fullResponse.append(text);
-                return text;
+                // 确保返回的数据符合SSE格式，添加data:前缀
+                return "data:" + text + "\n\n";
             })
             .doOnComplete(() -> {
-                // 流结束时保存 AI 回复
+                // 流结束时保存 AI 回复并发送DONE标记
+                log.info("流响应完成，保存AI回复: {}", fullResponse.toString());
                 chatService.saveMessage(chatId, "assistant", fullResponse.toString());
             });
     }

@@ -33,7 +33,16 @@ public class AIServiceImpl implements AIService {
             if (generation == null || generation.getOutput() == null || generation.getOutput().getText() == null) {
                 return "";
             }
-            return generation.getOutput().getText();
+            
+            // 获取生成的文本
+            String text = generation.getOutput().getText();
+            
+            // 移除可能的data:前缀
+            if (text != null && text.startsWith("data:")) {
+                text = text.substring(5).trim();
+            }
+            
+            return text;
         });
     }
 }

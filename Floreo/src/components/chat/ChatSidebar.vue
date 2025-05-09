@@ -30,11 +30,17 @@
          :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }">
       <button class="menu-item" @click="renameChat">
         <span>重命名</span>
-        <img src="@/assets/edit.png" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="menu-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20h9"></path>
+          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+        </svg>
       </button>
       <button class="menu-item delete" @click="deleteChat">
         <span>删除</span>
-        <img src="@/assets/trash.png" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="menu-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
       </button>
     </div>
   </div>
@@ -52,8 +58,12 @@ import {
   PencilIcon,
   TrashIcon
 } from '@heroicons/vue/16/solid'
+import { useChat } from '@/composables/useChat'
+import { useRouter } from 'vue-router'
 
 const emit = defineEmits(['update:currentChatId', 'loadChat'])
+const chatApi = useChat()
+const router = useRouter()
 
 // 状态变量声明
 const showMenu = ref(false)
@@ -78,10 +88,13 @@ const openMenu = (event: MouseEvent, record: { id: string, title: string }) => {
   event.stopPropagation()
   selectedChatId.value = record.id
   selectedChatTitle.value = record.title
+  
+  // 设置菜单位置，右侧显示
   menuPosition.value = {
-    x: event.clientX,
-    y: event.clientY
+    x: event.clientX + 10, // 向右偏移
+    y: event.clientY - 10  // 向上偏移一点，使其更好地对齐
   }
+  
   showMenu.value = true
 
   // 点击其他地方关闭菜单
@@ -101,23 +114,13 @@ const renameChat = async () => {
   const newTitle = prompt('请输入新的对话名称', selectedChatTitle.value)
   if (newTitle && newTitle !== selectedChatTitle.value) {
     try {
-      const response = await fetch(`/api/chat/${selectedChatId.value}/rename`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ title: newTitle })
-      })
-
-      if (response.ok) {
-        // 重命名成功后立即刷新聊天列表
-        const recordsResponse = await fetch('/api/chat/records')
-        if (recordsResponse.ok) {
-          const updatedRecords = await recordsResponse.json()
-          props.chatRecords.splice(0, props.chatRecords.length, ...updatedRecords)
-        }
-      } else {
-        throw new Error('重命名失败')
+      console.log('调用重命名对话API, ID:', selectedChatId.value, '新标题:', newTitle)
+      const success = await chatApi.renameChat(selectedChatId.value, newTitle)
+      
+      if (success) {
+        console.log('重命名成功，刷新对话列表')
+        // 重新加载对话列表，向父组件发送refresh信号
+        emit('loadChat', 'refresh')
       }
     } catch (error) {
       console.error('重命名失败:', error)
@@ -131,22 +134,19 @@ const renameChat = async () => {
 const deleteChat = async () => {
   if (confirm('确定要删除这个对话吗？')) {
     try {
-      const response = await fetch(`/api/chat/${selectedChatId.value}`, {
-        method: 'DELETE'
-      })
-
-      if (response.ok) {
+      console.log('调用删除对话API, ID:', selectedChatId.value)
+      const success = await chatApi.deleteChat(selectedChatId.value)
+      
+      if (success) {
+        console.log('删除成功，更新currentChatId和刷新对话列表')
+        
+        // 如果删除的是当前对话，重置currentChatId
         if (props.currentChatId === selectedChatId.value) {
           emit('update:currentChatId', '')
         }
-        // 删除成功后立即刷新聊天列表
-        const recordsResponse = await fetch('/api/chat/records')
-        if (recordsResponse.ok) {
-          const updatedRecords = await recordsResponse.json()
-          props.chatRecords.splice(0, props.chatRecords.length, ...updatedRecords)
-        }
-      } else {
-        throw new Error('删除失败')
+        
+        // 重新加载对话列表，向父组件发送refresh信号
+        emit('loadChat', 'refresh')
       }
     } catch (error) {
       console.error('删除失败:', error)
@@ -158,25 +158,34 @@ const deleteChat = async () => {
 
 // 创建新对话
 const createNewChat = async () => {
-  const response = await fetch('/api/chat/new', {
-    method: 'POST'
-  })
-  if (response.ok) {
-    const data = await response.json()
-    // 将新对话添加到本地chatRecords数组
-    props.chatRecords.push({
-      id: data.id,
-      title: '新的对话'
-    })
-    emit('update:currentChatId', data.id)
-    emit('loadChat')
+  try {
+    console.log('开始创建新对话...')
+    console.log('调用创建新对话API...')
+    const chatId = await chatApi.createNewChat()
+    
+    if (chatId) {
+      console.log('创建新对话成功，ID:', chatId)
+      
+      // 更新当前聊天ID
+      emit('update:currentChatId', chatId)
+      
+      // 重新加载对话列表，向父组件发送refresh信号
+      emit('loadChat', 'refresh')
+    } else {
+      console.error('创建对话失败: 未返回有效的对话ID')
+    }
+  } catch (error) {
+    console.error('创建新对话失败:', error)
+    alert('创建新对话失败，请稍后重试')
   }
 }
 
 // 加载对话
 const loadChat = (chatId: string) => {
+  console.log('开始加载对话, ID:', chatId)
   emit('update:currentChatId', chatId)
   emit('loadChat', chatId)
+  console.log('已触发loadChat事件')
 }
 </script>
 
@@ -297,20 +306,20 @@ const loadChat = (chatId: string) => {
 .chat-menu {
   position: fixed;
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  padding: 4px;
+  padding: 2px;
   z-index: 1000;
-  min-width: 120px;
+  min-width: 100px;
   margin-top: 4px;
-  transform: translateX(-90%);
+  transform: none; /* 移除之前的translateX(-90%) */
 }
 
 .menu-item {
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 8px 16px;
+  padding: 5px 10px;
   text-align: left;
   background: transparent;
   border: none;
@@ -319,6 +328,16 @@ const loadChat = (chatId: string) => {
   cursor: pointer;
   transition: background-color 0.2s;
   justify-content: space-between;
+  font-size: 13px;
+}
+
+.menu-icon {
+  margin-left: 8px;
+  color: #666;
+}
+
+.menu-item.delete .menu-icon {
+  color: #dc2626;
 }
 
 .menu-item:hover {

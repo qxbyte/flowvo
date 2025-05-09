@@ -51,8 +51,9 @@
       <div class="chat-messages" ref="messagesContainer">
         <div v-for="(msg, i) in renderedMessages" :key="i" :class="['message', msg.role]">
           {{ msg.content }}
-          <span v-if="isLoading && i === renderedMessages.length - 1 && msg.role === 'assistant'" class="typing-cursor"></span>
+          <span v-if="msg.isTyping" class="typing-cursor"></span>
         </div>
+        <div class="clearfix"></div>
         <div v-if="isLoading && (!renderedMessages.length || renderedMessages[renderedMessages.length-1].role !== 'assistant')" class="message assistant loading">
           <span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
         </div>
@@ -68,7 +69,7 @@
             @compositionstart="handleCompositionStart"
             @compositionupdate="handleCompositionUpdate"
             @compositionend="handleCompositionEnd"
-            class="message-input"
+            class="message-input rounded-input"
             :disabled="isLoading"
           />
           <el-button
@@ -95,7 +96,7 @@ function scrollToBottom() {
   if (isCollapsed.value) {
     return;
   }
-  
+
   if (messagesContainer.value) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     logInfo('已滚动到底部，消息容器高度:', messagesContainer.value.scrollHeight)
@@ -145,7 +146,7 @@ function fixAiMessages() {
 
   // 确保所有AI消息都与其完整回复一致
   for (let i = 0; i < messages.value.length; i++) {
-    if (messages.value[i].role === 'assistant' && fullResponses.value[i] && 
+    if (messages.value[i].role === 'assistant' && fullResponses.value[i] &&
         messages.value[i].content !== fullResponses.value[i]) {
       logInfo(`修复AI消息内容不完整 index=${i}`);
       messages.value[i].content = fullResponses.value[i];
@@ -201,26 +202,216 @@ const MESSAGES_STORAGE_KEY_PREFIX = 'floating_chat_messages_'
 
 // 打字机效果相关变量
 const fullResponses = ref({}) // 保存完整回复内容
-const typingSpeed = ref(30) // 打字速度(毫秒/字符)
-const typingTimeouts = ref({}) // 保存打字定时器
+const typingSpeed = ref(50) // 打字速度(毫秒/字符)，增加到50ms使效果更明显
+const typingTimeouts = ref({}) // 保存打字机定时器
+
+// 定义更新消息内容的函数 - 作为全局函数定义，而不是sendMessage内的局部函数
+const updateAiMessage = (text) => {
+  // 检查是否是控制指令
+  if (!text || text === '[DONE]' || text.includes('data:[DONE]')) {
+    console.log('收到控制指令或完成标记，忽略: ', text);
+    isLoading.value = false;
+    return;
+  }
+
+  // 移除可能的data:前缀
+  if (text.startsWith('data:')) {
+    text = text.substring(5).trim();
+  }
+
+  // 再次检查处理后的文本是否是结束标记
+  if (text === '[DONE]' || text.includes('[DONE]')) {
+    console.log('处理后发现完成标记，忽略并结束加载状态');
+    isLoading.value = false;
+    return;
+  }
+
+  // 清除文本中可能包含的[DONE]标记
+  text = text.replace(/\[DONE\]/g, '').trim();
+  if (!text) {
+    console.log('清除[DONE]后文本为空，忽略此更新');
+    return;
+  }
+
+  console.log('处理收到的AI响应:', text.substring(0, 30) + (text.length > 30 ? '...' : ''));
+
+  // 如果还没有创建AI消息，创建一个新的
+  if (!aiMessageAdded) {
+    // 创建一个新的AI消息，初始为空字符串
+    const newMessage = { role: 'assistant', content: '' };
+    messages.value.push(newMessage);
+    lastAiMessageIndex = messages.value.length - 1;
+    console.log('创建新的AI消息，索引:', lastAiMessageIndex);
+
+    // 将字符直接添加到消息中
+    messages.value[lastAiMessageIndex].content = text;
+
+    // 保存完整回复，以便后续可以确保内容完整
+    fullResponses.value[lastAiMessageIndex] = text;
+
+    // 标记已添加消息
+    aiMessageAdded = true;
+
+    // 滚动到底部
+    nextTick(scrollToBottom);
+    return;
+  }
+
+  // 如果已经创建了AI消息，找到它并更新
+  if (lastAiMessageIndex === -1) {
+    // 查找最后一条AI消息
+    for (let i = messages.value.length - 1; i >= 0; i--) {
+      if (messages.value[i].role === 'assistant') {
+        lastAiMessageIndex = i;
+        break;
+      }
+    }
+  }
+
+  // 找到了AI消息，更新它
+  if (lastAiMessageIndex !== -1) {
+    // 获取当前内容
+    const currentContent = fullResponses.value[lastAiMessageIndex] || '';
+    // 添加新内容
+    const newContent = currentContent + text;
+
+    // 更新完整回复记录
+    fullResponses.value[lastAiMessageIndex] = newContent;
+
+    // 直接更新DOM中的消息内容
+    messages.value[lastAiMessageIndex].content = newContent;
+
+    console.log('更新AI消息内容，当前长度:', newContent.length);
+
+    // 滚动到底部
+    nextTick(scrollToBottom);
+  } else {
+    console.error('找不到要更新的AI消息');
+  }
+}
+
+// 添加全局变量存储当前AI消息状态
+let aiMessageAdded = false;
+let lastAiMessageIndex = -1;
+
+// 检查token是否有效
+async function checkTokenValidity() {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    logWarn('未找到用户令牌')
+    return false
+  }
+
+  // 增加token格式检查
+  try {
+    // 检查token格式：应为JWT格式 (header.payload.signature)
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      logError('令牌格式不正确，不是有效的JWT格式')
+      return false
+    }
+    
+    // 尝试解析payload
+    try {
+      const payload = JSON.parse(atob(parts[1]))
+      logInfo('令牌payload解析成功，用户ID:', payload.sub || payload.userId || payload.id)
+    } catch (e) {
+      logError('令牌payload解析失败:', e)
+    }
+    
+    logInfo('开始验证令牌有效性，令牌长度:', token.length)
+    
+    // 进行一个简单的API调用来验证token
+    const response = await fetch('/api/function-call/user-chats', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'same-origin'
+    })
+    
+    logInfo('令牌验证响应状态:', response.status)
+
+    if (response.status === 401) {
+      // 尝试读取错误消息
+      let errorMessage = '令牌已过期或无效'
+      try {
+        const errorText = await response.text()
+        // 处理中文编码问题
+        logError('服务器返回401错误:', errorText)
+      } catch (e) {
+        logError('无法读取401错误响应内容:', e)
+      }
+      
+      logError(errorMessage)
+      
+      // 显示登录过期消息
+      ElMessage.error({
+        message: '登录已过期，请刷新页面重新登录',
+        duration: 5000,
+        showClose: true
+      })
+      
+      // 清除无效的token
+      localStorage.removeItem('token')
+      localStorage.removeItem('isAuthenticated')
+      return false
+    } else if (!response.ok) {
+      logError('API调用失败，状态码:', response.status)
+      try {
+        const errorText = await response.text()
+        logError('错误响应内容:', errorText)
+      } catch (e) {
+        logError('无法读取错误响应内容')
+      }
+      return false
+    }
+
+    logInfo('令牌验证成功')
+    return true
+  } catch (error) {
+    logError('验证令牌时出错:', error)
+    return false
+  }
+}
 
 // 获取当前用户ID
 function getCurrentUserId() {
   // 从token中获取用户信息，这里假设token是JWT格式
   try {
     const token = localStorage.getItem('token')
-    if (!token) return 'guest'
-    
-    // 尝试从token中解析用户ID
-    // JWT格式: header.payload.signature
-    const payload = token.split('.')[1]
-    if (!payload) return 'guest'
-    
-    // Base64解码
-    const decodedPayload = JSON.parse(atob(payload))
-    const userId = decodedPayload.sub || decodedPayload.userId || decodedPayload.id || 'guest'
-    
-    return userId
+    if (!token) {
+      logWarn('获取用户ID失败: 未找到token')
+      return 'guest'
+    }
+
+    // 检查token格式
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      logError('获取用户ID失败: token不是有效的JWT格式')
+      return 'guest'
+    }
+
+    // 尝试解码和解析payload
+    try {
+      const base64Url = parts[1]
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      }).join(''))
+
+      const payload = JSON.parse(jsonPayload)
+      
+      // 尝试从payload中提取userId (可能是sub, userId, id等字段)
+      const userId = payload.sub || payload.userId || payload.id || 'guest'
+      logInfo('从JWT解析出用户ID:', userId)
+      
+      return userId
+    } catch (e) {
+      logError('解析JWT payload失败:', e)
+      return 'guest'
+    }
   } catch (e) {
     logError('获取用户ID失败:', e)
     return 'guest' // 默认返回guest
@@ -238,13 +429,13 @@ function getStorageKey(chatId = null) {
 function saveMessagesToStorage() {
   try {
     const storageKey = getStorageKey()
-    
+
     // 如果没有当前对话ID，不保存
     if (!currentChatId.value) {
       logWarn('保存消息到本地存储失败: 没有当前对话ID')
       return
     }
-    
+
     // 在保存前确保所有AI消息的内容都是完整的
     const messagesForStorage = messages.value.map((msg, index) => {
       if (msg.role === 'assistant' && fullResponses.value[index] && msg.content !== fullResponses.value[index]) {
@@ -252,7 +443,7 @@ function saveMessagesToStorage() {
       }
       return {...msg}
     })
-    
+
     localStorage.setItem(storageKey, JSON.stringify(messagesForStorage))
     logInfo('消息已保存到本地存储:', storageKey)
   } catch (e) {
@@ -269,7 +460,7 @@ function loadMessagesFromStorage(chatId = null) {
       const parsedMessages = JSON.parse(savedMessages)
       messages.value = parsedMessages.map(msg => ({...msg})) // 保留完整内容，避免闪烁
       logInfo('从本地存储加载了', parsedMessages.length, '条消息, 键:', storageKey)
-      
+
       // 确保所有消息都正确显示
       nextTick(() => {
         // 滚动到底部
@@ -318,7 +509,7 @@ function focusInput() {
   if (isCollapsed.value) {
     return;
   }
-  
+
   nextTick(() => {
     if (inputRef.value && inputRef.value.input) {
       inputRef.value.input.focus()
@@ -344,70 +535,90 @@ function handleEnterKey(event) {
 
 // 模拟打字机效果，逐字显示内容
 function typeMessage(messageIndex, fullContent, skipTypingEffect = false) {
-  // 保存完整回复
-  if (!fullResponses.value[messageIndex]) {
-    fullResponses.value[messageIndex] = fullContent
-  } else {
-    // 如果已有内容，更新完整回复
-    fullResponses.value[messageIndex] = fullContent
-  }
+  console.log(`打字机效果开始: 消息索引=${messageIndex}, 内容长度=${fullContent.length}, 跳过效果=${skipTypingEffect}`);
+
+  // 直接保存完整回复，这样后续能确保内容一致
+  fullResponses.value[messageIndex] = fullContent;
 
   // 如果需要跳过打字机效果，直接设置完整内容并返回
   if (skipTypingEffect) {
     if (messages.value[messageIndex]) {
-      messages.value[messageIndex].content = fullContent
+      messages.value[messageIndex].content = fullContent;
+      console.log('跳过打字机效果，直接显示完整内容');
       // 确保立即更新UI并滚动到底部
-      nextTick(() => {
-        scrollToBottom()
-      })
+      nextTick(scrollToBottom);
     }
-    return
+    return;
   }
 
   // 取消之前的打字定时器
   if (typingTimeouts.value[messageIndex]) {
-    clearTimeout(typingTimeouts.value[messageIndex])
+    clearTimeout(typingTimeouts.value[messageIndex]);
+    console.log(`取消之前的打字定时器: 消息索引=${messageIndex}`);
   }
 
-  // 重置消息内容为空，准备开始打字
-  if (messages.value[messageIndex]) {
-    messages.value[messageIndex].content = ''
+  // 确保消息存在
+  if (!messages.value[messageIndex]) {
+    console.error(`找不到索引为 ${messageIndex} 的消息`);
+    return;
   }
 
-  // 记录当前打字位置
-  let currentIndex = 0
+  // 完全重置内容为空，从头开始打字
+  messages.value[messageIndex].content = '';
+  console.log('重置消息内容为空，准备开始打字');
 
-  // 定义逐字打字函数
-  function typeNextChar() {
-    if (currentIndex < fullContent.length) {
-      // 添加下一个字符
-      if (messages.value[messageIndex]) {
-        // 每次添加1-3个字符，使打字速度不那么机械
-        const charsToAdd = Math.min(Math.floor(Math.random() * 3) + 1, fullContent.length - currentIndex)
-        messages.value[messageIndex].content += fullContent.substring(currentIndex, currentIndex + charsToAdd)
-        currentIndex += charsToAdd
+  // 当前显示的字符位置
+  let currentPos = 0;
+  const totalLength = fullContent.length;
 
-        // 安排下一个字符的添加
-        const nextDelay = Math.max(10, Math.floor(typingSpeed.value * (Math.random() * 0.5 + 0.8)))
-        typingTimeouts.value[messageIndex] = setTimeout(typeNextChar, nextDelay)
-
-        // 滚动到底部
-        scrollToBottom()
-      }
-    } else {
-      // 打字结束，清除定时器引用
-      typingTimeouts.value[messageIndex] = null
-      
-      // 确保消息内容完全与完整回复一致
-      if (messages.value[messageIndex] && messages.value[messageIndex].content !== fullContent) {
-        messages.value[messageIndex].content = fullContent
-        scrollToBottom()
-      }
+  // 打字函数 - 循环添加字符
+  function type() {
+    // 检查消息是否还存在
+    if (!messages.value[messageIndex]) {
+      console.error('打字过程中消息被删除');
+      return;
     }
+
+    // 如果已经完成，清理并返回
+    if (currentPos >= totalLength) {
+      // 确保最终内容与完整内容一致
+      messages.value[messageIndex].content = fullContent;
+      console.log('打字完成，内容已完整显示');
+
+      // 滚动到底部
+      scrollToBottom();
+
+      // 清除打字定时器
+      typingTimeouts.value[messageIndex] = null;
+      return;
+    }
+
+    // 确定此次要添加多少字符 (1-2个)
+    const charsToAdd = Math.min(1, totalLength - currentPos);
+
+    // 添加字符
+    messages.value[messageIndex].content += fullContent.substring(currentPos, currentPos + charsToAdd);
+    currentPos += charsToAdd;
+
+    // 每20字符记录一次进度
+    if (currentPos % 20 === 0 || currentPos === totalLength) {
+      console.log(`打字进度: ${currentPos}/${totalLength} (${Math.round(currentPos/totalLength*100)}%)`);
+    }
+
+    // 滚动到底部
+    scrollToBottom();
+
+    // 设置下一次打字的延迟，控制打字速度
+    const delay = 30 + Math.floor(Math.random() * 20); // 30-50ms，稍微随机化以看起来更自然
+    typingTimeouts.value[messageIndex] = setTimeout(type, delay);
   }
 
-  // 开始打字
-  typeNextChar()
+  // 开始打字过程
+  console.log('开始打字过程');
+  // 延迟一帧再开始，确保UI已更新
+  nextTick(() => {
+    type();
+  });
 }
 
 // 切换聊天窗口状态
@@ -425,14 +636,14 @@ function toggleChat() {
       pendingResponse.value = true
       logInfo('关闭聊天窗口时仍在等待响应')
     }
-    
+
     // 保存当前对话列表到本地存储
     try {
       localStorage.setItem('user_chat_list', JSON.stringify(userChats.value))
     } catch (e) {
       logError('保存对话列表失败:', e)
     }
-    
+
     // 保存当前消息到本地存储
     saveMessagesToStorage()
   }
@@ -450,7 +661,7 @@ async function sendMessage() {
   }
 
   if (!input.value.trim()) return
-  
+
   // 如果没有当前对话ID，创建一个新的对话
   if (!currentChatId.value) {
     try {
@@ -464,7 +675,7 @@ async function sendMessage() {
   // 添加用户消息
   const userMessage = input.value
   messages.value.push({ role: 'user', content: userMessage })
-  logInfo('添加用户消息:', userMessage)
+  console.log('添加用户消息:', userMessage)
 
   // 暂存用户输入并清空输入框，提供更好的体验
   input.value = ''
@@ -475,9 +686,8 @@ async function sendMessage() {
   })
 
   // 定义变量跟踪是否已添加AI消息，每次新请求都要重置
-  let aiMessageAdded = false;
-  // 声明一个lastAiMessageIndex变量，用于在updateAiMessage函数中跟踪当前AI消息索引
-  let lastAiMessageIndex = -1;
+  aiMessageAdded = false;
+  lastAiMessageIndex = -1;
 
   try {
     isLoading.value = true
@@ -485,22 +695,14 @@ async function sendMessage() {
     // 设置超时保护，60秒后如果还在加载则强制结束
     const loadingTimeout = setTimeout(() => {
       if (isLoading.value) {
-        logInfo('请求超时，强制结束加载状态')
+        console.log('请求超时，强制结束加载状态')
         isLoading.value = false
         if (controller) {
           controller.abort()
           controller = null
         }
-
-        // 如果聊天窗口已收起，增加未读消息计数
-        if (isCollapsed.value) {
-          unreadCount.value++
-        }
-
-        // 超时后也聚焦输入框
-        focusInput()
       }
-    }, 60000) // 延长到60秒
+    }, 60000) // 60秒超时
 
     // 准备请求参数
     const params = new URLSearchParams()
@@ -513,478 +715,138 @@ async function sendMessage() {
 
     // 处理流式响应
     const url = `/api/function-call/invoke-stream?${params.toString()}`
-    console.log('请求URL:', url)
 
     // 创建一个 AbortController 实例，用于在需要时中断请求
     const abortController = new AbortController()
     controller = abortController
 
-    // 定义更新消息内容的函数
-    const updateAiMessage = (text) => {
-      // 检查是否是控制指令
-      if (!text || text === '[DONE]' || text.includes('data:[DONE]')) {
-        logInfo('收到控制指令或完成标记，忽略: ', text)
-        isLoading.value = false
-        
-        // 确保消息内容与完整回复一致
-        if (lastAiMessageIndex !== -1 && fullResponses.value[lastAiMessageIndex]) {
-          messages.value[lastAiMessageIndex].content = fullResponses.value[lastAiMessageIndex]
-          nextTick(() => {
-            scrollToBottom()
-          })
-        }
-        
-        // 检查是否需要处理未读消息通知（窗口关闭后收到回复）
-        if (pendingResponse.value && isCollapsed.value) {
-          unreadCount.value++
-          pendingResponse.value = false
-          logInfo('消息接收完毕，未读计数增加到:', unreadCount.value)
-          
-          // 保存更新后的消息
-          saveMessagesToStorage()
-        }
-        return
-      }
-
-      // 移除可能的data:前缀
-      if (text.startsWith('data:')) {
-        text = text.substring(5).trim()
-      }
-
-      // 再次检查处理后的文本是否是结束标记
-      if (text === '[DONE]' || text.includes('[DONE]')) {
-        logInfo('处理后发现完成标记，忽略并结束加载状态')
-        isLoading.value = false
-        
-        // 确保消息内容与完整回复一致
-        if (lastAiMessageIndex !== -1 && fullResponses.value[lastAiMessageIndex]) {
-          messages.value[lastAiMessageIndex].content = fullResponses.value[lastAiMessageIndex]
-          nextTick(() => {
-            scrollToBottom()
-          })
-        }
-        
-        // 检查是否需要处理未读消息通知
-        if (pendingResponse.value && isCollapsed.value) {
-          unreadCount.value++
-          pendingResponse.value = false
-          logInfo('消息接收完毕，未读计数增加到:', unreadCount.value)
-          
-          // 保存更新后的消息
-          saveMessagesToStorage()
-        }
-        return
-      }
-
-      // 清除文本中可能包含的[DONE]标记
-      text = text.replace(/\[DONE\]/g, '').trim()
-      if (!text) {
-        logInfo('清除[DONE]后文本为空，忽略此更新')
-        return
-      }
-
-      // 确保有AI消息可以更新
-      let lastAiMessage = null
-
-      // 只在当前请求还没有创建AI消息时才查找或创建
-      if (!aiMessageAdded) {
-        // 查找最后一条AI消息，确保它是当前对话的响应
-        // 如果已经有其他AI消息，我们应该创建新的，而不是更新旧的
-        for (let i = messages.value.length - 1; i >= 0; i--) {
-          // 在本次请求中，找到用户消息后就停止向前查找
-          if (messages.value[i].role === 'user') {
-            break;
-          }
-
-          if (messages.value[i].role === 'assistant') {
-            // 不使用已有的AI消息，确保总是创建新的响应
-            break;
-          }
-        }
-
-        // 创建一个新的AI消息
-        const newMessage = { role: 'assistant', content: '' }
-        messages.value.push(newMessage)
-        lastAiMessageIndex = messages.value.length - 1
-        logInfo('创建新的AI消息')
-
-        // 标记已添加消息
-        aiMessageAdded = true
-
-        // 使用打字机效果显示新消息
-        typeMessage(lastAiMessageIndex, text)
-      } else {
-        // 查找本次请求创建的AI消息
-        for (let i = messages.value.length - 1; i >= 0; i--) {
-          if (messages.value[i].role === 'assistant') {
-            lastAiMessageIndex = i
-            lastAiMessage = messages.value[i]
-            break
-          }
-        }
-
-        // 如果找到了此次请求创建的消息，更新它
-        if (lastAiMessageIndex !== -1) {
-          typeMessage(lastAiMessageIndex, text)
-          logInfo('更新AI消息')
-        }
-      }
-
-      // 确保UI更新
-      nextTick(() => {
-        scrollToBottom()
-      })
-    }
-
-    // 定义变量跟踪是否收到了任何实际内容
-    let receivedAnyContent = false
-
+    // 尝试请求API
     try {
-      // 添加简单的重试机制
-      let maxRetries = 3
-      let retryCount = 0
-      let success = false
+      console.log('正在发送API请求...');
 
-      while (!success && retryCount <= maxRetries) {
-        try {
-          logInfo(`尝试请求 (${retryCount + 1}/${maxRetries + 1})`)
-
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'Accept': 'text/event-stream',
-              'Cache-Control': 'no-cache',
-              'Connection': 'keep-alive',  // 添加持久连接
-              'Authorization': `Bearer ${localStorage.getItem('token')}` // 添加认证令牌
-            },
-            signal: abortController.signal,
-            credentials: 'same-origin'  // 添加凭证
-          })
-
-          if (!response.ok) {
-            const errorText = await response.text().catch(() => '')
-            logError(`请求失败: 状态码 ${response.status}, 响应内容: ${errorText}`)
-
-            if (response.status === 401) {
-              throw new Error(`网络请求失败，状态码: ${response.status}`)
-            }
-
-            retryCount++
-            if (retryCount > maxRetries) {
-              if (messages.value.some(msg => msg.role === 'assistant' && (!msg.content || msg.content === ''))) {
-                updateAiMessage(`网络请求失败，状态码: ${response.status}。请检查网络连接或联系管理员。`)
-              }
-              isLoading.value = false // 确保加载状态结束
-              throw new Error(`网络请求失败，状态码: ${response.status}`)
-            }
-
-            // 根据错误类型增加等待时间
-            const waitTime = response.status >= 500 ? 2000 : 1000
-            await new Promise(resolve => setTimeout(resolve, waitTime))
-            continue
-          }
-
-          // 标记为成功，跳出重试循环
-          success = true
-
-          // 处理成功的响应
-          const reader = response.body.getReader()
-          const decoder = new TextDecoder('utf-8')
-
-          // 收集完整响应用于调试
-          let fullResponse = '';
-          let lastUpdateTime = Date.now();
-
-          // 超时检测
-          const connectionTimeoutId = setTimeout(() => {
-            if (isLoading.value && Date.now() - lastUpdateTime > 15000) {
-              logInfo('数据流超时，可能是网络中断');
-
-              // 更新消息显示网络问题
-              if (messages.value.some(msg => msg.role === 'assistant' && (!msg.content || msg.content === ''))) {
-                updateAiMessage('与服务器的连接中断，请检查您的网络连接或代理设置。')
-              }
-
-              // 结束加载
-              isLoading.value = false;
-              reader.cancel('连接超时');
-            }
-          }, 15000);
-
-          while (true) {
-            try {
-              const { done, value } = await reader.read()
-
-              if (done) {
-                logInfo('读取完成')
-                clearTimeout(connectionTimeoutId);
-
-                // 结束加载状态
-                isLoading.value = false
-                controller = null
-
-                // 确保最后一条消息完整显示
-                for (let i = messages.value.length - 1; i >= 0; i--) {
-                  if (messages.value[i].role === 'assistant') {
-                    if (fullResponses.value[i] && messages.value[i].content !== fullResponses.value[i]) {
-                      logInfo('确保最后一条消息完整显示');
-                      messages.value[i].content = fullResponses.value[i];
-                    }
-                    break;
-                  }
-                }
-
-                // 立即检查AI消息
-                fixAiMessages()
-                
-                // 保存消息到本地存储
-                saveMessagesToStorage()
-                
-                // 检查是否需要处理未读消息通知
-                if (pendingResponse.value && isCollapsed.value) {
-                  unreadCount.value++
-                  pendingResponse.value = false
-                  logInfo('流程结束时，检测到未读消息需要增加，未读计数:', unreadCount.value)
-                }
-
-                // 5秒后再次检查消息是否显示
-                setTimeout(() => {
-                  if (messages.value.some(msg => msg.role === 'assistant' && (!msg.content || msg.content === ''))) {
-                    logInfo('检测到空消息，自动修复')
-                    fixEmptyMessages()
-                  }
-                }, 5000)
-
-                break
-              }
-
-              // 更新最后接收数据的时间
-              lastUpdateTime = Date.now();
-
-              // 解码数据
-              const text = decoder.decode(value, { stream: true })
-              logInfo('收到数据块:', text)
-
-              // 收集完整响应
-              fullResponse += text;
-
-              // 处理不同格式的响应数据
-              const lines = text.trim().split('\n');
-
-              for (const line of lines) {
-                if (!line.trim()) continue; // 跳过空行
-
-                let processedText = line.trim();
-
-                // 处理包含data:前缀的情况
-                if (processedText.startsWith('data:')) {
-                  processedText = processedText.substring(5).trim()
-                  logInfo('移除data:前缀后:', processedText)
-                }
-
-                // 检查是否是结束标记
-                if (processedText === '[DONE]' || processedText.includes('[DONE]')) {
-                  logInfo('收到完成标记，结束加载状态')
-                  isLoading.value = false
-
-                  // 如果文本只包含[DONE]，则直接跳过
-                  if (processedText === '[DONE]' || processedText.replace(/\[DONE\]/g, '').trim() === '') {
-                    continue
-                  }
-
-                  // 如果文本包含其他内容，则清除[DONE]并处理剩余内容
-                  processedText = processedText.replace(/\[DONE\]/g, '').trim()
-                  if (!processedText) {
-                    continue
-                  }
-                }
-
-                // 忽略空响应
-                if (!processedText) {
-                  logInfo('收到空数据块，跳过处理')
-                  continue
-                }
-
-                // 尝试解析JSON (有些SSE返回JSON格式)
-                try {
-                  const jsonData = JSON.parse(processedText);
-                  // 如果成功解析JSON并包含内容字段
-                  if (jsonData.content) {
-                    processedText = jsonData.content;
-                    logInfo('从JSON提取内容:', processedText);
-                  }
-                } catch (e) {
-                  // 不是JSON，继续处理原始文本
-                }
-
-                // 标记已收到内容
-                receivedAnyContent = true
-
-                logInfo('处理后的响应内容:', processedText)
-
-                // 特殊消息处理（如错误提示）
-                if (processedText.includes('无法连接到AI服务') ||
-                    processedText.includes('连接AI服务失败') ||
-                    processedText.includes('无法连接到OpenAI')) {
-                  logInfo('检测到连接错误消息');
-                  isLoading.value = false;
-                }
-
-                // 更新消息
-                updateAiMessage(processedText)
-              }
-
-              // 滚动到底部
-              scrollToBottom()
-            } catch (error) {
-              logError('读取数据块时出错:', error);
-
-              // 如果是网络连接中断，显示友好消息
-              if (error.message.includes('network') || error.message.includes('connection')) {
-                updateAiMessage('与服务器的连接中断，请检查您的网络连接。');
-              }
-
-              clearTimeout(connectionTimeoutId);
-              isLoading.value = false;
-              break;
-            }
-          }
-
-        } catch (error) {
-          if (error.name === 'AbortError') {
-            logInfo('请求被中止')
-            isLoading.value = false
-            break
-          }
-
-          logError(`尝试 ${retryCount + 1} 失败:`, error)
-          retryCount++
-
-          // 检查是否是网络连接错误
-          const isNetworkError = error.message.includes('network') ||
-            error.message.includes('连接') ||
-            error.message.includes('connect') ||
-            error.name === 'TypeError';
-
-          // 最后一次重试也失败
-          if (retryCount > maxRetries) {
-            // 在错误处理中，总是创建新的错误消息，不修改已有的消息
-            const errorMessage = isNetworkError
-              ? '无法连接到服务器，请检查您的网络连接或代理设置。'
-              : '网络请求失败: ' + error.message;
-
-            // 添加新的错误消息，无论是否已添加AI消息
-            const newMessage = { role: 'assistant', content: '' };
-            messages.value.push(newMessage);
-            const msgIndex = messages.value.length - 1;
-            // 使用打字机效果显示错误消息
-            typeMessage(msgIndex, errorMessage);
-
-            isLoading.value = false // 确保加载状态结束
-            throw error
-          }
-
-          // 网络错误需要更长的等待时间
-          const waitTime = isNetworkError ? 2000 : 1000;
-          // 等待一会再重试
-          await new Promise(resolve => setTimeout(resolve, waitTime))
-        }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('未找到用户令牌');
       }
 
-      // 清理超时定时器
-      clearTimeout(loadingTimeout)
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+          'Authorization': `Bearer ${token}`
+        },
+        signal: abortController.signal,
+        credentials: 'same-origin'
+      });
 
-      logInfo('响应处理完成')
-      isLoading.value = false
-      controller = null
+      if (!response.ok) {
+        if (response.status === 401) {
+          ElMessage.error({
+            message: '登录已过期，请刷新页面重新登录',
+            duration: 5000,
+            showClose: true
+          });
+          throw new Error('登录已过期');
+        }
+        throw new Error(`请求失败: ${response.status}`);
+      }
 
-      // 确保最后一条消息完整显示
-      for (let i = messages.value.length - 1; i >= 0; i--) {
-        if (messages.value[i].role === 'assistant') {
-          if (fullResponses.value[i] && messages.value[i].content !== fullResponses.value[i]) {
-            logInfo('响应处理完成后，确保消息完整显示');
-            messages.value[i].content = fullResponses.value[i];
-          }
+      // 获取响应流读取器
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      console.log('开始读取响应流...');
+
+      // 为了调试，显示一个即时的AI消息
+      messages.value.push({ role: 'assistant', content: '' });
+      lastAiMessageIndex = messages.value.length - 1;
+      aiMessageAdded = true;
+
+      // 循环读取流数据
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          console.log('读取完成，流已关闭');
           break;
         }
+
+        // 解码数据
+        const chunk = decoder.decode(value, { stream: true });
+        console.log('收到数据块长度:', chunk.length);
+
+        // 处理收到的数据块
+        if (chunk) {
+          // 处理SSE格式的数据，按行分割
+          const lines = chunk.trim().split('\n');
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+
+            let processedLine = line.trim();
+
+            // 处理SSE格式 "data:" 前缀
+            if (processedLine.startsWith('data:')) {
+              processedLine = processedLine.substring(5).trim();
+            }
+
+            // 忽略[DONE]标记
+            if (processedLine === '[DONE]') {
+              continue;
+            }
+
+            // 如果有内容，直接更新
+            updateAiMessage(processedLine);
+          }
+        }
       }
 
-      // 立即检查AI消息
-      fixAiMessages()
-      
-      // 保存消息到本地存储
-      saveMessagesToStorage()
-      
-      // 检查是否需要处理未读消息通知
-      if (pendingResponse.value && isCollapsed.value) {
-        unreadCount.value++
-        pendingResponse.value = false
-        logInfo('流程结束时，检测到未读消息需要增加，未读计数:', unreadCount.value)
-      }
-
-      // 自动聚焦输入框，让用户可以继续输入
-      focusInput()
+      console.log('流处理完成');
 
     } catch (error) {
-      logError('流处理错误:', error)
+      console.error('流处理错误:', error);
 
-      // 清理超时定时器
-      clearTimeout(loadingTimeout)
-
-      // 如果是用户主动取消请求，不显示错误
-      if (error.name !== 'AbortError') {
-        // 总是添加新的错误消息，不替换已有消息
-        const newMessage = { role: 'assistant', content: '' };
-        messages.value.push(newMessage);
-        const msgIndex = messages.value.length - 1;
-        // 使用打字机效果显示错误消息
-        typeMessage(msgIndex, '接收响应时出错: ' + error.message);
+      // 如果处理过程中没有添加AI消息，添加一个错误提示
+      if (!aiMessageAdded) {
+        messages.value.push({
+          role: 'assistant',
+          content: `发生错误: ${error.message}。请稍后重试或联系管理员。`
+        });
+      } else if (lastAiMessageIndex !== -1) {
+        // 如果已经添加了消息但内容为空，添加错误提示
+        if (!messages.value[lastAiMessageIndex].content) {
+          messages.value[lastAiMessageIndex].content = `发生错误: ${error.message}。请稍后重试或联系管理员。`;
+        }
       }
+    } finally {
+      // 确保加载状态被重置
+      isLoading.value = false;
+      controller = null;
 
-      isLoading.value = false
-      controller = null
+      // 清除超时计时器
+      clearTimeout(loadingTimeout);
 
-      // 自动聚焦输入框，即使发生错误
-      focusInput()
-    }
-
-    // 最终安全检查，确保加载状态被关闭
-    setTimeout(() => {
-      if (isLoading.value) {
-        logInfo('检测到加载状态未正确关闭，强制关闭')
-        isLoading.value = false
-      }
-
-      // 再次尝试聚焦输入框
-      focusInput()
-    }, 1000)
-
-    // 如果聊天窗口已收起，增加未读消息计数
-    if (isCollapsed.value) {
-      unreadCount.value++
+      // 自动聚焦输入框
+      nextTick(() => {
+        focusInput();
+        scrollToBottom();
+      });
     }
 
   } catch (error) {
-    logError('流处理错误:', error)
+    console.error('消息发送失败:', error);
 
-    // 清理超时定时器
-    clearTimeout(loadingTimeout)
+    // 显示错误消息
+    ElMessage.error('发送消息失败，请稍后重试');
 
-    // 如果是用户主动取消请求，不显示错误
-    if (error.name !== 'AbortError') {
-      // 总是添加新的错误消息，不替换已有消息
-      const newMessage = { role: 'assistant', content: '' };
-      messages.value.push(newMessage);
-      const msgIndex = messages.value.length - 1;
-      // 使用打字机效果显示错误消息
-      typeMessage(msgIndex, '接收响应时出错: ' + error.message);
+    // 清理资源
+    isLoading.value = false;
+    if (controller) {
+      controller.abort();
+      controller = null;
     }
-
-    isLoading.value = false
-    controller = null
-
-    // 自动聚焦输入框，即使发生错误
-    focusInput()
   }
 }
 
@@ -1005,25 +867,58 @@ function clearOldMessageStorage() {
 // 添加渲染优化：使用计算属性确保显示完整消息
 const renderedMessages = computed(() => {
   return messages.value.map((msg, index) => {
-    if (msg.role === 'assistant' && fullResponses.value[index] && msg.content !== fullResponses.value[index]) {
-      return { ...msg, content: fullResponses.value[index] };
+    // 如果是AI消息，检查是否需要应用完整响应
+    if (msg.role === 'assistant') {
+      // 检查是否有完整响应和是否是最后一条消息正在加载
+      const isLastMessageLoading = index === messages.value.length - 1 && isLoading.value;
+
+      // 确保使用最新完整响应，添加打字光标标记
+      if (fullResponses.value[index] && msg.content !== fullResponses.value[index]) {
+        return {
+          ...msg,
+          content: fullResponses.value[index],
+          isTyping: isLastMessageLoading
+        };
+      } else {
+        // 如果内容已匹配完整响应，只添加打字标记
+        return {
+          ...msg,
+          isTyping: isLastMessageLoading
+        };
+      }
     }
+
+    // 对于非AI消息，直接返回
     return msg;
   });
 });
+
+// 添加一个确保打字机效果正确运行的测试函数
+function testTypingEffect() {
+  const testMsg = "这是一个测试消息，用于验证打字机效果是否正常工作。你应该能看到这段文字逐字显示出来。"
+
+  // 创建一个测试消息
+  const newIndex = messages.value.length
+  messages.value.push({ role: 'assistant', content: '' })
+
+  // 应用打字机效果
+  typeMessage(newIndex, testMsg)
+
+  logInfo('已启动打字机效果测试')
+}
 
 // 添加确保消息显示完整的函数
 function ensureMessagesComplete() {
   logInfo('确保所有消息显示完整');
   let hasUpdated = false;
-  
+
   messages.value.forEach((msg, index) => {
     if (msg.role === 'assistant' && fullResponses.value[index] && msg.content !== fullResponses.value[index]) {
       messages.value[index].content = fullResponses.value[index];
       hasUpdated = true;
     }
   });
-  
+
   if (hasUpdated) {
     logInfo('已更新部分消息内容为完整版本');
     nextTick(() => {
@@ -1040,7 +935,7 @@ function setupMessagesCheck() {
       ensureMessagesComplete();
     }
   }, 5000);
-  
+
   // 在组件销毁时清理定时器
   onBeforeUnmount(() => {
     clearInterval(checkInterval);
@@ -1053,39 +948,142 @@ async function fetchUserChats() {
     const token = localStorage.getItem('token')
     if (!token) {
       logWarn('获取用户对话记录失败: 未找到用户令牌')
+      userChats.value = [] // 确保清空对话列表
       return
     }
 
+    // 检查登录状态
+    const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true'
+    if (!isLoggedIn) {
+      logWarn('用户未登录或登录状态无效')
+      userChats.value = []
+      return
+    }
+
+    logInfo('开始获取用户对话记录...')
+    
     // 获取用户的所有AIPROCESS类型对话记录
     const response = await fetch('/api/function-call/user-chats', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      }
+      },
+      credentials: 'same-origin' // 确保发送凭证（cookies等）
     })
 
+    logInfo('获取用户对话响应状态:', response.status)
+
     if (!response.ok) {
+      if (response.status === 401) {
+        // 会话过期，显示登录过期消息
+        logError('登录已过期，状态码:', response.status)
+        
+        // 尝试读取响应内容
+        let errorMessage = '登录已过期，请刷新页面重新登录'
+        try {
+          const errorBody = await response.text()
+          logError('服务器返回错误:', errorBody)
+          if (errorBody) {
+            try {
+              const errorJson = JSON.parse(errorBody)
+              if (errorJson.message) {
+                errorMessage = errorJson.message
+              }
+            } catch (e) {
+              // 不是JSON格式，使用原始文本
+              if (errorBody.length < 100) {
+                errorMessage = errorBody
+              }
+            }
+          }
+        } catch (e) {
+          logError('无法读取错误响应内容')
+        }
+        
+        ElMessage.error({
+          message: errorMessage,
+          duration: 5000,
+          showClose: true
+        });
+        
+        // 清除无效的token
+        localStorage.removeItem('token')
+        localStorage.removeItem('isAuthenticated')
+        userChats.value = []
+        logError('登录已过期，请重新登录')
+        return
+      }
+      
+      // 尝试读取其他错误响应
+      try {
+        const errorBody = await response.text()
+        logError(`获取用户对话记录失败(${response.status}):`, errorBody)
+      } catch (e) {
+        logError('无法读取错误响应内容')
+      }
+      
       throw new Error(`获取用户对话记录失败: ${response.status}`)
     }
 
-    const chatList = await response.json()
+    // 解析响应数据
+    let chatList = []
+    try {
+      chatList = await response.json()
+      if (!Array.isArray(chatList)) {
+        logError('获取的对话记录格式错误，预期是数组但收到了:', typeof chatList)
+        chatList = []
+      }
+    } catch (e) {
+      logError('解析对话记录响应失败:', e)
+      chatList = []
+    }
+    
     userChats.value = chatList
     logInfo('成功获取用户对话记录, 共', chatList.length, '条记录')
-    
+
     // 如果当前没有选择对话但有对话记录，选择第一个
     if (!currentChatId.value && chatList.length > 0) {
-      selectChat(chatList[0].id, chatList[0].title)
+      const firstChat = chatList[0]
+      if (firstChat && firstChat.id) {
+        logInfo('自动选择第一个对话:', firstChat.id)
+        selectChat(firstChat.id, firstChat.title)
+      } else {
+        logError('无法自动选择对话，第一个对话数据无效:', firstChat)
+      }
+    } else if (chatList.length === 0) {
+      // 如果没有对话记录，清空当前对话ID
+      logInfo('没有找到任何对话记录')
+      if (currentChatId.value) {
+        currentChatId.value = ''
+        currentChatTitle.value = ''
+        messages.value = [{
+          role: 'system',
+          content: '您还没有任何对话记录，请开始新对话'
+        }]
+      }
     }
   } catch (error) {
     logError('获取用户对话记录失败:', error)
+    userChats.value = [] // 确保设置为空数组
+    
+    // 显示错误通知
+    ElMessage.error({
+      message: '获取对话列表失败: ' + (error.message || '未知错误'),
+      duration: 3000
+    })
   }
 }
 
 // 获取指定对话的历史消息
 async function fetchChatHistory(chatId) {
-  if (!chatId) {
-    logWarn('获取对话历史消息失败: 未提供对话ID')
+  // 严格检查chatId有效性
+  if (!chatId || chatId === 'undefined' || chatId === 'null') {
+    logError('获取对话历史消息失败: 提供的对话ID无效:', chatId)
+    messages.value = [{
+      role: 'system',
+      content: '无法加载对话历史，对话ID无效'
+    }]
     return
   }
 
@@ -1093,77 +1091,167 @@ async function fetchChatHistory(chatId) {
     const token = localStorage.getItem('token')
     if (!token) {
       logWarn('获取对话历史消息失败: 未找到用户令牌')
+      messages.value = [{
+        role: 'system',
+        content: '请先登录后再查看对话历史'
+      }]
       return
     }
 
+    logInfo(`正在获取对话(${chatId})的历史消息...`)
+    
     // 获取指定对话的历史消息
     const response = await fetch(`/api/function-call/chat-history?chatId=${chatId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      }
+      },
+      credentials: 'same-origin'
     })
 
+    logInfo('获取对话历史响应状态:', response.status)
+
     if (!response.ok) {
+      if (response.status === 401) {
+        // 尝试读取响应内容，了解更多错误信息
+        let errorMessage = '登录已过期，请刷新页面重新登录'
+        try {
+          const errorBody = await response.text()
+          logError('获取历史消息失败, 服务器返回:', errorBody)
+          if (errorBody) {
+            try {
+              const errorJson = JSON.parse(errorBody)
+              if (errorJson.message) {
+                errorMessage = errorJson.message
+              }
+            } catch (e) {
+              // 不是JSON格式，使用原始文本
+              if (errorBody.length < 100) { // 避免过长的错误信息
+                errorMessage = errorBody
+              }
+            }
+          }
+        } catch (e) {
+          logError('无法读取错误响应内容')
+        }
+        
+        // 会话过期，显示登录过期消息
+        ElMessage.error({
+          message: errorMessage,
+          duration: 5000,
+          showClose: true
+        });
+        
+        messages.value = [{
+          role: 'system',
+          content: errorMessage
+        }]
+        
+        // 清除无效的token
+        localStorage.removeItem('token')
+        localStorage.removeItem('isAuthenticated')
+        
+        logError('登录已过期，请重新登录')
+        return
+      } else if (response.status === 404) {
+        logError('对话不存在或已被删除')
+        messages.value = [{
+          role: 'system',
+          content: '找不到指定的对话，可能已被删除'
+        }]
+        return
+      }
+      
       throw new Error(`获取对话历史消息失败: ${response.status}`)
     }
 
     const messageList = await response.json()
     logInfo('成功获取对话历史消息, 共', messageList.length, '条消息')
-    
+
     // 清空当前消息列表
     messages.value = []
     fullResponses.value = {}
-    
-    // 加载历史消息
-    messageList.forEach((msg, index) => {
-      // 添加到消息列表，不使用打字机效果
+
+    if (messageList.length === 0) {
+      // 如果没有消息，添加一条欢迎消息
       messages.value.push({
-        role: msg.role,
-        content: msg.content
+        role: 'system',
+        content: '欢迎开始新的对话！'
       })
-      
-      // 保存完整响应
-      if (msg.role === 'assistant') {
-        fullResponses.value[index] = msg.content
-      }
-    })
-    
+    } else {
+      // 加载历史消息
+      messageList.forEach((msg, index) => {
+        if (!msg.role || !msg.content) {
+          logWarn('发现无效消息:', msg)
+          return // 跳过无效消息
+        }
+        
+        // 添加到消息列表，不使用打字机效果
+        messages.value.push({
+          role: msg.role,
+          content: msg.content
+        })
+
+        // 保存完整响应
+        if (msg.role === 'assistant') {
+          fullResponses.value[index] = msg.content
+        }
+      })
+    }
+
     // 保存到本地存储
     saveMessagesToStorage()
-    
+
     // 滚动到底部
     nextTick(() => {
       scrollToBottom()
     })
   } catch (error) {
     logError('获取对话历史消息失败:', error)
+    messages.value = [{
+      role: 'system',
+      content: `加载历史消息失败: ${error.message || '未知错误'}`
+    }]
   }
 }
 
 // 选择对话
 function selectChat(chatId, chatTitle) {
+  // 先检查chatId是否有效
+  if (!chatId || chatId === 'undefined') {
+    logError('无效的对话ID:', chatId)
+    return
+  }
+
   if (chatId === currentChatId.value) {
     return // 已经是当前对话，不需要切换
   }
-  
+
   logInfo('切换到对话:', chatId)
   currentChatId.value = chatId
-  currentChatTitle.value = chatTitle
-  
+  currentChatTitle.value = chatTitle || 'AI对话'
+
   // 获取对话历史消息
   fetchChatHistory(chatId)
-  
+
   // 更新本地存储的当前对话ID
   localStorage.setItem('current_chat_id', chatId)
 }
 
 // 处理对话选择
 function handleChatSelect(chatId) {
+  // 防止传递undefined或null值
+  if (!chatId || chatId === 'undefined' || chatId === 'null') {
+    logError('尝试选择无效对话ID:', chatId)
+    return
+  }
+  
   const selectedChat = userChats.value.find(chat => chat.id === chatId)
   if (selectedChat) {
     selectChat(chatId, selectedChat.title)
+  } else {
+    logError('无法找到ID为', chatId, '的对话')
   }
 }
 
@@ -1173,8 +1261,20 @@ async function createNewChat() {
     isCreatingChat.value = true
     const token = localStorage.getItem('token')
     if (!token) {
-      throw new Error('未找到用户令牌')
+      ElMessage.error('未找到用户令牌，请先登录')
+      isCreatingChat.value = false
+      return
     }
+
+    // 验证登录状态
+    const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true'
+    if (!isLoggedIn) {
+      ElMessage.error('用户未登录或登录状态无效，请刷新页面重新登录')
+      isCreatingChat.value = false
+      return
+    }
+
+    logInfo('开始创建新对话...')
 
     // 创建新的对话
     const response = await fetch('/api/function-call/create-chat', {
@@ -1182,35 +1282,108 @@ async function createNewChat() {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      }
+      },
+      credentials: 'same-origin'
     })
 
+    logInfo('创建新对话响应状态:', response.status)
+
     if (!response.ok) {
-      throw new Error(`创建对话失败: ${response.status}`)
+      if (response.status === 401) {
+        // 会话过期，显示登录过期消息
+        // 尝试读取响应内容
+        let errorMessage = '登录已过期，请刷新页面重新登录'
+        try {
+          const errorBody = await response.text()
+          logError('创建对话失败, 服务器返回:', errorBody)
+          if (errorBody && errorBody.length < 100) {
+            errorMessage = errorBody
+          }
+        } catch (e) {
+          logError('无法读取错误响应内容')
+        }
+        
+        ElMessage.error({
+          message: errorMessage,
+          duration: 5000,
+          showClose: true
+        });
+        
+        // 清除登录状态
+        localStorage.removeItem('token')
+        localStorage.removeItem('isAuthenticated')
+        
+        logError('登录已过期，请重新登录')
+        isCreatingChat.value = false
+        return
+      }
+      
+      // 尝试读取错误内容
+      let errorMsg = '创建对话失败'
+      try {
+        const errorText = await response.text()
+        logError(`创建对话失败(${response.status}):`, errorText)
+        if (errorText && errorText.length < 100) {
+          errorMsg += `: ${errorText}`
+        } else {
+          errorMsg += `: 状态码 ${response.status}`
+        }
+      } catch (e) {
+        logError('无法读取错误响应')
+        errorMsg += `: 状态码 ${response.status}`
+      }
+      
+      ElMessage.error(errorMsg)
+      isCreatingChat.value = false
+      return
     }
 
-    const data = await response.json()
-    logInfo('创建新对话成功, ID:', data.id)
-    
-    // 获取最新的对话列表
-    await fetchUserChats()
-    
-    // 选择新创建的对话
-    const newChat = userChats.value.find(chat => chat.id === data.id)
-    if (newChat) {
-      selectChat(data.id, newChat.title || 'AI对话')
+    // 解析响应
+    let data
+    try {
+      data = await response.json()
+      if (!data || !data.id) {
+        throw new Error('响应数据中没有对话ID')
+      }
+    } catch (e) {
+      logError('解析创建对话响应失败:', e)
+      ElMessage.error('创建对话失败: 无法解析服务器响应')
+      isCreatingChat.value = false
+      return
     }
+
+    logInfo('创建新对话成功, ID:', data.id)
+
+    // 更新当前对话ID和标题
+    currentChatId.value = data.id
+    currentChatTitle.value = 'AI对话'
     
-    // 清空消息列表
+    // 清空消息列表并添加欢迎消息
     messages.value = []
     fullResponses.value = {}
     
+    // 添加欢迎消息
+    messages.value.push({
+      role: 'system',
+      content: '新对话已创建，开始输入您的问题吧！'
+    })
+    
+    // 确保系统消息显示
+    nextTick(() => {
+      scrollToBottom()
+    })
+
+    // 获取最新的对话列表
+    await fetchUserChats()
+
     // 聚焦输入框
     focusInput()
+
+    ElMessage.success('新对话已创建')
   } catch (error) {
     logError('创建新对话失败:', error)
     // 显示错误消息
-    ElMessage.error('创建新对话失败，请稍后重试')
+    ElMessage.error('创建新对话失败: ' + (error.message || '未知错误'))
   } finally {
     isCreatingChat.value = false
   }
@@ -1235,15 +1408,15 @@ async function renameChat(chat) {
         }
       }
     )
-    
+
     if (newTitle && newTitle !== chat.title) {
       const token = localStorage.getItem('token')
       if (!token) {
         throw new Error('未找到用户令牌')
       }
-      
-      // 调用重命名对话API
-      const response = await fetch(`/api/function-call/${chat.id}/rename`, {
+
+      // 调用重命名对话API，使用现有的ChatController接口
+      const response = await fetch(`/api/chat/${chat.id}/rename`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1251,24 +1424,36 @@ async function renameChat(chat) {
         },
         body: JSON.stringify({ title: newTitle })
       })
-      
+
       if (!response.ok) {
+        if (response.status === 401) {
+          // 会话过期，显示登录过期消息
+          ElMessage.error({
+            message: '登录已过期，请刷新页面重新登录',
+            duration: 5000,
+            showClose: true
+          });
+          logError('登录已过期，请重新登录')
+          return
+        }
         throw new Error(`重命名失败: ${response.status}`)
       }
-      
+
       // 更新本地对话列表
-      const updatedChat = await response.json()
       const index = userChats.value.findIndex(c => c.id === chat.id)
       if (index !== -1) {
-        userChats.value[index].title = updatedChat.title
+        userChats.value[index].title = newTitle
       }
-      
+
       // 如果当前正在查看该对话，更新标题
       if (currentChatId.value === chat.id) {
-        currentChatTitle.value = updatedChat.title
+        currentChatTitle.value = newTitle
       }
-      
+
       ElMessage.success('重命名成功')
+
+      // 刷新对话列表
+      await fetchUserChats()
     }
   } catch (error) {
     logError('重命名对话失败:', error)
@@ -1289,31 +1474,40 @@ async function deleteChat(chat) {
         type: 'warning'
       }
     )
-    
+
     const token = localStorage.getItem('token')
     if (!token) {
       throw new Error('未找到用户令牌')
     }
-    
-    // 调用删除对话API
-    const response = await fetch(`/api/function-call/${chat.id}`, {
+
+    // 调用删除对话API，使用现有的ChatController接口
+    const response = await fetch(`/api/chat/${chat.id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${token}`
       }
     })
-    
+
     if (!response.ok) {
+      if (response.status === 401) {
+        // 会话过期，显示登录过期消息
+        ElMessage.error({
+          message: '登录已过期，请刷新页面重新登录',
+          duration: 5000,
+          showClose: true
+        });
+        logError('登录已过期，请重新登录')
+        return
+      }
       throw new Error(`删除失败: ${response.status}`)
     }
-    
+
     // 从对话列表中移除
     const index = userChats.value.findIndex(c => c.id === chat.id)
     if (index !== -1) {
       userChats.value.splice(index, 1)
     }
-    
+
     // 如果当前正在查看该对话，切换到另一个对话或清空
     if (currentChatId.value === chat.id) {
       if (userChats.value.length > 0) {
@@ -1325,8 +1519,11 @@ async function deleteChat(chat) {
         fullResponses.value = {}
       }
     }
-    
+
     ElMessage.success('删除成功')
+
+    // 刷新对话列表
+    await fetchUserChats()
   } catch (error) {
     if (error === 'cancel') {
       return
@@ -1337,61 +1534,151 @@ async function deleteChat(chat) {
 }
 
 // 组件挂载完成后执行
-onMounted(() => {
+onMounted(async () => {
   logInfo('FloatingChat组件已挂载')
 
-  // 清除旧格式的消息存储
-  clearOldMessageStorage()
+  try {
+    // 验证登录状态
+    const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true'
+    const token = localStorage.getItem('token')
+    
+    if (!isLoggedIn || !token) {
+      logWarn('用户未登录或登录状态已失效')
+      messages.value = [{
+        role: 'system',
+        content: '请先登录以使用聊天功能'
+      }]
+      return
+    }
 
-  // 获取用户的所有对话记录
-  fetchUserChats()
-  
-  // 确保所有AI消息内容完整显示
-  setTimeout(() => {
-    fixAiMessages()
-    ensureMessagesComplete() // 额外检查
-  }, 500)
-  
-  // 设置定时检查机制
-  setupMessagesCheck()
-  
-  // 添加用户登录状态变化监听
-  window.addEventListener('storage', (event) => {
-    if (event.key === 'token') {
-      // 检测到token变化，可能是用户登录/登出/切换
-      logInfo('检测到用户登录状态变化，重新加载消息')
-      // 清空现有消息和聊天ID
-      messages.value = []
+    // 验证token有效性
+    logInfo('验证用户令牌有效性...')
+    const isTokenValid = await checkTokenValidity()
+    if (!isTokenValid) {
+      logError('用户令牌无效')
+      messages.value = [{
+        role: 'system',
+        content: '登录已过期，请刷新页面重新登录'
+      }]
+      return
+    }
+
+    logInfo('用户登录状态有效，开始加载数据')
+
+    // 清除旧格式的消息存储
+    clearOldMessageStorage()
+
+    // 解决可能出现的currentChatId为undefined的问题
+    if (currentChatId.value === 'undefined' || currentChatId.value === 'null') {
+      logWarn('发现无效的currentChatId，重置为空')
       currentChatId.value = ''
-      // 清空完整回复缓存
-      fullResponses.value = {}
-      // 加载新用户的消息
-      loadMessagesFromStorage()
     }
-  })
 
-  // 监听window.onerror，捕获任何JS错误
-  window.onerror = function(message, source, lineno, colno, error) {
-    logError('全局JS错误:', message, error)
-    return false
+    // 获取用户的所有对话记录
+    await fetchUserChats()
+
+    // 确保所有AI消息内容完整显示
+    setTimeout(() => {
+      fixAiMessages()
+      ensureMessagesComplete() // 额外检查
+    }, 500)
+
+    // 设置定时检查机制
+    setupMessagesCheck()
+
+    // 定期检查token有效性
+    const tokenCheckInterval = setInterval(async () => {
+      if (isCollapsed.value) return // 聊天窗口折叠时不检查
+
+      const isStillValid = await checkTokenValidity()
+      if (!isStillValid) {
+        logWarn('定期检查发现用户令牌已失效')
+        clearInterval(tokenCheckInterval)
+        
+        messages.value = [{
+          role: 'system',
+          content: '登录已过期，请刷新页面重新登录'
+        }]
+        
+        ElMessage.warning({
+          message: '登录已过期，请刷新页面重新登录',
+          duration: 5000,
+          showClose: true
+        })
+      }
+    }, 5 * 60 * 1000) // 每5分钟检查一次
+
+    // 在组件销毁时清理定时器
+    onBeforeUnmount(() => {
+      clearInterval(tokenCheckInterval)
+    })
+
+    // 添加用户登录状态变化监听
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'token' || event.key === 'isAuthenticated') {
+        // 检测到token或登录状态变化
+        logInfo('检测到用户登录状态变化，重新加载消息')
+        // 清空现有消息和聊天ID
+        messages.value = []
+        currentChatId.value = ''
+        // 清空完整回复缓存
+        fullResponses.value = {}
+
+        const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true'
+        if (isLoggedIn) {
+          // 用户仍然登录，加载新用户的消息
+          loadMessagesFromStorage()
+          // 重新获取对话列表
+          fetchUserChats()
+        } else {
+          // 用户已登出
+          messages.value = [{
+            role: 'system',
+            content: '请先登录以使用聊天功能'
+          }]
+        }
+      }
+    })
+
+    // 监听window.onerror，捕获任何JS错误
+    window.onerror = function(message, source, lineno, colno, error) {
+      logError('全局JS错误:', message, error)
+      return false
+    }
+
+    // 为了解决iOS中文输入法问题，添加全局事件处理
+    document.addEventListener('keydown', (event) => {
+      // 特殊处理iOS上的中文输入法回车问题
+      if (event.key === 'Enter' && isComposing.value) {
+        logInfo('全局捕获：输入法组合中的回车键，阻止传播')
+        event.stopPropagation()
+      }
+    }, true)  // 使用捕获阶段
+
+    // 5秒后检查消息，防止有空消息没有正确显示
+    setTimeout(() => {
+      if (messages.value.some(msg => msg.role === 'assistant' && (!msg.content || msg.content === ''))) {
+        logInfo('初始化检测到空消息，自动修复')
+        fixEmptyMessages()
+      }
+    }, 5000)
+
+    // 在窗口打开时自动测试打字机效果
+    watch(isCollapsed, (newVal) => {
+      if (!newVal && messages.value.length === 0) {
+        // 如果窗口打开且没有消息，延迟1秒后运行测试
+        setTimeout(() => {
+          testTypingEffect()
+        }, 1000)
+      }
+    })
+  } catch (error) {
+    logError('组件初始化出错:', error)
+    messages.value = [{
+      role: 'system',
+      content: '聊天组件初始化失败: ' + (error.message || '未知错误')
+    }]
   }
-
-  // 为了解决iOS中文输入法问题，添加全局事件处理
-  document.addEventListener('keydown', (event) => {
-    // 特殊处理iOS上的中文输入法回车问题
-    if (event.key === 'Enter' && isComposing.value) {
-      logInfo('全局捕获：输入法组合中的回车键，阻止传播')
-      event.stopPropagation()
-    }
-  }, true)  // 使用捕获阶段
-
-  // 5秒后检查消息，防止有空消息没有正确显示
-  setTimeout(() => {
-    if (messages.value.some(msg => msg.role === 'assistant' && (!msg.content || msg.content === ''))) {
-      logInfo('初始化检测到空消息，自动修复')
-      fixEmptyMessages()
-    }
-  }, 5000)
 })
 
 // 组件销毁时清理
@@ -1405,7 +1692,7 @@ onBeforeUnmount(() => {
   if (controller) {
     controller.abort()
   }
-  
+
   // 移除storage事件监听
   window.removeEventListener('storage', () => {
     logInfo('已移除storage事件监听')
@@ -1456,6 +1743,7 @@ watch(
 .chat-panel {
   width: 350px;
   height: calc(100vh - 100px);
+  max-height: 650px;
   display: flex;
   flex-direction: column;
   border-radius: 12px;
@@ -1495,10 +1783,11 @@ watch(
 .chat-title-dropdown h3 {
   margin: 0;
   font-size: 16px;
-  max-width: 150px;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 200px;
 }
 
 .dropdown-icon {
@@ -1507,15 +1796,20 @@ watch(
   color: #909399;
 }
 
-.chat-header h3 {
-  margin: 0;
-  color: #606266;
-  font-size: 16px;
+.current-chat {
+  color: #409EFF;
+  font-weight: bold;
 }
 
 .chat-actions {
   display: flex;
+  align-items: center;
   gap: 5px;
+}
+
+.chat-actions .el-button {
+  padding: 5px;
+  color: #606266;
 }
 
 .chat-messages {
@@ -1536,6 +1830,8 @@ watch(
   white-space: pre-wrap; /* 保留换行和空格 */
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   clear: both;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .message.user {
@@ -1556,14 +1852,78 @@ watch(
   border-bottom-left-radius: 4px;
 }
 
-.message.tool {
+.message.system {
+  float: none;
+  margin: 10px auto;
+  text-align: center;
+  background-color: #f4f4f5;
+  color: #909399;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  max-width: 90%;
+  display: block; /* 确保系统消息显示为块级元素，占据整行 */
+  text-align: center; /* 文本居中 */
+}
+
+.message.assistant.loading {
+  padding: 8px 14px;
   float: left;
-  text-align: left;
-  margin-right: auto;
-  background-color: #e6f7ff;
-  color: #333;
-  font-family: monospace;
-  border-bottom-left-radius: 4px;
+  display: inline-block;
+  min-width: 40px;
+  text-align: center;
+  background-color: #e4f2e4; /* 改为与AI回复相同的绿色背景 */
+  border-radius: 16px; /* 更圆润的形状 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* 更轻的阴影 */
+}
+
+.loading-dots span {
+  animation: loading 1.4s infinite both;
+  display: inline-block;
+  font-size: 16px; /* 减小点的大小 */
+  opacity: 0.2;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loading {
+  0% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+  40% {
+    opacity: 0.2;
+    transform: translateY(0);
+  }
+}
+
+.typing-cursor::after {
+  content: '|';
+  display: inline-block;
+  animation: blink 1s step-start infinite;
+  font-weight: bold;
+  margin-left: 2px;
+  font-size: 16px;
+  color: #000;
+  opacity: 0.8;
+  height: 16px;
+  line-height: 16px;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .chat-input {
@@ -1600,6 +1960,7 @@ watch(
 
 .send-button {
   margin-left: 8px;
+  border-radius: 20px;
   transition: all 0.3s;
 }
 
@@ -1620,63 +1981,8 @@ watch(
   transform: scale(0.8);
 }
 
-.loading-dots span {
-  animation: loading 1.4s infinite both;
-  display: inline-block;
-}
-
-.loading-dots span:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.loading-dots span:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes loading {
-  0% {
-    opacity: 0.2;
-    transform: translateY(0);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(-3px);
-  }
-  40% {
-    opacity: 0.2;
-    transform: translateY(0);
-  }
-}
-
-.typing-cursor::after {
-  content: '|';
-  animation: blink 1s step-start infinite;
-  font-weight: normal;
-  margin-left: 2px;
-  opacity: 0.7;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-.current-chat {
-  color: #409eff;
-  font-weight: bold;
-}
-
-.chat-actions .el-icon {
-  font-size: 16px;
-  color: #606266;
-}
-
-.chat-actions .el-icon:hover {
-  color: #409EFF;
-}
-
-.chat-actions .el-icon + .el-icon {
-  margin-left: 8px;
+.clearfix {
+  clear: both;
+  height: 1px;
 }
 </style>

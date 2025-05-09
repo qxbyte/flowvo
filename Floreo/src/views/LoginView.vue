@@ -35,32 +35,66 @@ const password = ref('')
 
 const handleLogin = async () => {
   try {
-    console.log('发送登录请求:', { username: username.value, password: password.value })
+    console.log('开始登录处理，用户名:', username.value)
 
+    // 清除之前可能存在的认证数据
+    localStorage.removeItem('token')
+    localStorage.removeItem('isAuthenticated')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('username')
+
+    console.log('发送登录请求...')
     const response = await axios.post('/api/user/login', {
       username: username.value,
       password: password.value
     })
 
+    console.log('收到登录响应，状态码:', response.status)
     const data = response.data
-    console.log('登录响应:', data)
-
-    if (response.status === 200) {
-      localStorage.setItem('isAuthenticated', 'true')
+    
+    if (response.status === 200 && data.token) {
+      console.log('登录成功，存储认证信息...')
+      
       // 保存token和用户信息
+      localStorage.setItem('isAuthenticated', 'true')
       localStorage.setItem('token', data.token)
       localStorage.setItem('userId', data.userId)
       localStorage.setItem('username', data.username)
       
+      console.log('保存的令牌:', data.token.substring(0, 20) + '...' + data.token.substring(data.token.length - 20))
+      
       // 检查是否有重定向参数
       const redirectPath = router.currentRoute.value.query.redirect as string
+      console.log('重定向路径:', redirectPath || '/')
+      
       router.push(redirectPath || '/')
     } else {
+      console.error('登录响应无效:', data)
       alert(data.message || '登录失败，请检查用户名和密码')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('登录错误:', error)
-    alert('登录过程中发生错误')
+    
+    let errorMessage = '登录失败，请检查用户名和密码'
+    
+    if (error.response) {
+      console.error('服务器响应错误:', error.response.status, error.response.data)
+      
+      // 尝试提取更有用的错误信息
+      if (typeof error.response.data === 'string') {
+        errorMessage = error.response.data
+      } else if (error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message
+      }
+    } else if (error.request) {
+      console.error('无服务器响应:', error.request)
+      errorMessage = '服务器没有响应，请检查网络连接'
+    } else {
+      console.error('请求配置错误:', error.message)
+      errorMessage = `请求错误: ${error.message}`
+    }
+    
+    alert(errorMessage)
   }
 }
 
