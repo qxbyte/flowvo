@@ -14,9 +14,11 @@ import org.xue.assistant.functioncall.service.FunctionCallService;
 import org.xue.assistant.service.UserService;
 import reactor.core.publisher.Flux;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -50,7 +52,7 @@ public class FunctionCallController {
     }
     
     /**
-     * 创建新的聊天会话或获取已有的AIPROCESS类型对话
+     * 创建新的聊天会话
      */
     @GetMapping("/create-chat")
     @CrossOrigin(origins = "*")
@@ -59,16 +61,21 @@ public class FunctionCallController {
         User user = getCurrentUser();
         log.info("收到创建聊天请求");
         
-        // 获取或创建AIPROCESS类型的聊天记录
+        // 直接创建一个新的AIPROCESS类型的聊天记录
         String userId = user.getId().toString();
         String type = "AIPROCESS"; // 默认类型
         
         try {
-            ChatRecord chatRecord = chatService.getOrCreateChatRecordByType(userId, type);
-            if (chatRecord == null) {
-                log.error("创建聊天记录失败，返回空记录");
-                throw new RuntimeException("创建聊天记录失败");
-            }
+            // 创建新的聊天记录
+            ChatRecord newChatRecord = new ChatRecord();
+            newChatRecord.setId(UUID.randomUUID().toString());
+            newChatRecord.setUserId(userId);
+            newChatRecord.setType(type);
+            newChatRecord.setTitle("AI对话");
+            newChatRecord.setCreateTime(LocalDateTime.now());
+            newChatRecord.setUpdateTime(LocalDateTime.now());
+            
+            ChatRecord chatRecord = chatService.saveChatRecord(newChatRecord);
             
             Map<String, String> response = new HashMap<>();
             response.put("id", chatRecord.getId());
@@ -160,16 +167,27 @@ public class FunctionCallController {
         log.info("收到流式调用请求: question={}, chatId={}", question, chatId);
         // 获取当前登录用户，如果未登录会抛出异常
         User user = getCurrentUser();
-        // 获取或创建AIPROCESS类型的聊天记录
         String userId = user.getId().toString();
-        String type = "AIPROCESS"; // 默认类型
+        
+        // 如果chatId为空，创建一个新的AIPROCESS类型对话
         if (StringUtils.isEmpty(chatId)) {
-            ChatRecord chatRecord = chatService.getOrCreateChatRecordByType(userId, type);
-            if (chatRecord == null) {
-                log.error("创建聊天记录失败，返回空记录");
-                throw new RuntimeException("创建聊天记录失败");
+            try {
+                // 创建新的聊天记录
+                ChatRecord newChatRecord = new ChatRecord();
+                newChatRecord.setId(UUID.randomUUID().toString());
+                newChatRecord.setUserId(userId);
+                newChatRecord.setType("AIPROCESS");
+                newChatRecord.setTitle("AI对话");
+                newChatRecord.setCreateTime(LocalDateTime.now());
+                newChatRecord.setUpdateTime(LocalDateTime.now());
+                
+                ChatRecord chatRecord = chatService.saveChatRecord(newChatRecord);
+                chatId = chatRecord.getId();
+                log.info("为流式请求创建新对话: {}", chatId);
+            } catch (Exception e) {
+                log.error("创建聊天记录失败", e);
+                throw new RuntimeException("创建聊天记录失败: " + e.getMessage());
             }
-            chatId = chatRecord.getId();
         }
 
         return functionCallService.handleUserQuestionStream(question, chatId);
