@@ -71,6 +71,8 @@ public class SecurityConfig {
                     "/api/function-call/invoke-stream",
                     "/api/function-call/invoke",
                     "/api/function-call/**",
+                    "/api/chat/sendStream-test",
+                    "/api/chat/sendStream",
                     "/index.html", "/js/**", "/css/**", "/assets/**"
                 ).permitAll()
                 .anyRequest().authenticated())

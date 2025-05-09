@@ -21,11 +21,27 @@ public interface ChatService {
     List<ChatRecord> getChatRecordsByUserId(String userId);
     
     /**
+     * 根据用户ID和对话类型获取聊天记录
+     * @param userId 用户ID
+     * @param type 对话类型
+     * @return 聊天记录列表
+     */
+    List<ChatRecord> getChatRecordsByUserIdAndType(String userId, String type);
+    
+    /**
      * 根据ID获取聊天记录
      * @param id 聊天记录ID
      * @return 聊天记录，如果不存在返回null
      */
     ChatRecord getChatRecordById(String id);
+    
+    /**
+     * 根据ID和用户ID获取聊天记录
+     * @param id 聊天记录ID
+     * @param userId 用户ID
+     * @return 聊天记录，如果不存在或不属于该用户返回null
+     */
+    ChatRecord getChatRecordByIdAndUserId(String id, String userId);
     
     /**
      * 保存聊天记录
@@ -36,7 +52,7 @@ public interface ChatService {
 
     List<Messages> getMessagesByChatId(String chatId);
 
-    ChatRecord createNewChatRecord();
+    ChatRecord createNewChatRecord(String userId);
     
     /**
      * 创建或获取指定类型的聊天记录
