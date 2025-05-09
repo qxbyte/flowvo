@@ -23,8 +23,12 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item v-for="chat in userChats" :key="chat.id" :command="chat.id">
-                  <span :class="{'current-chat': chat.id === currentChatId}">
-                    {{ chat.title || '未命名对话' }}
+                  <span :class="{'current-chat': chat.id === currentChatId}" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span>{{ chat.title || '未命名对话' }}</span>
+                    <span class="chat-actions" v-if="chat.id === currentChatId">
+                      <el-icon @click.stop="renameChat(chat)" style="margin-left: 8px; cursor: pointer;"><Edit /></el-icon>
+                      <el-icon @click.stop="deleteChat(chat)" style="margin-left: 8px; cursor: pointer; color: #F56C6C;"><Delete /></el-icon>
+                    </span>
                   </span>
                 </el-dropdown-item>
                 <el-dropdown-item v-if="userChats.length === 0" disabled>无对话记录</el-dropdown-item>
@@ -82,7 +86,8 @@
 
 <script setup>
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
-import { Close, ArrowDown, Plus } from '@element-plus/icons-vue'
+import { Close, ArrowDown, Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 // 滚动到底部
 function scrollToBottom() {
@@ -1211,6 +1216,126 @@ async function createNewChat() {
   }
 }
 
+// 重命名对话
+async function renameChat(chat) {
+  try {
+    // 显示重命名对话框
+    const { value: newTitle } = await ElMessageBox.prompt(
+      '请输入新的对话名称',
+      '重命名对话',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValue: chat.title || 'AI对话',
+        inputValidator: (value) => {
+          if (!value) {
+            return '标题不能为空'
+          }
+          return true
+        }
+      }
+    )
+    
+    if (newTitle && newTitle !== chat.title) {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        throw new Error('未找到用户令牌')
+      }
+      
+      // 调用重命名对话API
+      const response = await fetch(`/api/function-call/${chat.id}/rename`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ title: newTitle })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`重命名失败: ${response.status}`)
+      }
+      
+      // 更新本地对话列表
+      const updatedChat = await response.json()
+      const index = userChats.value.findIndex(c => c.id === chat.id)
+      if (index !== -1) {
+        userChats.value[index].title = updatedChat.title
+      }
+      
+      // 如果当前正在查看该对话，更新标题
+      if (currentChatId.value === chat.id) {
+        currentChatTitle.value = updatedChat.title
+      }
+      
+      ElMessage.success('重命名成功')
+    }
+  } catch (error) {
+    logError('重命名对话失败:', error)
+    ElMessage.error('重命名失败，请稍后重试')
+  }
+}
+
+// 删除对话
+async function deleteChat(chat) {
+  try {
+    // 显示删除确认对话框
+    await ElMessageBox.confirm(
+      '删除后将无法恢复，是否继续？',
+      '删除对话',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('未找到用户令牌')
+    }
+    
+    // 调用删除对话API
+    const response = await fetch(`/api/function-call/${chat.id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`删除失败: ${response.status}`)
+    }
+    
+    // 从对话列表中移除
+    const index = userChats.value.findIndex(c => c.id === chat.id)
+    if (index !== -1) {
+      userChats.value.splice(index, 1)
+    }
+    
+    // 如果当前正在查看该对话，切换到另一个对话或清空
+    if (currentChatId.value === chat.id) {
+      if (userChats.value.length > 0) {
+        selectChat(userChats.value[0].id, userChats.value[0].title)
+      } else {
+        currentChatId.value = ''
+        currentChatTitle.value = ''
+        messages.value = []
+        fullResponses.value = {}
+      }
+    }
+    
+    ElMessage.success('删除成功')
+  } catch (error) {
+    if (error === 'cancel') {
+      return
+    }
+    logError('删除对话失败:', error)
+    ElMessage.error('删除失败，请稍后重试')
+  }
+}
+
 // 组件挂载完成后执行
 onMounted(() => {
   logInfo('FloatingChat组件已挂载')
@@ -1344,8 +1469,9 @@ watch(
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #eaeaea;
 }
 
 .chat-header-left {
@@ -1357,6 +1483,13 @@ watch(
   display: flex;
   align-items: center;
   cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.chat-title-dropdown:hover {
+  background-color: #f5f7fa;
 }
 
 .chat-title-dropdown h3 {
@@ -1370,6 +1503,8 @@ watch(
 
 .dropdown-icon {
   margin-left: 5px;
+  font-size: 12px;
+  color: #909399;
 }
 
 .chat-header h3 {
@@ -1380,60 +1515,109 @@ watch(
 
 .chat-actions {
   display: flex;
-  align-items: center;
+  gap: 5px;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 15px;
-  display: flex;
-  flex-direction: column;
+  padding: 16px;
+  background-color: #fff;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
 }
 
 .message {
+  padding: 10px 14px;
   margin-bottom: 10px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  max-width: 85%;
+  border-radius: 18px;
+  display: inline-block;
+  max-width: 80%;
   word-break: break-word;
+  white-space: pre-wrap; /* 保留换行和空格 */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  clear: both;
 }
 
 .message.user {
-  align-self: flex-end;
-  background-color: #10a37f;
-  color: white;
+  float: right;
+  text-align: left;
+  margin-left: auto;
+  background-color: #d9ecff;
+  color: #2b5998;
+  border-bottom-right-radius: 4px;
 }
 
 .message.assistant {
-  align-self: flex-start;
-  background-color: #f1f1f1;
-  color: #333;
+  float: left;
+  text-align: left;
+  margin-right: auto;
+  background-color: #e4f2e4;
+  color: #1a1a1a;
+  border-bottom-left-radius: 4px;
 }
 
 .message.tool {
-  align-self: flex-start;
+  float: left;
+  text-align: left;
+  margin-right: auto;
   background-color: #e6f7ff;
   color: #333;
   font-family: monospace;
+  border-bottom-left-radius: 4px;
 }
 
 .chat-input {
-  padding: 10px 15px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  background-color: #fff;
+  border-top: 1px solid #eaeaea;
 }
 
 .input-container {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
 .message-input {
   flex: 1;
 }
 
+.message-input :deep(.el-input__wrapper) {
+  border-radius: 24px;
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  padding: 0 15px;
+}
+
+.message-input :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409eff inset;
+}
+
+.rounded-input :deep(.el-input-group__append) {
+  padding: 0;
+  background-color: transparent;
+  border: none;
+}
+
 .send-button {
-  margin-left: 10px;
+  margin-left: 8px;
+  transition: all 0.3s;
+}
+
+.send-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.4);
+}
+
+/* 动画效果 */
+.collapsed-enter-active,
+.collapsed-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.collapsed-enter-from,
+.collapsed-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
 }
 
 .loading-dots span {
@@ -1479,7 +1663,20 @@ watch(
 }
 
 .current-chat {
-  color: #10a37f;
+  color: #409eff;
   font-weight: bold;
+}
+
+.chat-actions .el-icon {
+  font-size: 16px;
+  color: #606266;
+}
+
+.chat-actions .el-icon:hover {
+  color: #409EFF;
+}
+
+.chat-actions .el-icon + .el-icon {
+  margin-left: 8px;
 }
 </style>
