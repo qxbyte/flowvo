@@ -15,9 +15,18 @@
            :key="record.id"
            class="chat-item"
            :class="{ active: currentChatId === record.id }">
-        <div class="chat-item-content" @click="loadChat(record.id)">
+        <div class="chat-item-content" @click="loadChat(record.id)" v-if="editingChatId !== record.id">
           {{ record.title }}
         </div>
+        <input 
+          v-else
+          ref="editInput"
+          v-model="editingChatTitle"
+          class="edit-input"
+          @keyup.enter="confirmRenaming"
+          @blur="cancelRenaming"
+          @keyup.esc="cancelRenaming"
+        />
         <button class="chat-item-menu" @click="openMenu($event, record)">
           <EllipsisHorizontalIcon class="h-3.5 w-3.5" />
         </button>
@@ -28,14 +37,14 @@
     <div v-if="showMenu"
          class="chat-menu"
          :style="{ top: menuPosition.y + 'px', left: menuPosition.x + 'px' }">
-      <button class="menu-item" @click="renameChat">
+      <button class="menu-item" @click="startEditing">
         <span>重命名</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="menu-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 20h9"></path>
           <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
         </svg>
       </button>
-      <button class="menu-item delete" @click="deleteChat">
+      <button class="menu-item delete" @click="showDeleteDialog">
         <span>删除</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="menu-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="3 6 5 6 21 6"></polyline>
@@ -43,11 +52,23 @@
         </svg>
       </button>
     </div>
+
+    <!-- 删除确认弹窗 -->
+    <ConfirmDialog
+      ref="deleteConfirmDialog"
+      title="删除对话"
+      message="删除后将无法恢复，是否继续？"
+      confirmText="确认"
+      cancelText="取消"
+      type="danger"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineEmits } from 'vue'
+import { ref, defineEmits, nextTick } from 'vue'
 import {
   Bars4Icon,
   PlusCircleIcon,
@@ -60,6 +81,7 @@ import {
 } from '@heroicons/vue/16/solid'
 import { useChat } from '@/composables/useChat'
 import { useRouter } from 'vue-router'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 const emit = defineEmits(['update:currentChatId', 'loadChat'])
 const chatApi = useChat()
@@ -71,6 +93,10 @@ const selectedChatId = ref('')
 const selectedChatTitle = ref('')
 const menuPosition = ref({ x: 0, y: 0 })
 const isSidebarCollapsed = ref(false)
+const editingChatId = ref('')
+const editingChatTitle = ref('')
+const editInput = ref<HTMLInputElement | null>(null)
+const deleteConfirmDialog = ref<any>(null)
 
 // Props
 const props = defineProps<{
@@ -109,13 +135,32 @@ const openMenu = (event: MouseEvent, record: { id: string, title: string }) => {
   }, 0)
 }
 
-// 重命名对话
-const renameChat = async () => {
-  const newTitle = prompt('请输入新的对话名称', selectedChatTitle.value)
-  if (newTitle && newTitle !== selectedChatTitle.value) {
+// 开始编辑对话
+const startEditing = () => {
+  showMenu.value = false
+  editingChatId.value = selectedChatId.value
+  editingChatTitle.value = selectedChatTitle.value
+  
+  // 自动聚焦输入框
+  nextTick(() => {
+    if (editInput.value) {
+      editInput.value.focus()
+      editInput.value.select()
+    }
+  })
+}
+
+// 取消重命名
+const cancelRenaming = () => {
+  editingChatId.value = ''
+}
+
+// 确认重命名
+const confirmRenaming = async () => {
+  if (editingChatTitle.value && editingChatTitle.value !== selectedChatTitle.value) {
     try {
-      console.log('调用重命名对话API, ID:', selectedChatId.value, '新标题:', newTitle)
-      const success = await chatApi.renameChat(selectedChatId.value, newTitle)
+      console.log('调用重命名对话API, ID:', selectedChatId.value, '新标题:', editingChatTitle.value)
+      const success = await chatApi.renameChat(selectedChatId.value, editingChatTitle.value)
       
       if (success) {
         console.log('重命名成功，刷新对话列表')
@@ -127,33 +172,43 @@ const renameChat = async () => {
       alert('重命名失败，请稍后重试')
     }
   }
-  showMenu.value = false
+  editingChatId.value = ''
 }
 
-// 删除对话
-const deleteChat = async () => {
-  if (confirm('确定要删除这个对话吗？')) {
-    try {
-      console.log('调用删除对话API, ID:', selectedChatId.value)
-      const success = await chatApi.deleteChat(selectedChatId.value)
-      
-      if (success) {
-        console.log('删除成功，更新currentChatId和刷新对话列表')
-        
-        // 如果删除的是当前对话，重置currentChatId
-        if (props.currentChatId === selectedChatId.value) {
-          emit('update:currentChatId', '')
-        }
-        
-        // 重新加载对话列表，向父组件发送refresh信号
-        emit('loadChat', 'refresh')
-      }
-    } catch (error) {
-      console.error('删除失败:', error)
-      alert('删除失败，请稍后重试')
-    }
-  }
+// 显示删除确认对话框
+const showDeleteDialog = () => {
   showMenu.value = false
+  if (deleteConfirmDialog.value) {
+    deleteConfirmDialog.value.show()
+  }
+}
+
+// 确认删除
+const confirmDelete = async () => {
+  try {
+    console.log('调用删除对话API, ID:', selectedChatId.value)
+    const success = await chatApi.deleteChat(selectedChatId.value)
+    
+    if (success) {
+      console.log('删除成功，更新currentChatId和刷新对话列表')
+      
+      // 如果删除的是当前对话，重置currentChatId
+      if (props.currentChatId === selectedChatId.value) {
+        emit('update:currentChatId', '')
+      }
+      
+      // 重新加载对话列表，向父组件发送refresh信号
+      emit('loadChat', 'refresh')
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    alert('删除失败，请稍后重试')
+  }
+}
+
+// 取消删除
+const cancelDelete = () => {
+  console.log('用户取消了删除操作')
 }
 
 // 创建新对话
@@ -359,7 +414,119 @@ const loadChat = (chatId: string) => {
 .chat-item.active {
   background-color: rgba(0,0,0,0.1);
 }
-Bars3Icon {
+
+/* 编辑框样式 */
+.edit-input {
+  flex: 1;
+  background-color: #ffffff;
+  border: 1px solid #4399ff;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 13px;
+  margin-right: 4px;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(67, 153, 255, 0.2);
+}
+
+.edit-input:focus {
+  border-color: #4399ff;
+}
+
+/* 重命名对话框样式 */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.rename-dialog {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+}
+
+.close-button:hover {
   color: #333;
+}
+
+.rename-dialog h3 {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.rename-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.rename-input:focus {
+  outline: none;
+  border-color: #4399ff;
+  box-shadow: 0 0 0 2px rgba(67, 153, 255, 0.2);
+}
+
+.confirm-dialog-buttons {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cancel-button, .confirm-button {
+  flex: 1;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.cancel-button {
+  background-color: #f5f5f5;
+  color: #333;
+  margin-right: 10px;
+}
+
+.confirm-button {
+  background-color: #4399ff;
+  color: white;
+}
+
+.cancel-button:hover {
+  background-color: #e5e5e5;
+}
+
+.confirm-button:hover {
+  background-color: #3385e5;
 }
 </style>

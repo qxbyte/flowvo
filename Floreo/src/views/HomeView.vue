@@ -1,4 +1,7 @@
 import NavBar from '@/components/NavBar.vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import DocumentModal from '@/components/document/DocumentModal.vue'
 
 <template>
   <NavBar />
@@ -44,9 +47,33 @@ import NavBar from '@/components/NavBar.vue'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import DocumentModal from '@/components/document/DocumentModal.vue'
+import { onMounted } from 'vue'
 
 const router = useRouter()
 const showDocumentModal = ref(false)
+
+// 在组件挂载时进行用户认证检查
+onMounted(() => {
+  console.log('HomeView 组件已挂载，检查用户认证状态')
+  const token = localStorage.getItem('token')
+  const isAuthenticated = token && localStorage.getItem('isAuthenticated') === 'true'
+  
+  if (!isAuthenticated) {
+    console.log('用户未登录，重定向到登录页面')
+    // 清除可能存在的无效认证数据
+    localStorage.removeItem('isAuthenticated')
+    localStorage.removeItem('token')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('username')
+    
+    // 重定向到登录页
+    router.push('/login')
+  } else {
+    console.log('用户已登录，可以访问首页')
+    const username = localStorage.getItem('username')
+    console.log('当前登录用户:', username)
+  }
+})
 
 // 处理鼠标移动事件，更新边框效果位置
 const handleMouseMove = (event: MouseEvent) => {

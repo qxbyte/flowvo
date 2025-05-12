@@ -17,9 +17,6 @@
     <modules>
         <module>core</module>
         <module>api</module>
-        <module>mcp-common</module>
-        <module>mcp-mysql</module>
-        <module>mcp-cache</module>
         <!-- 你有其他子模块可以加在这里 -->
     </modules>
 

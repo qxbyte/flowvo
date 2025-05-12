@@ -21,13 +21,13 @@
               <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
-              <el-dropdown-menu>
+              <el-dropdown-menu class="chat-dropdown-menu">
                 <el-dropdown-item v-for="chat in userChats" :key="chat.id" :command="chat.id">
                   <span :class="{'current-chat': chat.id === currentChatId}" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <span>{{ chat.title || '未命名对话' }}</span>
-                    <span class="chat-actions" v-if="chat.id === currentChatId">
-                      <el-icon @click.stop="renameChat(chat)" style="margin-left: 8px; cursor: pointer;"><Edit /></el-icon>
-                      <el-icon @click.stop="deleteChat(chat)" style="margin-left: 8px; cursor: pointer; color: #F56C6C;"><Delete /></el-icon>
+                    <span class="chat-actions">
+                      <el-icon @click.stop="renameChat(chat)" class="action-icon edit-icon"><Edit /></el-icon>
+                      <el-icon @click.stop="deleteChat(chat)" class="action-icon delete-icon"><Delete /></el-icon>
                     </span>
                   </span>
                 </el-dropdown-item>
@@ -839,7 +839,10 @@ async function sendMessage() {
     console.error('消息发送失败:', error);
 
     // 显示错误消息
-    ElMessage.error('发送消息失败，请稍后重试');
+    ElMessage.error({
+      message: '发送消息失败，请稍后重试',
+      plain: true
+    });
 
     // 清理资源
     isLoading.value = false;
@@ -1261,7 +1264,10 @@ async function createNewChat() {
     isCreatingChat.value = true
     const token = localStorage.getItem('token')
     if (!token) {
-      ElMessage.error('未找到用户令牌，请先登录')
+      ElMessage.error({
+        message: '未找到用户令牌，请先登录',
+        plain: true
+      })
       isCreatingChat.value = false
       return
     }
@@ -1269,7 +1275,10 @@ async function createNewChat() {
     // 验证登录状态
     const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true'
     if (!isLoggedIn) {
-      ElMessage.error('用户未登录或登录状态无效，请刷新页面重新登录')
+      ElMessage.error({
+        message: '用户未登录或登录状态无效，请刷新页面重新登录',
+        plain: true
+      })
       isCreatingChat.value = false
       return
     }
@@ -1333,7 +1342,10 @@ async function createNewChat() {
         errorMsg += `: 状态码 ${response.status}`
       }
       
-      ElMessage.error(errorMsg)
+      ElMessage.error({
+        message: errorMsg,
+        plain: true
+      })
       isCreatingChat.value = false
       return
     }
@@ -1347,7 +1359,10 @@ async function createNewChat() {
       }
     } catch (e) {
       logError('解析创建对话响应失败:', e)
-      ElMessage.error('创建对话失败: 无法解析服务器响应')
+      ElMessage.error({
+        message: '创建对话失败: 无法解析服务器响应',
+        plain: true
+      })
       isCreatingChat.value = false
       return
     }
@@ -1379,11 +1394,17 @@ async function createNewChat() {
     // 聚焦输入框
     focusInput()
 
-    ElMessage.success('新对话已创建')
+    ElMessage.success({
+      message: '新对话已创建',
+      plain: true
+    })
   } catch (error) {
     logError('创建新对话失败:', error)
     // 显示错误消息
-    ElMessage.error('创建新对话失败: ' + (error.message || '未知错误'))
+    ElMessage.error({
+      message: '创建新对话失败: ' + (error.message || '未知错误'),
+      plain: true
+    })
   } finally {
     isCreatingChat.value = false
   }
@@ -1405,7 +1426,9 @@ async function renameChat(chat) {
             return '标题不能为空'
           }
           return true
-        }
+        },
+        customClass: 'rename-dialog-custom',
+        roundButton: true
       }
     )
 
@@ -1450,14 +1473,20 @@ async function renameChat(chat) {
         currentChatTitle.value = newTitle
       }
 
-      ElMessage.success('重命名成功')
+      ElMessage.success({
+        message: '重命名成功',
+        plain: true
+      })
 
       // 刷新对话列表
       await fetchUserChats()
     }
   } catch (error) {
     logError('重命名对话失败:', error)
-    ElMessage.error('重命名失败，请稍后重试')
+    ElMessage.error({
+      message: '重命名失败，请稍后重试',
+      plain: true
+    })
   }
 }
 
@@ -1471,7 +1500,10 @@ async function deleteChat(chat) {
       {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
-        type: 'warning'
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger',
+        customClass: 'delete-dialog-custom',
+        roundButton: true
       }
     )
 
@@ -1520,7 +1552,10 @@ async function deleteChat(chat) {
       }
     }
 
-    ElMessage.success('删除成功')
+    ElMessage.success({
+      message: '删除成功',
+      plain: true
+    })
 
     // 刷新对话列表
     await fetchUserChats()
@@ -1529,7 +1564,10 @@ async function deleteChat(chat) {
       return
     }
     logError('删除对话失败:', error)
-    ElMessage.error('删除失败，请稍后重试')
+    ElMessage.error({
+      message: '删除失败，请稍后重试',
+      plain: true
+    })
   }
 }
 
@@ -1804,7 +1842,6 @@ watch(
 .chat-actions {
   display: flex;
   align-items: center;
-  gap: 5px;
 }
 
 .chat-actions .el-button {
@@ -1984,5 +2021,112 @@ watch(
 .clearfix {
   clear: both;
   height: 1px;
+}
+
+/* 自定义对话框样式 */
+:global(.delete-dialog-custom) {
+  width: 340px !important;
+  border-radius: 12px !important;
+}
+
+:global(.delete-dialog-custom .el-message-box__header) {
+  padding-top: 15px;
+}
+
+:global(.delete-dialog-custom .el-message-box__content) {
+  padding: 15px;
+}
+
+:global(.delete-dialog-custom .el-message-box__btns) {
+  padding: 10px 15px 15px;
+}
+
+:global(.delete-dialog-custom .el-button--danger) {
+  background-color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+:global(.delete-dialog-custom .el-message-box__btns button) {
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+/* 重命名对话框样式 */
+:global(.rename-dialog-custom) {
+  width: 340px !important;
+  border-radius: 12px !important;
+}
+
+:global(.rename-dialog-custom .el-message-box__header) {
+  padding-top: 15px;
+}
+
+:global(.rename-dialog-custom .el-message-box__content) {
+  padding: 15px;
+}
+
+:global(.rename-dialog-custom .el-message-box__input) {
+  padding: 5px 0;
+}
+
+:global(.rename-dialog-custom .el-message-box__btns) {
+  padding: 10px 15px 15px;
+}
+
+:global(.rename-dialog-custom .el-message-box__btns button) {
+  border-radius: 8px;
+  padding: 8px 16px;
+}
+
+/* 在style标签内添加下拉菜单的自定义样式 */
+:global(.chat-dropdown-menu) {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+  padding: 4px 0 !important;
+}
+
+:global(.chat-dropdown-menu .el-dropdown-menu__item) {
+  padding: 8px 16px !important;
+  transition: all 0.2s;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin: 0 !important;
+  border-radius: 8px !important;
+  margin: 2px 4px !important;
+  width: calc(100% - 8px) !important;
+}
+
+:global(.chat-dropdown-menu .el-dropdown-menu__item:hover) {
+  background-color: #f5f7fa !important;
+}
+
+:global(.chat-dropdown-menu .el-dropdown-menu__item.is-disabled) {
+  color: #c0c4cc !important;
+  cursor: not-allowed !important;
+  font-size: 12px !important;
+}
+
+/* 添加操作图标样式 */
+.action-icon {
+  width: 16px;
+  height: 16px;
+  margin-left: 8px;
+  opacity: 0.7;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.action-icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.edit-icon:hover {
+  color: #409EFF;
+}
+
+.delete-icon:hover {
+  color: #F56C6C;
 }
 </style>

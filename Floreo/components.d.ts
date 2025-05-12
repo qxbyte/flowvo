@@ -11,6 +11,7 @@ declare module 'vue' {
     ChatInput: typeof import('./src/components/chat/ChatInput.vue')['default']
     ChatMessages: typeof import('./src/components/chat/ChatMessages.vue')['default']
     ChatSidebar: typeof import('./src/components/chat/ChatSidebar.vue')['default']
+    ConfirmDialog: typeof import('./src/components/common/ConfirmDialog.vue')['default']
     DocumentModal: typeof import('./src/components/document/DocumentModal.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAvatar: typeof import('element-plus/es')['ElAvatar']
