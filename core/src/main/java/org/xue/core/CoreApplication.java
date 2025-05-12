@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.xue.core.functioncall.dto.model.Tool;
 import org.xue.core.functioncall.executor.FunctionRegistry;
 import org.xue.core.functioncall.util.FunctionDefinitionRegistry;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Slf4j
 @SpringBootApplication
+@EnableFeignClients(basePackages = "org.xue.core.client")
 public class CoreApplication implements CommandLineRunner {
 
     public static void main(String[] args) {

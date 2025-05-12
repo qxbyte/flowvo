@@ -9,18 +9,23 @@ spring:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
 
+  cloud:
+    eureka:
+      client:
+        service‑url:
+          defaultZone: http://localhost:8761/eureka
+        fetch‑registry: true
+        # 是否自己注册到注册中心
+        register‑with‑eureka: true
+        enabled: true
+      instance:
+        instance‑id: ${spring.application.name}_${server.port}
+        prefer‑ip‑address: true
+        lease-renewal-interval-in-seconds: 30  #服务提供者实例续期时间间隔
+        lease-expiration-duration-in-seconds: 90 #服务提供者失效的时间，默认为90秒。
+
   main:
     allow-bean-definition-overriding: true
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://localhost:8761/eureka
-  instance:
-    instance-id: api-common_${server.port}
-    prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 30  #服务提供者实例续期时间间隔
-    lease-expiration-duration-in-seconds: 90 #服务提供者失效的时间，默认为90秒。
 
 logging:
   level:

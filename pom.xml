@@ -16,6 +16,7 @@
     <packaging>pom</packaging>  <!-- 关键点，聚合用 -->
     <modules>
         <module>core</module>
+        <module>api</module>
         <module>mcp-common</module>
         <module>mcp-mysql</module>
         <module>mcp-cache</module>

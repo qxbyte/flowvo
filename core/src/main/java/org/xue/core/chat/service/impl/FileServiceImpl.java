@@ -5,10 +5,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.xue.api.dto.request.milvus.InsertChunksRequest;
+import org.xue.api.dto.request.milvus.SearchChunksRequest;
 import org.xue.core.chat.entity.FileInfo;
 import org.xue.core.chat.repository.FileInfoRepository;
 import org.xue.core.chat.service.FileService;
 import org.xue.core.chat.util.ContentUtils;
+import org.xue.core.client.feign.MilvusFeign;
 import org.xue.core.milvus.service.ChunkMilvusService;
 
 import java.io.IOException;
@@ -20,10 +23,12 @@ public class FileServiceImpl implements FileService {
 
     private final FileInfoRepository fileInfoRepository;
     private final ChunkMilvusService milvusService;
+    private final MilvusFeign milvusFeign;
 
-    public FileServiceImpl(FileInfoRepository fileInfoRepository, ChunkMilvusService milvusService) {
+    public FileServiceImpl(FileInfoRepository fileInfoRepository, ChunkMilvusService milvusService, MilvusFeign milvusFeign) {
         this.fileInfoRepository = fileInfoRepository;
         this.milvusService = milvusService;
+        this.milvusFeign = milvusFeign;
     }
 
     @Override
@@ -51,7 +56,8 @@ public class FileServiceImpl implements FileService {
         fileInfo.setUploadTime(LocalDateTime.now());
 
         //保存向量数据库
-        milvusService.insertChunks(content, fileInfo.getId());
+//        milvusService.insertChunks(content, fileInfo.getId());
+        milvusFeign.insertChunks(new InsertChunksRequest(content, fileInfo.getId()));
 
         return fileInfo; // 不在这里保存，由调用者设置userId后保存
     }
@@ -81,6 +87,7 @@ public class FileServiceImpl implements FileService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteDocument(String id) {
         fileInfoRepository.deleteById(id);
-        milvusService.deleteById(id);
+//        milvusService.deleteById(id);
+        milvusFeign.deleteById(id);
     }
 }
