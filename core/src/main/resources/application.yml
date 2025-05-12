@@ -1,0 +1,107 @@
+server:
+  port: 8080
+# http://localhost:8080/sendStream-test
+
+spring:
+  application:
+    name: assistant
+
+  devtools:
+    restart:
+      enabled: false
+
+  security:
+    user:
+      name: admin
+      password: 123456
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/springaibot?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
+    username: flowvouser
+    password: Aa111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  ai:
+    openai:
+      api-key: sk-741ef1518f0945c78157f4926c2ddde6
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.8
+          max-tokens: 2048
+      embedding:
+        options:
+          model: deepseek-embedding
+          # max-tokens: 8191         # 按照 deepseek embedding API 要求（可以省略，按需添加）
+
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+    vectorstore:
+      qdrant:
+        # host, port 指定你 Qdrant 服务的地址（本地用localhost，服务器用IP）
+        host: localhost
+        port: 6334         # gRPC 端口！不是 REST 6333
+        collection: user_uploaded  # 指定集合名
+
+  # 这是 Spring Boot/Spring Framework 的全局开关，用来允许同名的 Bean 被多次定义时，后定义的 Bean 会覆盖前面的
+  main:
+    allow-bean-definition-overriding: true
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+    cache: false
+
+# JWT配置
+jwt:
+  secret: bTn5CjmhDSqFdBvKWLhPcCmH4n42jKnZeY6LzmNKRnawT2JyX9dM3h5L6qTVczK8
+  expiration: 86400000  # 24小时有效期（毫秒）
+
+# OkHttp实现openai api调用
+ai:
+  openai:
+    api-key: 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
+#      api-key: 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
+    base-url: https://api.openai.com
+    # 网络连接超时设置（秒）
+    connect-timeout: 30
+    read-timeout: 120
+    # 代理设置
+    proxy:
+      enabled: true  # 是否启用代理
+      host: 127.0.0.1
+      port: 7890
+    chat:
+      options:
+        model: gpt-4-turbo
+        temperature: 0.8
+        max-tokens: 2048
+
+logging:
+  level:
+    root: INFO
+    org.springframework.boot.autoconfigure: WARN
+    org.springframework.security: DEBUG
+    org.springframework.boot.devtools: DEBUG
+    org.xue.milvus: DEBUG
+
+proxy:
+  host: 127.0.0.1
+  port: 7890
+
+# 文本分割/向量化模型
+local:
+  embedding:
+    server: http://localhost:8000
+
