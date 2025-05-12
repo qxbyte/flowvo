@@ -10,7 +10,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller to expose ChunkMilvusService methods for OpenFeign clients.
+ * REST 控制器为 OpenFeign 客户端暴露 ChunkMilvusService 方法。
  */
 @RestController
 @RequestMapping("/api/milvus")
@@ -20,7 +20,7 @@ public class ChunkMilvusController {
     private final ChunkMilvusService chunkMilvusService;
 
     /**
-     * Ensure the collection exists, create if not.
+     * 确保集合存在，如果不存在，则创建 。
      */
     @PostMapping("/collections/create")
     public ResponseEntity<Void> createCollection() {
@@ -29,8 +29,8 @@ public class ChunkMilvusController {
     }
 
     /**
-     * Insert document chunks and embeddings.
-     * @param request contains document text and document id
+     * 插入文档块和嵌入。
+     * @param request 包含文档文本和文档 ID
      */
     @PostMapping("/chunks/insert")
     public ResponseEntity<Void> insertChunks(@RequestBody InsertChunksRequest request) {
@@ -39,9 +39,9 @@ public class ChunkMilvusController {
     }
 
     /**
-     * Search similar chunks by query text.
-     * @param request contains query text and topK
-     * @return list of matching chunks
+     * 按查询文本搜索相似文本块。
+     * @param request 包含查询文本和 topK
+     * @return 匹配 chunk 列表
      */
     @PostMapping("/chunks/search")
     public ResponseEntity<List<String>> searchChunks(@RequestBody SearchChunksRequest request) {
@@ -51,8 +51,8 @@ public class ChunkMilvusController {
     }
 
     /**
-     * Delete chunks by document id.
-     * @param id the document id to delete
+     * 按文档 ID 删除块。
+     * @param id 要删除的文档 ID
      */
     @DeleteMapping("/chunks/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable String id) {
