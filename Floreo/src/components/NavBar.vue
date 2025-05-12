@@ -9,10 +9,9 @@
               <img src="@/assets/logo.png" alt="AI Logo" class="logo-image" />
             </router-link>
             <ul class="nav-links">
-              <li><router-link to="/">首页</router-link></li>
-              <li><router-link to="/documents">文档</router-link></li>
-              <li><router-link to="/chat">聊天</router-link></li>
-              <li><router-link to="/service">业务</router-link></li>
+              <li><router-link to="/documents" class="nav-link">文档管理</router-link></li>
+              <li><router-link to="/chat" class="nav-link">知识库Ask</router-link></li>
+              <li><router-link to="/service" class="nav-link">业务系统</router-link></li>
             </ul>
           </div>
         </div>
@@ -31,7 +30,7 @@
           <el-dropdown trigger="click" class="user-dropdown">
             <el-avatar :size="32" :src="userAvatar" />
             <template #dropdown>
-              <el-dropdown-menu>
+              <el-dropdown-menu class="custom-dropdown-menu">
                 <el-dropdown-item>个人信息</el-dropdown-item>
                 <el-dropdown-item>设置</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
@@ -63,7 +62,7 @@ const handleLogout = () => {
   localStorage.removeItem('token')
   localStorage.removeItem('userId')
   localStorage.removeItem('username')
-  
+
   // 重定向到登录页面
   router.push('/login')
 }
@@ -140,15 +139,30 @@ const handleLogout = () => {
 .nav-links li a {
   text-decoration: none;
   color: #333;
-  font-size: 15px; /* 稍微增大字体 */
-  transition: color 0.2s;
-  font-weight: 500; /* 增加字体粗细 */
+  font-size: 15px;
+  transition: all 0.3s;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 20px;
+  position: relative;
+  border: 1px solid transparent;
 }
 
 /* 导航链接悬停和激活状态 */
-.nav-links li a:hover,
+.nav-links li a:hover {
+  color: #4f46e5;
+}
+
 .nav-links li a.router-link-active {
   color: #4f46e5;
+  border-color: #4f46e5;
+  font-weight: 600;
+  background-color: transparent;
+}
+
+/* 移除下方指示线 */
+.nav-link::before {
+  display: none;
 }
 
 /* 右侧区域样式 */
@@ -178,5 +192,31 @@ const handleLogout = () => {
 /* 下拉菜单内容样式 */
 .el-dropdown-menu {
   min-width: 120px; /* 增加下拉菜单宽度 */
+}
+
+/* 自定义下拉菜单样式 */
+:global(.custom-dropdown-menu) {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+  overflow: hidden;
+  padding: 4px 0 !important;
+}
+
+:global(.custom-dropdown-menu .el-dropdown-menu__item) {
+  padding: 8px 20px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin: 2px 4px !important;
+  width: calc(100% - 8px) !important;
+}
+
+:global(.custom-dropdown-menu .el-dropdown-menu__item:hover) {
+  background-color: #f5f7fa !important;
+}
+
+:global(.custom-dropdown-menu .el-dropdown-menu__item.is-disabled) {
+  color: #c0c4cc !important;
 }
 </style>

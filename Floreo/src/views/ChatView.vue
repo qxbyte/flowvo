@@ -21,10 +21,13 @@ import NavBar from '@/components/NavBar.vue'
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import ChatSidebar from '@/components/chat/ChatSidebar.vue'
 import ChatMessages from '@/components/chat/ChatMessages.vue'
 import ChatInput from '@/components/chat/ChatInput.vue'
 import { useChat } from '@/composables/useChat'
+
+const router = useRouter()
 
 // 使用组合式函数
 const {
@@ -43,7 +46,28 @@ let refreshTimer: number | null = null
 
 // 页面加载时获取对话记录列表
 onMounted(async () => {
-  console.log('ChatView 组件已挂载，准备加载对话记录...')
+  console.log('ChatView 组件已挂载，检查用户认证状态')
+  
+  // 检查用户是否已登录
+  const token = localStorage.getItem('token')
+  const isAuthenticated = token && localStorage.getItem('isAuthenticated') === 'true'
+  
+  if (!isAuthenticated) {
+    console.log('用户未登录，重定向到登录页面')
+    // 清除可能存在的无效认证数据
+    localStorage.removeItem('isAuthenticated')
+    localStorage.removeItem('token')
+    localStorage.removeItem('userId')
+    localStorage.removeItem('username')
+    
+    // 重定向到登录页
+    router.push('/login')
+    return // 防止继续执行后续代码
+  }
+  
+  console.log('用户已登录，准备加载对话记录...')
+  console.log('当前登录用户:', localStorage.getItem('username'))
+  
   await loadChatRecords()
   console.log('对话记录加载完成，记录数量:', chatRecords.value.length, '详细数据:', chatRecords.value)
   

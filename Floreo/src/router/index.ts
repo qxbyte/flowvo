@@ -50,12 +50,18 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
+  console.log('路由守卫检查: 目标路径', to.path)
+  
   // 检查是否存在有效token
   const token = localStorage.getItem('token')
   const isAuthenticated = token && localStorage.getItem('isAuthenticated') === 'true'
+  
+  console.log('认证状态:', isAuthenticated ? '已登录' : '未登录')
 
   // 需要鉴权的路由，但没有有效的token
   if (to.meta.requiresAuth && !isAuthenticated) {
+    console.log('拦截未授权访问，重定向到登录页面')
+    
     // 清除无效的认证信息
     localStorage.removeItem('isAuthenticated')
     localStorage.removeItem('token')
