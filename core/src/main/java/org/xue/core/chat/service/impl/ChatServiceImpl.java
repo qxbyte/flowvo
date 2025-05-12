@@ -68,6 +68,18 @@ public class ChatServiceImpl implements ChatService {
         newRecord.setUpdateTime(LocalDateTime.now());
         return chatRecordRepository.save(newRecord);
     }
+
+    @Override
+    public ChatRecord createNewChatRecordwithType(String userId, String type) {
+        ChatRecord newRecord = new ChatRecord();
+        newRecord.setId(UUID.randomUUID().toString());
+        newRecord.setTitle("新的对话");
+        newRecord.setUserId(userId);
+        newRecord.setType(type);
+        newRecord.setCreateTime(LocalDateTime.now());
+        newRecord.setUpdateTime(LocalDateTime.now());
+        return chatRecordRepository.save(newRecord);
+    }
     
     @Override
     public ChatRecord getOrCreateChatRecordByType(String userId, String type) {

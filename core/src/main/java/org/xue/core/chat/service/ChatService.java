@@ -52,6 +52,7 @@ public interface ChatService {
     List<Messages> getMessagesByChatId(String chatId);
 
     ChatRecord createNewChatRecord(String userId);
+    ChatRecord createNewChatRecordwithType(String userId, String type);
     
     /**
      * 创建或获取指定类型的聊天记录
