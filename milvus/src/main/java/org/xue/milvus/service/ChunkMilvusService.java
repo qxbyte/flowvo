@@ -51,19 +51,30 @@ public class ChunkMilvusService {
             HasCollectionParam.newBuilder().withCollectionName(COLLECTION).build()
         );
         if (exist.getData() != Boolean.TRUE) {
-            FieldType pk = FieldType.newBuilder().withName(PK_FIELD).withDataType(DataType.Int64).withPrimaryKey(true).withAutoID(true).build(); //设置自增 IDwithAutoID(true)
-            FieldType txt = FieldType.newBuilder().withName(TEXT_FIELD).withDataType(DataType.VarChar).withMaxLength(1024).build();
-            FieldType vec = FieldType.newBuilder().withName(VECTOR_FIELD).withDataType(DataType.FloatVector).withDimension(VECTOR_DIM).build(); //设置向量维度 withDimension(VECTOR_DIM)
-            FieldType docId = FieldType.newBuilder().withName(DOC_ID).withDataType(DataType.VarChar).withMaxLength(100).build(); //用于删除文档向量数据
+
+            // 1. 定义一个 CollectionSchemaParam
+            CollectionSchemaParam schema = CollectionSchemaParam.newBuilder()
+                .addFieldType(FieldType.newBuilder().withName(PK_FIELD).withDataType(DataType.Int64).withPrimaryKey(true).withAutoID(true).build()) //设置自增 IDwithAutoID(true)
+                .addFieldType(FieldType.newBuilder().withName(TEXT_FIELD).withDataType(DataType.VarChar).withMaxLength(1024).build())
+                .addFieldType(FieldType.newBuilder().withName(VECTOR_FIELD).withDataType(DataType.FloatVector).withDimension(VECTOR_DIM).build()) //设置向量维度 withDimension(VECTOR_DIM)
+                .addFieldType(FieldType.newBuilder().withName(DOC_ID).withDataType(DataType.VarChar).withMaxLength(100).build()) //用于删除文档向量数据
+                // … 更多字段 …
+                .build();
+
+//            FieldType pk = FieldType.newBuilder().withName(PK_FIELD).withDataType(DataType.Int64).withPrimaryKey(true).withAutoID(true).build(); //设置自增 IDwithAutoID(true)
+//            FieldType txt = FieldType.newBuilder().withName(TEXT_FIELD).withDataType(DataType.VarChar).withMaxLength(1024).build();
+//            FieldType vec = FieldType.newBuilder().withName(VECTOR_FIELD).withDataType(DataType.FloatVector).withDimension(VECTOR_DIM).build(); //设置向量维度 withDimension(VECTOR_DIM)
+//            FieldType docId = FieldType.newBuilder().withName(DOC_ID).withDataType(DataType.VarChar).withMaxLength(100).build(); //用于删除文档向量数据
 
             CreateCollectionParam createParam = CreateCollectionParam.newBuilder()
                     .withCollectionName(COLLECTION)
                     .withDescription("Doc Chunks Embedding")
+                    .withSchema(schema)
                     .withShardsNum(2)
-                    .addFieldType(pk)
-                    .addFieldType(txt)
-                    .addFieldType(vec)
-                    .addFieldType(docId)
+//                    .addFieldType(pk)
+//                    .addFieldType(txt)
+//                    .addFieldType(vec)
+//                    .addFieldType(docId)
                     .build();
             milvusClient.createCollection(createParam);
 

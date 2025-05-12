@@ -7,8 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.xue.api.dto.request.milvus.SearchChunksRequest;
 import org.xue.core.chat.entity.ChatRecord;
 import org.xue.core.chat.entity.Messages;
+import org.xue.core.client.feign.MilvusFeign;
 import org.xue.core.entity.User;
 import org.xue.core.chat.service.AIService;
 import org.xue.core.chat.service.ChatService;
@@ -37,6 +39,9 @@ public class ChatController {
     private final UserService userService;
 
     private final ChunkMilvusService milvusService;
+
+    private final MilvusFeign milvusFeign;
+
 
     // 获取当前登录用户
     private User getCurrentUser() {
@@ -136,7 +141,9 @@ public class ChatController {
             chatService.saveMessage(chatId, "user", message);
     
             // ==== 1. 检索向量库知识 ====
-            List<String> retrievedChunks = milvusService.searchSimilarChunks(message, 2);
+//            List<String> retrievedChunks = milvusService.searchSimilarChunks(message, 2);
+            List<String> retrievedChunks = milvusFeign.searchChunks(new SearchChunksRequest(message, 2));
+
             
             // ==== 2. 拼接prompt ====
             StringBuilder promptBuilder = new StringBuilder();
