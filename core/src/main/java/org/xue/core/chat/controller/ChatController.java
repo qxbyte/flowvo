@@ -58,8 +58,8 @@ public class ChatController {
     @GetMapping("/records")
     public List<Map<String, Object>> getChatList() {
         User user = getCurrentUser();
-        
-        List<ChatRecord> records = chatService.getChatRecordsByUserId(user.getId().toString());
+        String type = "CHAT"; // 默认类型
+        List<ChatRecord> records = chatService.getChatRecordsByUserIdAndType(user.getId().toString(), type);
         return records.stream()
             .map(record -> {
                 Map<String, Object> recordMap = new HashMap<>();
@@ -90,8 +90,9 @@ public class ChatController {
     public ResponseEntity<Map<String, String>> createNewChat() {
         User user = getCurrentUser();
 
+        String type = "CHAT";
         // 设置用户ID
-        ChatRecord newRecord = chatService.createNewChatRecord(user.getId().toString());
+        ChatRecord newRecord = chatService.createNewChatRecordwithType(user.getId().toString(), type);
 
         Map<String, String> response = new HashMap<>();
         response.put("id", newRecord.getId());
