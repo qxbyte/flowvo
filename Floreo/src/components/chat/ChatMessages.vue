@@ -89,10 +89,16 @@ const formatMessage = (content: string): string => {
 // 复制消息内容
 const copyMessage = (content: string) => {
   navigator.clipboard.writeText(content).then(() => {
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success({
+      message: '已复制到剪贴板',
+      plain: true
+    })
   }).catch(err => {
     console.error('复制失败:', err)
-    ElMessage.error('复制失败')
+    ElMessage.error({
+      message: '复制失败',
+      plain: true
+    })
   })
 }
 
