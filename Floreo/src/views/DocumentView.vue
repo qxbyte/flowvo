@@ -107,7 +107,10 @@ const handleFiles = async (files: FileList) => {
     const file = files[i]
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
     if (!allowedTypes.includes(fileExtension)) {
-      ElMessage.warning(`不支持的文件类型：${fileExtension}\n请上传 .doc, .docx, .pdf, .txt 格式的文件`)
+      ElMessage.warning({
+        message: `不支持的文件类型：${fileExtension}\n请上传 .doc, .docx, .pdf, .txt 格式的文件`,
+        plain: true
+      })
       continue
     }
     formData.append('file', file)
@@ -126,7 +129,10 @@ const handleFiles = async (files: FileList) => {
     if (error.response && error.response.status === 401) {
       router.push('/login')
     } else {
-      ElMessage.error('文件上传失败，请重试')
+      ElMessage.error({
+        message: '文件上传失败，请重试',
+        plain: true
+      })
     }
   } finally {
     loading.value = false
@@ -196,13 +202,17 @@ const deleteDocument = async (id: string) => {
     ElMessage({
       message: '删除成功！',
       type: 'success',
+      plain: true
     })
   } catch (error) {
     console.error('删除文档错误:', error)
     if (error.response && error.response.status === 401) {
       router.push('/login')
     } else {
-      ElMessage.error('删除文档失败，请重试')
+      ElMessage.error({
+        message: '删除文档失败，请重试',
+        plain: true
+      })
     }
   } finally {
     loading.value = false
