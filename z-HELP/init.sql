@@ -1,11 +1,21 @@
 
 
---创建数据库用户
+-- 创建数据库用户
+CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'Aa111111';
 GRANT ALL PRIVILEGES ON springaibot.* TO 'springai'@'localhost';
 FLUSH PRIVILEGES;
 
+-- 创建新用户 flowvouser 并设置密码
+CREATE USER 'flowvouser'@'localhost' IDENTIFIED BY 'Aa111111';
 
---创建users表
+-- 给用户授权访问 flowvo 库
+GRANT ALL PRIVILEGES ON springaibot.* TO 'flowvouser'@'localhost';
+
+-- 刷新权限
+FLUSH PRIVILEGES;
+
+
+-- 创建users表
 create table users
 (
     id       bigint auto_increment
@@ -20,7 +30,7 @@ create table users
         unique (username)
 );
 
-CREATE USER 'springuser'@'localhost' IDENTIFIED BY 'Aa111111';
+
 
 
 --创建数据库表
@@ -53,17 +63,20 @@ CREATE TABLE `file_info` (
 
 
 # function call多轮对话记录
-CREATE TABLE call_message (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键 ID',
 
-    chat_id BIGINT NOT NULL COMMENT '所属对话 ID，可用于区分不同对话',
-    role VARCHAR(20) NOT NULL COMMENT '角色：user / assistant / tool',
+create table call_message
+(
+    id           bigint auto_increment comment '主键 ID'
+        primary key,
+    chat_id      varchar(100)                       not null comment '所属对话 ID，可用于区分不同对话',
+    role         varchar(20)                        not null comment '角色：user / assistant / tool',
+    content      text                               null comment '普通对话内容，如果是 tool_calls 则为 null',
+    name         varchar(100)                       null comment '函数名，仅 tool 用到',
+    tool_call_id varchar(100)                       null comment '函数调用 ID，仅 tool 用到',
+    tool_calls   json                               null comment '如果是 assistant 且使用了 tool_calls，完整 JSON 存这里',
+    created_at   datetime default CURRENT_TIMESTAMP null comment '创建时间'
+)
+    comment '聊天记录表（支持函数调用）';
 
-    content TEXT COMMENT '普通对话内容，如果是 tool_calls 则为 null',
-    name VARCHAR(100) COMMENT '函数名，仅 tool 用到',
-    tool_call_id VARCHAR(100) COMMENT '函数调用 ID，仅 tool 用到',
-
-    tool_calls JSON COMMENT '如果是 assistant 且使用了 tool_calls，完整 JSON 存这里',
-
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
-) COMMENT='聊天记录表（支持函数调用）';
+ALTER TABLE chat_record
+ADD COLUMN type VARCHAR(50) DEFAULT 'user' COMMENT '对话类型：CHAT-普通对话，AIPROCESS-系统业务对话';
