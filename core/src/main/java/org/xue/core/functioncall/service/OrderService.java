@@ -27,6 +27,13 @@ public interface OrderService {
     Optional<Order> findById(Long id);
     
     /**
+     * 根据订单号查询订单信息
+     * @param orderNo 订单号
+     * @return 订单信息
+     */
+    Optional<Order> findByOrderNo(String orderNo);
+    
+    /**
      * 根据条件分页查询订单列表
      * @param orderNo 订单号（可选）
      * @param customerId 客户ID（可选）
@@ -52,6 +59,14 @@ public interface OrderService {
      * @return 更新后的订单信息
      */
     Order updateOrderStatus(Long id, String status);
+    
+    /**
+     * 根据订单号更新订单状态
+     * @param orderNo 订单号
+     * @param status 新状态
+     * @return 更新后的订单信息
+     */
+    Order updateOrderStatusByOrderNo(String orderNo, String status);
     
     /**
      * 生成订单号

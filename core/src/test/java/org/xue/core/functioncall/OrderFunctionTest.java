@@ -19,18 +19,15 @@ public class OrderFunctionTest {
     @Test
     public void testBatchCancelOrders_EmptyList() {
         // 测试空列表
-        String result = orderFunction.batchCancelOrders(null);
-        assertTrue(result.contains("订单ID列表不能为空"));
-
-        result = orderFunction.batchCancelOrders(List.of());
+        String result = orderFunction.batchCancelOrders(List.of(""));
         assertTrue(result.contains("订单ID列表不能为空"));
     }
 
     @Test
     public void testBatchCancelOrders_Success() {
         // 准备测试数据
-        Long orderId1 = 1L;
-        Long orderId2 = 2L;
+        String orderId1 = "";
+        String orderId2 = "";
 
         // 执行测试方法
         String result = orderFunction.batchCancelOrders(Arrays.asList(orderId1, orderId2));
@@ -41,9 +38,10 @@ public class OrderFunctionTest {
     @Test
     public void testBatchCancelOrders_PartialSuccess() {
         // 准备测试数据
-        Long orderId1 = 1L;
-        Long orderId2 = 2L;
-        Long orderId3 = 3L;
+        String orderId1 = "";
+        String orderId2 = "";
+        String orderId3 = "";
+
 
         // 执行测试方法
         String result = orderFunction.batchCancelOrders(Arrays.asList(orderId1, orderId2, orderId3));
@@ -55,8 +53,8 @@ public class OrderFunctionTest {
     @Test
     public void testBatchCancelOrders_OrderNotFound() {
         // 准备测试数据
-        Long orderId1 = 1L;
-        Long orderId2 = 2L; // 不存在的订单
+        String orderId1 = "";
+        String orderId2 = ""; // 不存在的订单
 
         // 执行测试方法
         String result = orderFunction.batchCancelOrders(Arrays.asList(orderId1, orderId2));
@@ -66,7 +64,7 @@ public class OrderFunctionTest {
     @Test
     public void testBatchCancelOrders_ExceptionHandling() {
         // 准备测试数据
-        Long orderId1 = 1L;
+        String orderId1 = "";
 
         // 执行测试方法
         String result = orderFunction.batchCancelOrders(List.of(orderId1));

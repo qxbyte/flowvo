@@ -14,6 +14,7 @@ import org.xue.core.functioncall.client.OpenAiClient;
 import org.xue.core.functioncall.dto.model.ChatMessage;
 import org.xue.core.functioncall.dto.model.Tool;
 import org.xue.core.functioncall.entity.CallMessage;
+import org.xue.core.functioncall.executor.FunctionDispatcher;
 import org.xue.core.functioncall.repository.CallMessageRepository;
 import org.xue.core.functioncall.service.FunctionCallService;
 import org.xue.core.functioncall.util.FunctionDefinitionRegistry;
@@ -47,13 +48,12 @@ public class FunctionCallServiceImpl implements FunctionCallService {
     @Value("${ai.openai.chat.options.model}")
     private String model;
 
-    @Autowired
     private final OpenAiClient openAiClient;
-    
-    @Autowired
+
     private final CallMessageRepository callMessageRepository;
-    
-    @Autowired
+
+    private final FunctionDispatcher functionDispatcher;
+
     private final ChatService chatService;
     
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -136,7 +136,8 @@ public class FunctionCallServiceImpl implements FunctionCallService {
                 log.info("触发函数调用: {}, 参数: {}", functionName, argumentsJson);
 
                 // 调用本地函数
-                String functionResult = executeFunction(functionName, argumentsJson);
+//                String functionResult = executeFunction(functionName, argumentsJson);
+                String functionResult = functionDispatcher.dispatchFromJson(toolCall);
 
                 // 构造 tool 类型的回复并添加到 messageHistory
                 ChatMessage toolReply = new ChatMessage();
@@ -308,7 +309,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
                 log.info("发送请求到OpenAI: {}", requestJson);
                 
                 // 添加重试机制处理 SETTINGS preface 错误
-                int maxRetries = 3;
+                int maxRetries = 2;
                 int retryCount = 0;
 
                 while (retryCount <= maxRetries) {
@@ -338,7 +339,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
                                 log.info("触发函数调用: {}, 参数: {}", functionName, argumentsJson);
 
                                 // 调用本地函数
-                                String functionResult = executeFunction(functionName, argumentsJson);
+                                String functionResult = functionDispatcher.dispatchFromJson(toolCall);
 
                                 // 构造 tool 类型的回复并添加到 messageHistory
                                 ChatMessage toolReply = new ChatMessage();

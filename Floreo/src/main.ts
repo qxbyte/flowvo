@@ -8,6 +8,7 @@ import router from './router'
 // 导入Element Plus样式，页面信息提示需要
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/el-message.css'
+import { ElMessage } from 'element-plus'
 
 import App from './App.vue'
 
@@ -47,5 +48,13 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+
+// 配置Element Plus的全局默认值
+app.config.globalProperties.$ELEMENT = {
+  // 消息提示的默认配置
+  message: {
+    plain: true
+  }
+}
 
 app.mount('#app')

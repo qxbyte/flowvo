@@ -212,7 +212,7 @@ export function useChat() {
       if (!token) {
         console.error('未登录，无法加载对话记录')
         chatRecords.value = []
-        
+
         // 检查当前是否在受保护的路由
         if (router.currentRoute.value.meta.requiresAuth) {
           console.log('用户未登录但尝试访问受保护路由，重定向到登录页面')
@@ -221,7 +221,7 @@ export function useChat() {
           localStorage.removeItem('token')
           localStorage.removeItem('userId')
           localStorage.removeItem('username')
-          
+
           // 重定向到登录页
           router.push('/login')
         }
@@ -238,13 +238,13 @@ export function useChat() {
         if (response.status === 401) {
           console.error('登录已过期，请重新登录')
           chatRecords.value = []
-          
+
           // 清除失效的认证信息
           localStorage.removeItem('isAuthenticated')
           localStorage.removeItem('token')
           localStorage.removeItem('userId')
           localStorage.removeItem('username')
-          
+
           // 重定向到登录页
           router.push('/login')
           return
@@ -273,7 +273,7 @@ export function useChat() {
           role: 'system',
           content: '您需要登录才能查看对话记录'
         }]
-        
+
         // 检查当前是否在受保护的路由
         if (router.currentRoute.value.meta.requiresAuth) {
           console.log('用户未登录但尝试访问受保护路由，重定向到登录页面')
@@ -282,7 +282,7 @@ export function useChat() {
           localStorage.removeItem('token')
           localStorage.removeItem('userId')
           localStorage.removeItem('username')
-          
+
           // 重定向到登录页
           router.push('/login')
         }
@@ -301,13 +301,13 @@ export function useChat() {
             role: 'system',
             content: '登录已过期，请重新登录'
           }]
-          
+
           // 清除失效的认证信息
           localStorage.removeItem('isAuthenticated')
           localStorage.removeItem('token')
           localStorage.removeItem('userId')
           localStorage.removeItem('username')
-          
+
           // 重定向到登录页
           router.push('/login')
           return

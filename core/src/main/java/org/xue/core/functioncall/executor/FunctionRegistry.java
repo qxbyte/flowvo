@@ -10,13 +10,13 @@ import java.util.List;
  */
 public interface FunctionRegistry {
 
-    @FunctionCallable(description = "获取天气信息")
-    String getWeather(@FunctionParam(description = "城市名称") String city);
+    String getWeather(String city);
 
-    @FunctionCallable(description = "获取新闻信息")
-    String getNews(@FunctionParam(description = "新闻类别") String category);
+    String getNews(List<Long> categorys);
 
-    @FunctionCallable(description = "根据订单主键ID批量删除订单")
-    public String batchCancelOrders(@FunctionParam(description = "订单主键ID列表") List<Long> orderIds);
+    String batchCancelOrders(List<String> orderIds);
+
+    void foo(List<Long> categorys, String name, Integer count);
+
 }
 

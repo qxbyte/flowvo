@@ -7,6 +7,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.xue.core.chat.entity.ChatRecord;
 import org.xue.core.chat.service.ChatService;
 import org.xue.core.entity.User;
@@ -158,13 +159,14 @@ public class FunctionCallController {
     /**
      * 流式响应的函数调用接口
      */
-    @GetMapping(value = "/invoke-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RequestMapping(value = "/invoke-stream", method = {RequestMethod.GET, RequestMethod.POST}, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @CrossOrigin(origins = "*", allowedHeaders = "*")
     public Flux<String> invokeFunctionStream(
         @RequestParam String question, 
         @RequestParam(required = false) String chatId
     ) {
-        log.info("收到流式调用请求: question={}, chatId={}", question, chatId);
+        log.info("收到流式调用请求: question={}, chatId={}，请求方法={}", question, chatId, 
+                SecurityContextHolder.getContext().getAuthentication() != null ? "已认证" : "未认证");
         // 获取当前登录用户，如果未登录会抛出异常
         User user = getCurrentUser();
         String userId = user.getId().toString();

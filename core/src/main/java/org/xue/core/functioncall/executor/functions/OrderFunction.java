@@ -8,11 +8,9 @@ import org.xue.core.functioncall.entity.Order;
 import org.xue.core.functioncall.executor.BaseFunction;
 import org.xue.core.functioncall.service.OrderService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import org.xue.core.functioncall.annotation.FunctionCallable;
 import org.xue.core.functioncall.annotation.FunctionParam;
 import org.xue.core.util.JsonUtils;
@@ -29,26 +27,25 @@ public class OrderFunction extends BaseFunction {
     /**
      * 批量取消订单
      * 
-     * @param orderIds 订单ID列表
+     * @param orderNos 订单号列表
      * @return 操作结果的JSON字符串，包含成功和失败的订单信息
      */
-    @FunctionCallable(description = "根据订单主键ID批量删除订单")
-    public String batchCancelOrders(@FunctionParam(description = "订单主键ID列表")List<Long> orderIds) {
-        if (orderIds == null || orderIds.isEmpty()) {
-            return createErrorResponse("订单ID列表不能为空");
+    @FunctionCallable(description = "根据订单号批量取消订单")
+    public String batchCancelOrdersByOrderNo(@FunctionParam(description = "订单号列表") List<String> orderNos) {
+        if (orderNos == null || orderNos.isEmpty()) {
+            return createErrorResponse("订单号列表不能为空");
         }
 
         List<Map<String, Object>> successList = new ArrayList<>();
         List<Map<String, Object>> failList = new ArrayList<>();
 
-        for (Long orderId : orderIds) {
+        for (String orderNo : orderNos) {
             try {
-                Optional<Order> orderOpt = orderService.findById(orderId);
+                Optional<Order> orderOpt = orderService.findByOrderNo(orderNo);
                 
                 if (orderOpt.isPresent()) {
                     Order order = orderOpt.get();
                     String currentStatus = order.getStatus();
-                    String orderNo = order.getOrderNo(); // 获取订单号用于展示
                     
                     // 判断订单状态，仅允许未支付的订单进行取消
                     if ("paid".equals(currentStatus) || "cancelled".equals(currentStatus)) {
@@ -60,7 +57,7 @@ public class OrderFunction extends BaseFunction {
                         failList.add(failInfo);
                     } else {
                         // 更新订单状态为取消
-                        Order updatedOrder = orderService.updateOrderStatus(orderId, "cancelled");
+                        Order updatedOrder = orderService.updateOrderStatusByOrderNo(orderNo, "cancelled");
                         
                         Map<String, Object> successInfo = new HashMap<>();
                         successInfo.put("orderNo", updatedOrder.getOrderNo());
@@ -71,17 +68,17 @@ public class OrderFunction extends BaseFunction {
                 } else {
                     // 订单不存在，使用一个友好的格式显示
                     Map<String, Object> failInfo = new HashMap<>();
-                    // 为不存在的订单生成一个临时订单号格式，显示为 "未知订单-{orderId}"
-                    failInfo.put("orderNo", "unknown-" + orderId);
-                    failInfo.put("orderId", orderId);
+                    // 为不存在的订单使用原始订单号
+                    failInfo.put("orderNo", orderNo);
+                    failInfo.put("orderId", null);
                     failInfo.put("reason", "订单不存在");
                     failList.add(failInfo);
                 }
             } catch (Exception e) {
                 // 处理异常，同样使用友好的格式显示
                 Map<String, Object> failInfo = new HashMap<>();
-                failInfo.put("orderNo", "unknown-" + orderId);
-                failInfo.put("orderId", orderId);
+                failInfo.put("orderNo", orderNo);
+                failInfo.put("orderId", null);
                 failInfo.put("reason", "处理异常: " + e.getMessage());
                 failList.add(failInfo);
             }
@@ -105,6 +102,8 @@ public class OrderFunction extends BaseFunction {
                         itemNode.put(key, (Long) value);
                     } else if (value instanceof Integer) {
                         itemNode.put(key, (Integer) value);
+                    } else if (value == null) {
+                        itemNode.putNull(key);
                     }
                 });
             }
@@ -126,6 +125,8 @@ public class OrderFunction extends BaseFunction {
                         itemNode.put(key, (Long) value);
                     } else if (value instanceof Integer) {
                         itemNode.put(key, (Integer) value);
+                    } else if (value == null) {
+                        itemNode.putNull(key);
                     }
                 });
             }
@@ -152,5 +153,14 @@ public class OrderFunction extends BaseFunction {
         } catch (Exception e) {
             return "{\"error\":\"" + message + "\"}";
         }
+    }
+
+    private List<String> getArgs(String csv) {
+        if (csv == null || csv.isBlank()) {
+        return List.of();
+        }
+        return Arrays.stream(csv.split(","))
+                     .map(String::trim)
+                     .collect(Collectors.toList());
     }
 }
