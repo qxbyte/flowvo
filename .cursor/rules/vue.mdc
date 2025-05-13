@@ -1,0 +1,7 @@
+---
+description: 当生成前端代码时遵循规则
+globs: 
+alwaysApply: false
+---
+1.页面上使用到的所有消息提醒ElMessage元素都需要添加上plain: true属性。
+2.页面的按钮、弹窗等元素使用比较圆润的外形。
