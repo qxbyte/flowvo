@@ -10,12 +10,19 @@ public class BaseFunction implements FunctionRegistry {
     }
 
     @Override
-    public String getNews(String category) {
+    public String getNews(List<Long> categorys) {
         return "";
     }
 
     @Override
-    public String batchCancelOrders(List<Long> orderIds) {
+    public String batchCancelOrders(List<String> orderIds) {
         return "";
     }
+
+    @Override
+    public void foo(List<Long> categorys, String name, Integer count) {
+
+    }
+
+
 }

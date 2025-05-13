@@ -18,6 +18,7 @@ import org.xue.core.service.UserService;
 import org.xue.core.milvus.service.ChunkMilvusService;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -142,9 +143,26 @@ public class ChatController {
             chatService.saveMessage(chatId, "user", message);
     
             // ==== 1. 检索向量库知识 ====
-//            List<String> retrievedChunks = milvusService.searchSimilarChunks(message, 2);
-            List<String> retrievedChunks = milvusFeign.searchChunks(new SearchChunksRequest(message, 2));
-
+            List<String> retrievedChunks = new ArrayList<>();
+            try {
+                // 尝试从向量库检索相关知识
+                log.info("开始调用Milvus向量库，查询内容：'{}'，预期返回{}条结果", 
+                         message.substring(0, Math.min(30, message.length())) + "...", 2);
+                retrievedChunks = milvusFeign.searchChunks(new SearchChunksRequest(message, 2));
+                log.info("向量检索成功，获取到{}条相关资料", retrievedChunks.size());
+            } catch (feign.FeignException.BadGateway e) {
+                log.error("向量库服务不可用(502错误): {}, 异常类型: {}", e.getMessage(), e.getClass().getName());
+                // 添加友好提示
+                retrievedChunks.add("很抱歉，知识库检索服务暂时不可用(502错误)，但我会尽力回答您的问题。");
+            } catch (feign.FeignException e) {
+                log.error("向量检索Feign异常: 状态码={}, 消息={}", e.status(), e.getMessage());
+                // 添加友好提示
+                retrievedChunks.add("知识库检索服务返回错误(状态码:" + e.status() + ")，将使用基础知识回答您的问题。");
+            } catch (Exception e) {
+                log.error("向量检索失败: {}, 异常类型: {}", e.getMessage(), e.getClass().getName(), e);
+                // 添加友好提示
+                retrievedChunks.add("向量检索服务遇到问题，无法提供知识库参考，但我会尽力回答您的问题。");
+            }
             
             // ==== 2. 拼接prompt ====
             StringBuilder promptBuilder = new StringBuilder();
