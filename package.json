@@ -1,0 +1,13 @@
+{
+  "name": "Floreo",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite"
+  },
+  "dependencies": {
+    "vue": "^3.2.0"
+  },
+  "devDependencies": {
+    "vite": "^2.9.18"
+  }
+}

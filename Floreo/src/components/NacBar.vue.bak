@@ -1,0 +1,167 @@
+<template>
+  <div class="nav-container">
+    <nav class="navbar">
+      <div class="status-bar">
+        <div class="left-section">
+          <div class="nav-left">
+            <router-link to="/" class="nav-logo">
+              <img src="@/assets/logo.png" alt="AI Logo" class="logo-image" />
+            </router-link>
+            <ul class="nav-links">
+              <li><router-link to="/">首页</router-link></li>
+              <li><router-link to="/documents">文档</router-link></li>
+              <li><router-link to="/chat">聊天</router-link></li>
+              <li><router-link to="/service">业务</router-link></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="right-section">
+          <el-badge :value="3" class="notification-badge">
+            <el-button class="notification-btn" :icon="Bell" circle />
+          </el-badge>
+
+          <el-dropdown trigger="click" class="language-dropdown">
+            <el-button circle>
+              <el-icon><LanguageIcon /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="switchLanguage('zh')">中文</el-dropdown-item>
+                <el-dropdown-item @click="switchLanguage('en')">English</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
+          <el-dropdown trigger="click" class="user-dropdown">
+            <el-avatar :size="32" :src="userAvatar" />
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item>个人信息</el-dropdown-item>
+                <el-dropdown-item>设置</el-dropdown-item>
+                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </div>
+    </nav>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { Bell } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+
+const switchLanguage = (lang: string) => {
+  // 实现语言切换逻辑
+  console.log('切换语言到:', lang)
+}
+
+const handleLogout = () => {
+  // 实现登出逻辑
+  router.push('/login')
+}
+</script>
+
+<style scoped>
+.nav-container {
+  height: 48px;
+  width: 100%;
+}
+
+.navbar {
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  height: 5vh;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-left: 10px;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-image {
+  height: 32px;
+  width: auto;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+
+.nav-links li a:hover,
+.nav-links li a.router-link-active {
+  color: #4f46e5;
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 5vh;
+  padding: 0 1rem;
+  width: 100%; /* ✅ 添加这行，让左右内容能撑满并分布 */
+}
+
+
+.notification-badge :deep(.el-badge__content) {
+  background-color: #f56c6c;
+}
+
+.notification-btn {
+  padding: 8px;
+}
+
+.language-dropdown,
+.user-dropdown {
+  cursor: pointer;
+}
+
+.el-dropdown-menu {
+  min-width: 100px;
+}
+
+
+
+
+
+.left-section,
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+
+</style>

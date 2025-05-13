@@ -33,27 +33,27 @@ public class EmbeddingClient {
     }
 
     // 2. 单条文本向量化
-    public List<Double> embedOne(String text) {
+    public List<Float> embedOne(String text) {
         Map<String, String> req = new HashMap<>();
         req.put("text", text);
         ResponseEntity<Map> resp = restTemplate.postForEntity(baseUrl + "/embed_one", req, Map.class);
         List<?> emb = (List<?>) resp.getBody().get("embedding");
-        List<Double> result = new ArrayList<>();
-        for (Object o : emb) result.add(Double.valueOf(o.toString()));
+        List<Float> result = new ArrayList<>();
+        for (Object o : emb) result.add(Float.valueOf(o.toString()));
         return result;
     }
 
     // 3. 批量文本向量化
-    public List<List<Double>> embedBatch(List<String> texts) {
+    public List<List<Float>> embedBatch(List<String> texts) {
         Map<String, Object> req = new HashMap<>();
         req.put("texts", texts);
         ResponseEntity<Map> resp = restTemplate.postForEntity(baseUrl + "/embed_batch", req, Map.class);
         List<?> arr = (List<?>) resp.getBody().get("embeddings");
-        List<List<Double>> result = new ArrayList<>();
+        List<List<Float>> result = new ArrayList<>();
         for (Object o : arr) {
             List<?> emb = (List<?>) o;
-            List<Double> one = new ArrayList<>();
-            for (Object x : emb) one.add(Double.valueOf(x.toString()));
+            List<Float> one = new ArrayList<>();
+            for (Object x : emb) one.add(Float.valueOf(x.toString()));
             result.add(one);
         }
         return result;
