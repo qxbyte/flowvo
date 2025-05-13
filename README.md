@@ -1,93 +1,145 @@
-# Flowvo
+# 安装node.js
+
+npm create vue@latest .
+
+npm install axios marked highlight.js
+
+npm config set registry https://registry.npmmirror.com
+
+
+# 安装UI组件
+npm install @heroicons/vue @headlessui/vue
+
+### 引入Heroicons图标组件
+npm install @heroicons/vue
+
+---
+[embed_tools_server.py](../python/embed_tools_server.py)
+
+# 引入langchain切分模型
+
+### 安装必要的python库
+1. pip install langchain
+2. pip install langchain sentence-transformers fastapi uvicorn
+
+### 启动虚拟环境Mac/Linux
+source embedding_env/bin/activate
+### 切到服务目录
+cd embedding_service
+### 启动服务
+uvicorn embed_tools_server:app --host 0.0.0.0 --port 8000
+
+### 启动后查看api
+http://localhost:8000/docs
+
+---
+# 安装Milvus
+### 下载docker-compose配置文件
+wget https://github.com/milvus-io/milvus/releases/download/v2.5.10/milvus-standalone-docker-compose.yml -O docker-compose.yml
+### 启动
+sudo docker compose up -d
+
+### 查看运行情况
+docker-compose ps
+      Name                     Command                  State                            Ports
+--------------------------------------------------------------------------------------------------------------------
+milvus-etcd         etcd -advertise-client-url ...   Up             2379/tcp, 2380/tcp
+milvus-minio        /usr/bin/docker-entrypoint ...   Up (healthy)   9000/tcp
+milvus-standalone   /tini -- milvus run standalone   Up             0.0.0.0:19530->19530/tcp, 0.0.0.0:9091->9091/tcp
+
+### 停止和删除 Milvus
+sudo docker compose down
+sudo rm -rf volumes
+
+### Milvus Insight（官方可视化工具）停止更新
+#### 拉取镜像
+docker pull milvusdb/milvus-insight:latest
+#### 一键启动
+docker run -p 3000:3000 -e MILVUS_URL={milvus server IP}:19530 zilliz/attu:v2.5
+docker run --rm -p 3000:3000 milvusdb/milvus-insight:latest
+启动 docker start 容器ID
+
+### 社区可视化工具 attu
+docker run -d --name attu -p 3000:3000 zilliz/attu
 
 
 
-## Getting started
+# ✅ 步骤流程（详细描述）
+### 用户发送消息
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+前端发送用户输入的问题，例如：“请帮我查一下今天上海的天气”。
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### 服务端封装消息（第一轮请求）
 
-## Add your files
+#### 构造 ChatCompletion 请求体：
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+包含用户消息。
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/qiangxue-group/aibot.git
-git branch -M main
-git push -uf origin main
-```
+附加当前支持的 functions 和 function descriptions。
 
-## Integrate with your tools
+明确提示：只回答是否需要调用 function call（是 或 否），不要包含其他解释内容。
 
-- [ ] [Set up project integrations](https://gitlab.com/qiangxue-group/aibot/-/settings/integrations)
+### 大模型回复是否需要 function call
 
-## Collaborate with your team
+#### 模型返回：
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+"content": "是" 或 "content": "否"。
 
-## Test and Deploy
+无需包含任何额外文本。
 
-Use the built-in continuous integration in GitLab.
+### 后端解析“是/否”响应
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+#### 如果是 "否"：
 
-***
+直接把用户问题再次发送给模型（不附加任何 function 信息），
 
-# Editing this README
+获取回答，流式返回给前端。
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+#### 如果是 "是"：
 
-## Suggestions for a good README
+###### 后端再次构造请求体：
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+包含用户原始消息。
 
-## Name
-Choose a self-explaining name for your project.
+附加所有 functions 的完整 JSON 格式。
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+明确提示模型只返回 function_call 字段中的调用信息（JSON）。
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### 模型返回 Function Call JSON
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+#### 示例返回：
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+json
+`{
+  "function_call": {
+    "name": "getWeather",
+    "arguments": {
+      "city": "上海"
+    }
+  }
+}`
+### 后端执行对应方法
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+后端使用反射（或统一注册的 handlerMap）找到对应方法。
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+执行调用，获取返回值。
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### 返回 Function 结果
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+将函数返回值作为回答内容，流式发送到前端页面。
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+# 🔄 对话流逻辑图（文本图）
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+                        用户输入问题
+                            ↓
+    服务端封装问题 + 发送完整 functions JSON + 原始消息给模型                    
+                            ↓                                   
+                模型返回 function_call JSON          
+                            ↓                                   
+                  后端解析并通过反射调用方法             
+                            ↓
+                函数执行结果作为回答流式返回前端
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+---
+# MCP server
+1、实现数据库MCP server (HTTP+JSON‑RPC 调用)

@@ -1,6 +1,4 @@
-# 
-
-安装node.js
+# 安装node.js
 
 npm create vue@latest .
 
