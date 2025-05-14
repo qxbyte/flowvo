@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.xue</groupId>
-    <artifactId>mcp-common</artifactId>
+    <artifactId>mcp-client</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>mcp-common</name>
     <description>mcp-common</description>
@@ -46,6 +46,20 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.briandilley.jsonrpc4j</groupId>
+            <artifactId>jsonrpc4j</artifactId>
+            <version>1.7</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.18.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -72,5 +86,13 @@
             </plugin>
 		</plugins>
     </build>
+
+    <repositories>
+        <!-- 添加JitPack仓库以支持jsonrpc4j -->
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
 </project>
