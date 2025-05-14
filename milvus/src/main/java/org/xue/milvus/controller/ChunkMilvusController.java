@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.xue.api.dto.request.milvus.InsertChunksRequest;
-import org.xue.api.dto.request.milvus.SearchChunksRequest;
+import org.xue.api.milvus.dto.InsertChunksRequest;
+import org.xue.api.milvus.dto.SearchChunksRequest;
 import org.xue.milvus.service.ChunkMilvusService;
 
 import java.util.List;

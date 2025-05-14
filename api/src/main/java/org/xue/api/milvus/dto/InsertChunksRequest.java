@@ -1,4 +1,4 @@
-package org.xue.api.dto.request.milvus;
+package org.xue.api.milvus.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
