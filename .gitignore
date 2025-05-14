@@ -18,6 +18,7 @@
 # Generated files
 /out/
 /_logs/
+/core/_logs/
 /.idea/
 /_downloads/
 

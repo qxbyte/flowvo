@@ -1,0 +1,27 @@
+server:
+  port: 8001
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    max-connections: 10000
+
+spring:
+  application:
+    name: mcp-mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+# （可选）修改 JSON‑RPC 访问路径，默认 " /jsonrpc"
+jsonrpc4j:
+  servlet:
+    path: /rpc
+
+logging:
+  level:
+    root: INFO
+    org.xue.mcpmysql: DEBUG
+    org.springframework.jdbc.core: DEBUG

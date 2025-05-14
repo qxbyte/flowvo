@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.xue.api.dto.request.milvus.SearchChunksRequest;
+import org.xue.api.milvus.dto.SearchChunksRequest;
 import org.xue.core.chat.entity.ChatRecord;
 import org.xue.core.chat.entity.Messages;
 import org.xue.core.client.feign.MilvusFeign;

@@ -3,8 +3,8 @@ package org.xue.core.client.fallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.xue.api.dto.request.milvus.InsertChunksRequest;
-import org.xue.api.dto.request.milvus.SearchChunksRequest;
+import org.xue.api.milvus.dto.InsertChunksRequest;
+import org.xue.api.milvus.dto.SearchChunksRequest;
 import org.xue.core.client.feign.MilvusFeign;
 
 import java.util.ArrayList;
