@@ -1,10 +1,10 @@
-package org.xue.mcpcommon;
+package org.xue.mcpclient;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class McpCommonApplicationTests {
+class McpClientApplicationTests {
 
     @Test
     void contextLoads() {
