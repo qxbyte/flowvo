@@ -1,21 +1,27 @@
-package org.xue.mcpmysql.rpc.dto;
+package org.xue.mcpmysql.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * SQL查询参数对象
+ * SQL查询参数模型
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class SqlQueryParams {
+    
     /**
-     * 要执行的SQL，支持命名参数，例如：SELECT * FROM user WHERE id = :id
+     * SQL查询语句
      */
     private String sql;
     
     /**
-     * SQL参数，key为参数名，value为参数值
+     * 查询参数
      */
     private Map<String, Object> params = new HashMap<>();
 } 
