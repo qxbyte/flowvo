@@ -1,4 +1,4 @@
-package org.xue.mcp_client.config;
+package org.xue.mcp_client.sql.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.xue.mcp_client.rpc.MCPDatabaseService;
+import org.xue.mcp_client.sql.rpc.MCPDatabaseService;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class JsonRpcClientConfig {
     @Bean
     public MCPDatabaseService mcpDatabaseService(ObjectMapper objectMapper) {
         String serviceUrl = mcpMysqlUrl + "/api/rpc/db";
-        logger.info("初始化MCP数据库服务客户端，URL: {}", serviceUrl);
+        logger.info("初始化MCP客户端，服务端URL: {}", serviceUrl);
         
         try {
             // 设置HTTP Header
@@ -73,16 +73,16 @@ public class JsonRpcClientConfig {
                     MCPDatabaseService.class,
                     client);
             
-            logger.info("MCP数据库服务客户端初始化完成");
+            logger.info("MCP客户端初始化完成");
             return service;
         } catch (Exception e) {
-            logger.error("初始化MCP数据库服务客户端失败: {}", e.getMessage(), e);
+            logger.error("初始化MCP客户端失败: {}", e.getMessage(), e);
             if (retryEnabled) {
                 logger.info("将使用降级服务");
                 // 返回一个降级的代理实现
                 return createFallbackProxy();
             } else {
-                throw new RuntimeException("无法连接到MCP数据库服务: " + e.getMessage(), e);
+                throw new RuntimeException("无法连接到MCP服务: " + e.getMessage(), e);
             }
         }
     }
@@ -93,7 +93,7 @@ public class JsonRpcClientConfig {
      */
     private MCPDatabaseService createFallbackProxy() {
         return new MCPDatabaseService() {
-            private final String ERROR_MSG = "MCP数据库服务暂时不可用，请稍后再试";
+            private final String ERROR_MSG = "MCP服务暂时不可用，请稍后再试";
             
             @Override
             public Map<String, Object> executeQuery(String sql, Map<String, Object> params) {

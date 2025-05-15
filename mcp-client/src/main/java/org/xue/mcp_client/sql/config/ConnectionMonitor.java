@@ -1,4 +1,4 @@
-package org.xue.mcp_client.config;
+package org.xue.mcp_client.sql.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcHttpClient;
@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.xue.mcp_client.rpc.MCPDatabaseService;
+import org.xue.mcp_client.sql.rpc.MCPDatabaseService;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;

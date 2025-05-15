@@ -1,4 +1,4 @@
-package org.xue.mcp_client.rpc;
+package org.xue.mcp_client.sql.rpc;
 
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcParam;
