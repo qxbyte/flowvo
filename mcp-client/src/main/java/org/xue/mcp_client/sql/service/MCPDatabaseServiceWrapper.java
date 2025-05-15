@@ -1,8 +1,8 @@
-package org.xue.mcp_client.service;
+package org.xue.mcp_client.sql.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.xue.mcp_client.rpc.MCPDatabaseService;
+import org.xue.mcp_client.sql.rpc.MCPDatabaseService;
 
 import java.util.HashMap;
 import java.util.List;

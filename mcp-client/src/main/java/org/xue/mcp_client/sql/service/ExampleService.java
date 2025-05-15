@@ -1,4 +1,4 @@
-package org.xue.mcp_client.service;
+package org.xue.mcp_client.sql.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

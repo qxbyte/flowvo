@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.xue.mcp_client.service.MCPDatabaseServiceWrapper;
+import org.xue.mcp_client.sql.service.MCPDatabaseServiceWrapper;
 
 @SpringBootApplication
 @EnableScheduling
@@ -25,14 +25,14 @@ public class McpClientApplication {
         String mysqlUrl = env.getProperty("mcp.mysql.url", "http://localhost:8082");
         
         // 打印启动信息
-        logger.info("MCP Common服务已启动, 访问地址: http://localhost:{}{}", port, contextPath);
+        logger.info("MCP Client已启动, 访问地址: http://localhost:{}{}", port, contextPath);
         logger.info("测试接口地址: http://localhost:{}/api/test/status", port);
         logger.info("MCP MySQL服务地址: {}", mysqlUrl);
         
         // 检查服务是否已注册
         MCPDatabaseServiceWrapper mcpService = context.getBean(MCPDatabaseServiceWrapper.class);
         if (mcpService != null) {
-            logger.info("MCP数据库服务客户端已成功注册!");
+            logger.info("MCP客户端已成功注册!");
             
             try {
                 // 尝试获取数据库元数据
