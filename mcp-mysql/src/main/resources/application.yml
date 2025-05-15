@@ -1,0 +1,43 @@
+server:
+  port: 50941
+  servlet:
+    context-path: /
+  tomcat:
+    max-threads: 200
+    max-connections: 10000
+
+spring:
+  application:
+    name: mcp-mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/springaibot?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
+    username: flowvouser
+    password: Aa111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+
+# 应用配置
+app:
+  rpc:
+    path: /api/rpc/db
+
+# CORS配置
+cors:
+  allowed-origins: "*"
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  allowed-headers: "*"
+  max-age: 3600
+
+logging:
+  level:
+    root: INFO
+    org.xue.mcpmysql: DEBUG
+    org.springframework.jdbc.core: DEBUG
+    com.googlecode.jsonrpc4j: DEBUG
+    org.springframework.web: DEBUG
