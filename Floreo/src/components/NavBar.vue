@@ -8,7 +8,7 @@
             <router-link to="/" class="nav-logo">
               <img src="@/assets/logo.png" alt="AI Logo" class="logo-image" />
             </router-link>
-            <ul class="nav-links">
+            <ul class="nav-links" ref="navLinksRef">
               <li><router-link to="/documents" class="nav-link">文档管理</router-link></li>
               <li><router-link to="/chat" class="nav-link">知识库Ask</router-link></li>
               <li><router-link to="/service" class="nav-link">业务系统</router-link></li>
@@ -44,12 +44,86 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { Bell } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
+const navLinksRef = ref<HTMLElement | null>(null)
 const userAvatar = ref('https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+
+// 记录当前和上一个激活导航项的位置信息
+const prevPosition = ref({ left: 0, width: 0 })
+const currentPosition = ref({ left: 0, width: 0 })
+const isInitial = ref(true)
+
+// 更新活动导航项的样式
+const updateActiveNavStyle = () => {
+  if (!navLinksRef.value) return
+  
+  const activeLink = navLinksRef.value.querySelector('.router-link-active') as HTMLElement
+  
+  if (activeLink) {
+    // 获取活动链接的位置和尺寸
+    const rect = activeLink.getBoundingClientRect()
+    const parentRect = navLinksRef.value.getBoundingClientRect()
+    
+    // 计算相对于父元素的位置
+    const left = rect.left - parentRect.left
+
+    // 显示边框
+    navLinksRef.value.classList.add('has-active-link')
+
+    // 首次加载时不应用动画
+    if (isInitial.value) {
+      // 直接设置位置，不需要动画
+      prevPosition.value = { left, width: rect.width }
+      currentPosition.value = { left, width: rect.width }
+      isInitial.value = false
+      
+      // 设置CSS变量
+      navLinksRef.value.style.setProperty('--prev-left', `${left}px`)
+      navLinksRef.value.style.setProperty('--prev-width', `${rect.width}px`)
+      navLinksRef.value.style.setProperty('--active-left', `${left}px`)
+      navLinksRef.value.style.setProperty('--active-width', `${rect.width}px`)
+      navLinksRef.value.classList.add('initial-load')
+    } else {
+      // 保存上一个位置
+      prevPosition.value = { ...currentPosition.value }
+      currentPosition.value = { left, width: rect.width }
+      
+      // 设置CSS变量
+      navLinksRef.value.style.setProperty('--prev-left', `${prevPosition.value.left}px`)
+      navLinksRef.value.style.setProperty('--prev-width', `${prevPosition.value.width}px`)
+      navLinksRef.value.style.setProperty('--active-left', `${left}px`)
+      navLinksRef.value.style.setProperty('--active-width', `${rect.width}px`)
+      navLinksRef.value.classList.remove('initial-load')
+    }
+  } else {
+    // 没有激活的链接时隐藏边框
+    navLinksRef.value.classList.remove('has-active-link')
+  }
+}
+
+// 监听路由变化
+watch(() => route.path, () => {
+  // 使用setTimeout确保DOM已更新
+  setTimeout(updateActiveNavStyle, 50)
+}, { immediate: true })
+
+// 在组件挂载后初始化
+onMounted(() => {
+  updateActiveNavStyle()
+  
+  // 监听窗口大小变化，重新计算位置
+  window.addEventListener('resize', updateActiveNavStyle)
+})
+
+// 清理事件监听器
+onUnmounted(() => {
+  window.removeEventListener('resize', updateActiveNavStyle)
+})
 
 const switchLanguage = (lang: string) => {
   // 实现语言切换逻辑
@@ -133,6 +207,7 @@ const handleLogout = () => {
   gap: 32px; /* 增加导航链接之间的间距 */
   margin: 0;
   padding: 0;
+  position: relative;
 }
 
 /* 导航链接样式 */
@@ -146,18 +221,71 @@ const handleLogout = () => {
   border-radius: 20px;
   position: relative;
   border: 1px solid transparent;
+  display: block; /* 确保链接是块级元素 */
 }
 
 /* 导航链接悬停和激活状态 */
 .nav-links li a:hover {
   color: #4f46e5;
+  background-color: #f5f7fa; /* 添加浅灰色背景 */
 }
 
 .nav-links li a.router-link-active {
   color: #4f46e5;
-  border-color: #4f46e5;
   font-weight: 600;
   background-color: transparent;
+  position: relative;
+  z-index: 1;
+  border-color: transparent; /* 确保活动项没有自己的边框 */
+}
+
+/* 添加边框动画效果 */
+.nav-links::after {
+  content: '';
+  position: absolute;
+  height: 36px;
+  border-radius: 20px;
+  border: 1px solid #4f46e5;
+  box-shadow: 0 0 2px rgba(79, 70, 229, 0.2), 
+              inset 0 0 2px rgba(79, 70, 229, 0.2); /* 添加内外阴影 */
+  /* 调整过渡速度和缓动函数，使用更慢且更加非线性的效果 */
+  transition: 
+    width 0.8s cubic-bezier(0.25, 1.0, 0.5, 1.3), /* 弹性过渡效果 */
+    left 0.8s cubic-bezier(0.25, 1.0, 0.5, 1.3),  /* 弹性过渡效果 */
+    box-shadow 0.8s ease,
+    opacity 0.3s ease;
+  pointer-events: none; /* 确保不会干扰点击事件 */
+  z-index: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  /* 初始化位置 */
+  left: var(--prev-left, 0);
+  width: var(--prev-width, 0);
+  opacity: 0; /* 默认隐藏 */
+}
+
+/* 当有激活链接时显示边框 */
+.nav-links.has-active-link::after {
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(79, 70, 229, 0.25), 
+              inset 0 0 5px rgba(79, 70, 229, 0.1); /* 增强阴影效果 */
+}
+
+/* 初次加载时不应用动画 */
+.nav-links.initial-load::after {
+  transition: none;
+}
+
+/* 确保元素不是初始加载状态时应用动画 */
+.nav-links.has-active-link:not(.initial-load)::after {
+  width: var(--active-width, 100px);
+  left: var(--active-left, 0);
+}
+
+/* 初始加载状态下直接设置到目标位置 */
+.nav-links.has-active-link.initial-load::after {
+  width: var(--active-width, 100px);
+  left: var(--active-left, 0);
 }
 
 /* 移除下方指示线 */
