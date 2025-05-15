@@ -26,3 +26,6 @@
 /.venv/
 /Floreo/.vscode/
 /.cursor/
+
+
+/core/src/main/resources/application.yml
