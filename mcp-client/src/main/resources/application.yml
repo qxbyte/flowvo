@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: mcp-client
+  profiles:
+    active: dev,mcp
+
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    org.xue.mcpcommon: DEBUG
+    com.googlecode.jsonrpc4j: DEBUG
+
+mcp:
+  mysql:
+    # MCP-MySQL服务URL
+    url: http://localhost:50941
+    retry:
+      enabled: true
+      interval: 10000  # 毫秒 

@@ -49,12 +49,13 @@
       </div>
 
       <div class="chat-messages" ref="messagesContainer">
-        <div v-for="(msg, i) in renderedMessages" :key="i" :class="['message', msg.role]">
-          {{ msg.content }}
-          <span v-if="msg.isTyping" class="typing-cursor"></span>
+        <div v-for="(msg, i) in messages" :key="i" :class="['message', msg.role]">
+          <div v-if="msg.role === 'assistant'" v-html="formatMessage(msg.content)"></div>
+          <template v-else>{{ msg.content }}</template>
+          <span v-if="msg.role === 'assistant' && i === messages.length - 1 && isLoading" class="typing-cursor"></span>
         </div>
         <div class="clearfix"></div>
-        <div v-if="isLoading && (!renderedMessages.length || renderedMessages[renderedMessages.length-1].role !== 'assistant')" class="message assistant loading">
+        <div v-if="isLoading && (!messages.length || messages[messages.length-1].role !== 'assistant')" class="message assistant loading">
           <span class="loading-dots"><span>.</span><span>.</span><span>.</span></span>
         </div>
       </div>
@@ -89,6 +90,9 @@
 import { ref, watch, nextTick, onBeforeUnmount, onMounted, computed } from 'vue'
 import { Close, ArrowDown, Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { marked } from 'marked'
+import 'highlight.js/styles/github.css'
+import hljs from 'highlight.js'
 
 // 滚动到底部
 function scrollToBottom() {
@@ -126,11 +130,11 @@ function fixAiMessages() {
   logInfo('检查AI消息状态...')
 
   // 移除所有空的AI消息，除了最后一条
-  let lastAiIndex = -1;
+  let lastAiMessageIndex = -1;
   for (let i = messages.value.length - 1; i >= 0; i--) {
     if (messages.value[i].role === 'assistant') {
-      if (lastAiIndex === -1) {
-        lastAiIndex = i;
+      if (lastAiMessageIndex === -1) {
+        lastAiMessageIndex = i;
       } else if (!messages.value[i].content || messages.value[i].content.trim() === '') {
         logInfo(`删除空AI消息 index=${i}`);
         messages.value.splice(i, 1);
@@ -139,9 +143,9 @@ function fixAiMessages() {
   }
 
   // 如果最后一条AI消息是空的，补充内容
-  if (lastAiIndex !== -1 && (!messages.value[lastAiIndex].content || messages.value[lastAiIndex].content.trim() === '')) {
+  if (lastAiMessageIndex !== -1 && (!messages.value[lastAiMessageIndex].content || messages.value[lastAiMessageIndex].content.trim() === '')) {
     logInfo('最后一条AI消息是空的，添加默认回复');
-    messages.value[lastAiIndex].content = '服务器返回了空响应，请重试或联系管理员。';
+    messages.value[lastAiMessageIndex].content = '服务器返回了空响应，请重试或联系管理员。';
   }
 
   // 确保所有AI消息都与其完整回复一致
@@ -243,11 +247,18 @@ const updateAiMessage = (text) => {
     lastAiMessageIndex = messages.value.length - 1;
     console.log('创建新的AI消息，索引:', lastAiMessageIndex);
 
-    // 将字符直接添加到消息中
-    messages.value[lastAiMessageIndex].content = text;
+    // 对首次接收的文本进行处理，确保换行符规范化
+    // 规范化所有换行符为\n
+    const processedText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    // 确保单行换行被转换为双换行符，以便在Markdown中正确显示段落
+    const formattedText = processedText.replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
+    
+    // 将处理后的文本添加到消息中
+    messages.value[lastAiMessageIndex].content = formattedText;
+    console.log('创建AI消息内容:', formattedText.substring(0, 30) + (formattedText.length > 30 ? '...' : ''));
 
     // 保存完整回复，以便后续可以确保内容完整
-    fullResponses.value[lastAiMessageIndex] = text;
+    fullResponses.value[lastAiMessageIndex] = formattedText;
 
     // 标记已添加消息
     aiMessageAdded = true;
@@ -272,19 +283,42 @@ const updateAiMessage = (text) => {
   if (lastAiMessageIndex !== -1) {
     // 获取当前内容
     const currentContent = fullResponses.value[lastAiMessageIndex] || '';
-    // 添加新内容
-    const newContent = currentContent + text;
+    
+    // 添加新内容，处理换行和连接问题
+    let newContent = '';
+    
+    // 检查是否需要在新内容前加空格或者换行
+    if (currentContent && !currentContent.endsWith('\n') && !text.startsWith('\n')) {
+      // 如果当前内容不以换行结尾，新内容不以换行开头，则添加一个空格防止内容紧贴
+      newContent = currentContent + ' ' + text;
+    } else {
+      // 否则直接连接
+      newContent = currentContent + text;
+    }
 
+    // 规范化所有换行符
+    newContent = newContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
     // 更新完整回复记录
     fullResponses.value[lastAiMessageIndex] = newContent;
 
-    // 直接更新DOM中的消息内容
-    messages.value[lastAiMessageIndex].content = newContent;
-
-    console.log('更新AI消息内容，当前长度:', newContent.length);
-
+    // 对新内容使用简单的渐进式显示，使其看起来像是打字效果
+    // 当收到新内容时，更新现有内容并应用打字效果
+    console.log('使用打字机效果更新消息内容');
+    
+    // 每次只更新最后一段，不重新渲染整个消息
+    if (messages.value[lastAiMessageIndex].content === '') {
+      // 如果当前内容为空，直接设置新内容
+      messages.value[lastAiMessageIndex].content = text;
+    } else {
+      // 使用打字机效果更新整个内容
+      messages.value[lastAiMessageIndex].content = newContent;
+    }
+    
+    console.log('更新AI消息内容，当前长度:', newContent.length, '最新片段:', text);
+    
     // 滚动到底部
-    nextTick(scrollToBottom);
+    scrollToBottom();
   } else {
     console.error('找不到要更新的AI消息');
   }
@@ -350,7 +384,8 @@ async function checkTokenValidity() {
       ElMessage.error({
         message: '登录已过期，请刷新页面重新登录',
         duration: 5000,
-        showClose: true
+        showClose: true,
+        plain: true
       })
       
       // 清除无效的token
@@ -593,8 +628,8 @@ function typeMessage(messageIndex, fullContent, skipTypingEffect = false) {
       return;
     }
 
-    // 确定此次要添加多少字符 (1-2个)
-    const charsToAdd = Math.min(1, totalLength - currentPos);
+    // 确定此次要添加多少字符 (2-5个)
+    const charsToAdd = Math.min(Math.floor(Math.random() * 4) + 2, totalLength - currentPos);
 
     // 添加字符
     messages.value[messageIndex].content += fullContent.substring(currentPos, currentPos + charsToAdd);
@@ -609,7 +644,7 @@ function typeMessage(messageIndex, fullContent, skipTypingEffect = false) {
     scrollToBottom();
 
     // 设置下一次打字的延迟，控制打字速度
-    const delay = 30 + Math.floor(Math.random() * 20); // 30-50ms，稍微随机化以看起来更自然
+    const delay = 10 + Math.floor(Math.random() * 20); // 10-30ms，稍微随机化以看起来更自然
     typingTimeouts.value[messageIndex] = setTimeout(type, delay);
   }
 
@@ -711,129 +746,269 @@ async function sendMessage() {
       params.append('chatId', currentChatId.value)
     }
 
-    console.log(`发送请求: /api/function-call/invoke-stream?${params.toString()}`)
+    console.log(`准备发送请求到: /api/function-call/invoke-stream`);
 
     // 处理流式响应
-    const url = `/api/function-call/invoke-stream?${params.toString()}`
+    const url = `/api/function-call/invoke-stream`;
 
     // 创建一个 AbortController 实例，用于在需要时中断请求
     const abortController = new AbortController()
     controller = abortController
 
-    // 尝试请求API
-    try {
-      console.log('正在发送API请求...');
+    // 尝试请求API，添加重试逻辑
+    let maxRetries = 2;
+    let retryCount = 0;
+    let lastError = null;
 
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('未找到用户令牌');
-      }
+    while (retryCount <= maxRetries) {
+      try {
+        console.log(`发送API请求 (尝试${retryCount + 1}/${maxRetries + 1})...`);
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Authorization': `Bearer ${token}`
-        },
-        signal: abortController.signal,
-        credentials: 'same-origin'
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
+        const token = localStorage.getItem('token');
+        if (!token) {
           ElMessage.error({
-            message: '登录已过期，请刷新页面重新登录',
-            duration: 5000,
-            showClose: true
+            message: '未找到用户令牌，请先登录',
+            plain: true
           });
-          throw new Error('登录已过期');
-        }
-        throw new Error(`请求失败: ${response.status}`);
-      }
-
-      // 获取响应流读取器
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-
-      console.log('开始读取响应流...');
-
-      // 为了调试，显示一个即时的AI消息
-      messages.value.push({ role: 'assistant', content: '' });
-      lastAiMessageIndex = messages.value.length - 1;
-      aiMessageAdded = true;
-
-      // 循环读取流数据
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          console.log('读取完成，流已关闭');
-          break;
+          throw new Error('未找到用户令牌');
         }
 
-        // 解码数据
-        const chunk = decoder.decode(value, { stream: true });
-        console.log('收到数据块长度:', chunk.length);
+        // 检查token格式
+        const tokenParts = token.split('.');
+        if (tokenParts.length !== 3) {
+          ElMessage.error({
+            message: '无效的令牌格式，请重新登录',
+            plain: true
+          });
+          throw new Error('无效的令牌格式');
+        }
 
-        // 处理收到的数据块
-        if (chunk) {
-          // 处理SSE格式的数据，按行分割
-          const lines = chunk.trim().split('\n');
+        // 解析token有效期
+        try {
+          const payload = JSON.parse(atob(tokenParts[1]));
+          const expTime = payload.exp * 1000; // 转换为毫秒
+          const now = Date.now();
+          
+          if (expTime < now) {
+            console.log('令牌已过期，尝试自动刷新');
+            // 这里可以添加刷新token的逻辑，暂时先提示用户
+            ElMessage.error({
+              message: '登录已过期，请刷新页面重新登录',
+              plain: true
+            });
+            throw new Error('登录已过期');
+          }
+        } catch (e) {
+          console.error('解析token时出错:', e);
+        }
 
-          for (const line of lines) {
-            if (!line.trim()) continue;
+        // 发送请求
+        const response = await fetch(url, {
+          method: 'POST', // 使用POST方法
+          headers: {
+            'Accept': 'text/event-stream',
+            'Content-Type': 'application/x-www-form-urlencoded', 
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Authorization': `Bearer ${token}`
+          },
+          body: params.toString(), // 将参数放在body中
+          signal: abortController.signal,
+          credentials: 'same-origin'
+        });
 
-            let processedLine = line.trim();
-
-            // 处理SSE格式 "data:" 前缀
-            if (processedLine.startsWith('data:')) {
-              processedLine = processedLine.substring(5).trim();
+        if (!response.ok) {
+          if (response.status === 401) {
+            // 尝试获取更详细的错误信息
+            let errorText = '登录已过期，请刷新页面重新登录';
+            try {
+              const errorContent = await response.text();
+              console.error('授权错误详情:', errorContent);
+              if (errorContent && errorContent.length < 100) {
+                errorText = errorContent;
+              }
+            } catch (e) {
+              console.error('无法读取错误详情:', e);
             }
-
-            // 忽略[DONE]标记
-            if (processedLine === '[DONE]') {
-              continue;
+            
+            ElMessage.error({
+              message: errorText,
+              plain: true
+            });
+            
+            // 清除失效的token
+            localStorage.removeItem('token');
+            localStorage.removeItem('isAuthenticated');
+            
+            throw new Error('未授权: ' + errorText);
+          } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+            // 服务器端错误，可能是临时性的，尝试重试
+            lastError = new Error(`服务器暂时不可用(${response.status})，尝试重试...`);
+            retryCount++;
+            
+            if (retryCount <= maxRetries) {
+              // 使用指数退避策略
+              const retryDelay = Math.pow(2, retryCount) * 1000; // 2秒, 4秒, 8秒...
+              console.log(`将在${retryDelay}毫秒后重试请求...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              continue; // 继续重试循环
+            } else {
+              throw lastError; // 重试次数用完
             }
+          }
+          
+          // 处理其他错误
+          let errorMessage = `请求失败: ${response.status}`;
+          try {
+            const errorContent = await response.text();
+            console.error(`请求失败(${response.status}):`, errorContent);
+            if (errorContent && errorContent.length < 100) {
+              errorMessage = errorContent;
+            }
+          } catch (e) {
+            console.error('无法读取错误详情:', e);
+          }
+          
+          throw new Error(errorMessage);
+        }
 
-            // 如果有内容，直接更新
-            updateAiMessage(processedLine);
+        // 获取响应流读取器
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        console.log('开始读取响应流...');
+
+        // 为了调试，显示一个即时的AI消息
+        messages.value.push({ role: 'assistant', content: '' });
+        lastAiMessageIndex = messages.value.length - 1;
+        aiMessageAdded = true;
+
+        // 循环读取流数据
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            console.log('读取完成，流已关闭');
+            break;
+          }
+
+          // 解码数据
+          const chunk = decoder.decode(value, { stream: true });
+          console.log('收到数据块长度:', chunk.length);
+
+          // 处理收到的数据块
+          if (chunk) {
+            // 处理SSE格式的数据，按行分割
+            const lines = chunk.trim().split('\n');
+
+            for (const line of lines) {
+              if (!line.trim()) continue;
+
+              let processedLine = line.trim();
+
+              // 处理SSE格式 "data:" 前缀
+              if (processedLine.startsWith('data:')) {
+                processedLine = processedLine.substring(5).trim();
+              }
+
+              // 忽略[DONE]标记
+              if (processedLine === '[DONE]') {
+                continue;
+              }
+
+              // 确保每个块都保留换行符，如果原始数据有换行符
+              // 在块之间添加换行符，确保格式正确
+              if (lines.length > 1) {
+                processedLine += '\n';
+              }
+
+              // 如果有内容，直接更新
+              updateAiMessage(processedLine);
+            }
           }
         }
+
+        console.log('流处理完成');
+        
+        // 流处理完成后，确保内容完整显示并正确渲染Markdown
+        if (lastAiMessageIndex !== -1) {
+          // 最后再次确保内容完整，强制重新渲染markdown
+          const finalContent = fullResponses.value[lastAiMessageIndex];
+          if (finalContent) {
+            console.log('流处理完成，重新渲染最终内容，长度:', finalContent.length);
+            
+            // 确保内容中的换行符被正确处理
+            let processedContent = finalContent;
+            // 规范化所有换行符为\n
+            processedContent = processedContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            
+            // 确保段落之间有空行（在Markdown中，段落之间需要一个空行）
+            processedContent = processedContent.replace(/\n{3,}/g, '\n\n'); // 先将三个以上换行压缩为两个
+            
+            // 应用打字机效果，使用false参数表示不跳过打字机效果
+            console.log('应用打字机效果显示最终内容');
+            typeMessage(lastAiMessageIndex, processedContent, false);
+          }
+        }
+        
+        // 如果成功完成，跳出重试循环
+        break;
+
+      } catch (error) {
+        lastError = error;
+        console.error('流处理错误:', error);
+        
+        // 检查是否是网络错误或服务器错误，可以尝试重试
+        if (error.message && (
+            error.message.includes('network error') || 
+            error.message.includes('服务器暂时不可用') || 
+            error.message.includes('failed to fetch'))) {
+          retryCount++;
+          
+          if (retryCount <= maxRetries) {
+            // 使用指数退避策略
+            const retryDelay = Math.pow(2, retryCount) * 1000; // 2秒, 4秒, 8秒...
+            console.log(`网络错误，将在${retryDelay}毫秒后重试(${retryCount}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            continue; // 继续重试循环
+          }
+        } else {
+          // 其他类型的错误，不需要重试
+          break;
+        }
       }
-
-      console.log('流处理完成');
-
-    } catch (error) {
-      console.error('流处理错误:', error);
-
+    }
+    
+    // 处理最终错误
+    if (lastError && (!aiMessageAdded || (lastAiMessageIndex !== -1 && !messages.value[lastAiMessageIndex].content))) {
+      console.error('所有重试都失败，显示错误消息:', lastError);
+      
       // 如果处理过程中没有添加AI消息，添加一个错误提示
       if (!aiMessageAdded) {
         messages.value.push({
           role: 'assistant',
-          content: `发生错误: ${error.message}。请稍后重试或联系管理员。`
+          content: `发生错误: ${lastError.message}。请稍后重试或联系管理员。`
         });
       } else if (lastAiMessageIndex !== -1) {
         // 如果已经添加了消息但内容为空，添加错误提示
         if (!messages.value[lastAiMessageIndex].content) {
-          messages.value[lastAiMessageIndex].content = `发生错误: ${error.message}。请稍后重试或联系管理员。`;
+          messages.value[lastAiMessageIndex].content = `发生错误: ${lastError.message}。请稍后重试或联系管理员。`;
         }
       }
-    } finally {
-      // 确保加载状态被重置
-      isLoading.value = false;
-      controller = null;
-
-      // 清除超时计时器
-      clearTimeout(loadingTimeout);
-
-      // 自动聚焦输入框
-      nextTick(() => {
-        focusInput();
-        scrollToBottom();
-      });
     }
+
+    // 确保加载状态被重置
+    isLoading.value = false;
+    controller = null;
+
+    // 清除超时计时器
+    clearTimeout(loadingTimeout);
+
+    // 自动聚焦输入框
+    nextTick(() => {
+      focusInput();
+      scrollToBottom();
+    });
 
   } catch (error) {
     console.error('消息发送失败:', error);
@@ -868,37 +1043,38 @@ function clearOldMessageStorage() {
 }
 
 // 添加渲染优化：使用计算属性确保显示完整消息
-const renderedMessages = computed(() => {
-  return messages.value.map((msg, index) => {
-    // 如果是AI消息，检查是否需要应用完整响应
-    if (msg.role === 'assistant') {
-      // 检查是否有完整响应和是否是最后一条消息正在加载
-      const isLastMessageLoading = index === messages.value.length - 1 && isLoading.value;
+// 不再需要这个计算属性，直接使用原始消息
+// const renderedMessages = computed(() => {
+//   return messages.value.map((msg, index) => {
+//     // 如果是AI消息，检查是否需要应用完整响应
+//     if (msg.role === 'assistant') {
+//       // 检查是否有完整响应和是否是最后一条消息正在加载
+//       const isLastMessageLoading = index === messages.value.length - 1 && isLoading.value;
 
-      // 确保使用最新完整响应，添加打字光标标记
-      if (fullResponses.value[index] && msg.content !== fullResponses.value[index]) {
-        return {
-          ...msg,
-          content: fullResponses.value[index],
-          isTyping: isLastMessageLoading
-        };
-      } else {
-        // 如果内容已匹配完整响应，只添加打字标记
-        return {
-          ...msg,
-          isTyping: isLastMessageLoading
-        };
-      }
-    }
+//       // 确保使用最新完整响应，添加打字光标标记
+//       if (fullResponses.value[index] && msg.content !== fullResponses.value[index]) {
+//         return {
+//           ...msg,
+//           content: fullResponses.value[index],
+//           isTyping: isLastMessageLoading
+//         };
+//       } else {
+//         // 如果内容已匹配完整响应，只添加打字标记
+//         return {
+//           ...msg,
+//           isTyping: isLastMessageLoading
+//         };
+//       }
+//     }
 
-    // 对于非AI消息，直接返回
-    return msg;
-  });
-});
+//     // 对于非AI消息，直接返回
+//     return msg;
+//   });
+// });
 
 // 添加一个确保打字机效果正确运行的测试函数
 function testTypingEffect() {
-  const testMsg = "这是一个测试消息，用于验证打字机效果是否正常工作。你应该能看到这段文字逐字显示出来。"
+  const testMsg = "## Markdown渲染测试\n\n这是一个测试消息，用于验证**Markdown**格式和*打字机效果*是否正常工作。\n\n```javascript\nconsole.log('Hello World');\n```\n\n- 列表项1\n- 列表项2\n\n[链接测试](https://example.com)"
 
   // 创建一个测试消息
   const newIndex = messages.value.length
@@ -987,18 +1163,8 @@ async function fetchUserChats() {
         try {
           const errorBody = await response.text()
           logError('服务器返回错误:', errorBody)
-          if (errorBody) {
-            try {
-              const errorJson = JSON.parse(errorBody)
-              if (errorJson.message) {
-                errorMessage = errorJson.message
-              }
-            } catch (e) {
-              // 不是JSON格式，使用原始文本
-              if (errorBody.length < 100) {
-                errorMessage = errorBody
-              }
-            }
+          if (errorBody && errorBody.length < 100) {
+            errorMessage = errorBody
           }
         } catch (e) {
           logError('无法读取错误响应内容')
@@ -1007,7 +1173,8 @@ async function fetchUserChats() {
         ElMessage.error({
           message: errorMessage,
           duration: 5000,
-          showClose: true
+          showClose: true,
+          plain: true
         });
         
         // 清除无效的token
@@ -1073,7 +1240,8 @@ async function fetchUserChats() {
     // 显示错误通知
     ElMessage.error({
       message: '获取对话列表失败: ' + (error.message || '未知错误'),
-      duration: 3000
+      duration: 3000,
+      plain: true
     })
   }
 }
@@ -1122,18 +1290,8 @@ async function fetchChatHistory(chatId) {
         try {
           const errorBody = await response.text()
           logError('获取历史消息失败, 服务器返回:', errorBody)
-          if (errorBody) {
-            try {
-              const errorJson = JSON.parse(errorBody)
-              if (errorJson.message) {
-                errorMessage = errorJson.message
-              }
-            } catch (e) {
-              // 不是JSON格式，使用原始文本
-              if (errorBody.length < 100) { // 避免过长的错误信息
-                errorMessage = errorBody
-              }
-            }
+          if (errorBody && errorBody.length < 100) { // 避免过长的错误信息
+            errorMessage = errorBody
           }
         } catch (e) {
           logError('无法读取错误响应内容')
@@ -1143,7 +1301,8 @@ async function fetchChatHistory(chatId) {
         ElMessage.error({
           message: errorMessage,
           duration: 5000,
-          showClose: true
+          showClose: true,
+          plain: true
         });
         
         messages.value = [{
@@ -1195,6 +1354,11 @@ async function fetchChatHistory(chatId) {
           role: msg.role,
           content: msg.content
         })
+
+        // 调试信息
+        if(msg.role === 'assistant') {
+          logInfo(`历史AI消息 #${index} 已加载，内容前50个字符: ${msg.content.substring(0, 50)}...`);
+        }
 
         // 保存完整响应
         if (msg.role === 'assistant') {
@@ -1315,7 +1479,8 @@ async function createNewChat() {
         ElMessage.error({
           message: errorMessage,
           duration: 5000,
-          showClose: true
+          showClose: true,
+          plain: true
         });
         
         // 清除登录状态
@@ -1454,7 +1619,8 @@ async function renameChat(chat) {
           ElMessage.error({
             message: '登录已过期，请刷新页面重新登录',
             duration: 5000,
-            showClose: true
+            showClose: true,
+            plain: true
           });
           logError('登录已过期，请重新登录')
           return
@@ -1526,7 +1692,8 @@ async function deleteChat(chat) {
         ElMessage.error({
           message: '登录已过期，请刷新页面重新登录',
           duration: 5000,
-          showClose: true
+          showClose: true,
+          plain: true
         });
         logError('登录已过期，请重新登录')
         return
@@ -1576,6 +1743,31 @@ onMounted(async () => {
   logInfo('FloatingChat组件已挂载')
 
   try {
+    // 确保所有ElMessage都有plain: true属性
+    const originalElMessageMethods = {
+      success: ElMessage.success,
+      warning: ElMessage.warning,
+      info: ElMessage.info,
+      error: ElMessage.error
+    };
+
+    // 重写ElMessage的各个方法，自动添加plain: true
+    ['success', 'warning', 'info', 'error'].forEach(type => {
+      ElMessage[type] = (options) => {
+        if (typeof options === 'string') {
+          return originalElMessageMethods[type]({
+            message: options,
+            plain: true
+          });
+        } else {
+          return originalElMessageMethods[type]({
+            ...options,
+            plain: true
+          });
+        }
+      };
+    });
+
     // 验证登录状态
     const isLoggedIn = localStorage.getItem('isAuthenticated') === 'true'
     const token = localStorage.getItem('token')
@@ -1641,7 +1833,8 @@ onMounted(async () => {
         ElMessage.warning({
           message: '登录已过期，请刷新页面重新登录',
           duration: 5000,
-          showClose: true
+          showClose: true,
+          plain: true
         })
       }
     }, 5 * 60 * 1000) // 每5分钟检查一次
@@ -1748,6 +1941,76 @@ watch(
     })
   }
 )
+
+// 格式化消息内容，支持Markdown渲染
+const formatMessage = (content) => {
+  if (!content) return '';
+  try {
+    // 添加调试日志
+    console.log('开始格式化Markdown内容:', content.substring(0, 50) + (content.length > 50 ? '...' : ''));
+    
+    // 处理可能的data:前缀
+    let processedContent = content;
+    
+    // 检查内容是否包含多个"data:"前缀的行
+    if (processedContent.includes('data:')) {
+      // 按行分割
+      const lines = processedContent.split('\n');
+      const processedLines = lines.map(line => {
+        if (line.startsWith('data:')) {
+          return line.substring(5).trim();
+        }
+        return line;
+      });
+      processedContent = processedLines.join('\n');
+    }
+
+    // 确保段落之间有足够的换行符
+    // 先规范化所有换行符为\n
+    processedContent = processedContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
+    // 确保单行换行被转换为<br>标签 (在marked中设置breaks: true也会处理这个)
+    // 但为了确保效果，这里显式地将单个换行符转换为双换行符
+    processedContent = processedContent.replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
+    
+    // 确保段落之间有空行（在Markdown中，段落之间需要一个空行）
+    processedContent = processedContent.replace(/\n{3,}/g, '\n\n'); // 先将三个以上换行压缩为两个
+    
+    // 优化处理普通段落前的换行，确保有两个换行符以形成段落分隔
+    processedContent = processedContent.replace(/\n([^#\-*>0-9\n])/g, '\n\n$1');
+    
+    // 确保代码块前后有空行
+    processedContent = processedContent.replace(/(```[^`]+```)/g, '\n$1\n');
+    
+    // 配置marked选项，启用代码高亮
+    marked.setOptions({
+      highlight: function(code, lang) {
+        try {
+          if (lang && hljs.getLanguage(lang)) {
+            return hljs.highlight(code, { language: lang }).value;
+          } else {
+            return hljs.highlightAuto(code).value;
+          }
+        } catch (e) {
+          console.error('代码高亮失败:', e);
+          return code;
+        }
+      },
+      breaks: true, // 允许换行
+      gfm: true, // 启用GitHub风格的Markdown
+      mangle: false, // 不转义内联HTML
+      headerIds: false // 不生成标题ID
+    });
+    
+    // 使用marked解析Markdown内容
+    const markedResult = marked(processedContent);
+    console.log('Markdown格式化完成, 长度:', markedResult.length);
+    return markedResult;
+  } catch (error) {
+    console.error('格式化消息失败:', error);
+    return content;
+  }
+}
 </script>
 
 <style scoped>
@@ -1878,6 +2141,7 @@ watch(
   background-color: #d9ecff;
   color: #2b5998;
   border-bottom-right-radius: 4px;
+  white-space: pre-wrap; /* 保留换行和空格 */
 }
 
 .message.assistant {
@@ -1887,6 +2151,15 @@ watch(
   background-color: #e4f2e4;
   color: #1a1a1a;
   border-bottom-left-radius: 4px;
+  max-width: 90%;
+  white-space: normal; /* 不保留原始文本的换行，由Markdown控制 */
+  padding: 12px 16px; /* 增加内边距，使文本不贴边 */
+  line-height: 1.5;
+}
+
+.message.assistant > div {
+  width: 100%;
+  overflow-wrap: break-word;
 }
 
 .message.system {
@@ -2128,5 +2401,142 @@ watch(
 
 .delete-icon:hover {
   color: #F56C6C;
+}
+
+/* Markdown内容样式 */
+.message.assistant :deep(a) {
+  color: #409EFF;
+  text-decoration: none;
+}
+
+.message.assistant :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.message.assistant :deep(pre) {
+  margin: 18px 0; /* 增加代码块与周围内容的间距 */
+  background-color: #f5f5f5; /* 调整代码块背景色 */
+  border-radius: 8px; /* 增加圆角 */
+  padding: 14px; /* 增加内边距 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 添加轻微阴影 */
+}
+
+.message.assistant :deep(code) {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #476582; /* 代码文本颜色 */
+}
+
+.message.assistant :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+/* 增强对换行的支持 */
+.message.assistant :deep(p) {
+  white-space: pre-wrap; /* 保留空格和换行 */
+  word-break: break-word; /* 确保长单词可以断行 */
+}
+
+.message.assistant {
+  white-space: normal; /* 保持正常的文本换行 */
+  word-break: break-word; /* 确保长单词可以断行 */
+}
+
+.message.assistant :deep(blockquote) {
+  border-left: 4px solid #dfe2e5;
+  color: #6a737d;
+  margin: 8px 0;
+  padding: 0 16px;
+}
+
+.message.assistant :deep(ul), .message.assistant :deep(ol) {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.message.assistant :deep(table) {
+  border-collapse: collapse;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.message.assistant :deep(th), .message.assistant :deep(td) {
+  border: 1px solid #dfe2e5;
+  padding: 6px 13px;
+  text-align: left;
+}
+
+.message.assistant :deep(th) {
+  background-color: #f6f8fa;
+}
+
+.message.assistant :deep(img) {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.message.assistant :deep(hr) {
+  height: 1px;
+  background-color: #dfe2e5;
+  border: none;
+  margin: 12px 0;
+}
+
+.message.assistant :deep(h1), 
+.message.assistant :deep(h2), 
+.message.assistant :deep(h3), 
+.message.assistant :deep(h4), 
+.message.assistant :deep(h5), 
+.message.assistant :deep(h6) {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.message.assistant :deep(h1) {
+  font-size: 1.5em;
+}
+
+.message.assistant :deep(h2) {
+  font-size: 1.3em;
+}
+
+.message.assistant :deep(h3) {
+  font-size: 1.2em;
+}
+
+.message.assistant :deep(h4) {
+  font-size: 1.1em;
+}
+
+.message.assistant :deep(p) {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.message.assistant :deep(p + p) {
+  margin-top: 18px; /* 增加段落之间的间距 */
+}
+
+.message.assistant :deep(br) {
+  content: "";
+  margin-top: 12px;
+  display: block;
+  height: 12px; /* 增加换行的高度 */
+}
+
+.message.assistant :deep(li) {
+  margin-bottom: 8px; /* 增加列表项之间的间距 */
+}
+
+.message.assistant :deep(li p) {
+  margin: 6px 0; /* 列表项内段落间距较小 */
 }
 </style>

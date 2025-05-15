@@ -1,63 +1,61 @@
-# .
+此模板可帮助您开始使用 Vue 3 和 Vite 进行开发
+## 推荐的 IDE 设置
 
-This template should help get you started developing with Vue 3 in Vite.
+[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)（并禁用 Vetur）。
 
-## Recommended IDE Setup
+## TS 中对`.vue` 导入的类型支持 
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+TypeScript 默认无法处理 `.vue` 导入的类型信息，因此我们用 `tsc` 替代 `vue-tsc` CLI 进行类型检查。在编辑器中，我们需要 [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) 使 TypeScript 语言服务能够识别 `.vue` 类型。
 
-## Type Support for `.vue` Imports in TS
+## 自定义配置
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+参见 [Vite 配置参考](https://vite.dev/config/)。
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## 项目设置
 
 ```sh
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+### 开发环境的编译和热重载
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+### 生产环境的类型检查、编译和压缩
 
 ```sh
 npm run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+### 使用 [Vitest](https://vitest.dev/) 运行单元测试
 
 ```sh
 npm run test:unit
 ```
 
-### Run End-to-End Tests with [Playwright](https://playwright.dev)
+### 使用 [Playwright](https://playwright.dev) 运行端到端测试
 
 ```sh
-# Install browsers for the first run
+# 首次运行前安装浏览器
 npx playwright install
 
-# When testing on CI, must build the project first
+# 在 CI 环境中测试时，必须先构建项目
 npm run build
 
-# Runs the end-to-end tests
+
+# 运行端到端测试
 npm run test:e2e
-# Runs the tests only on Chromium
+# 仅在 Chromium 上运行测试
 npm run test:e2e -- --project=chromium
-# Runs the tests of a specific file
+# 运行特定文件的测试
 npm run test:e2e -- tests/example.spec.ts
-# Runs the tests in debug mode
+# 在调试模式下运行测试
 npm run test:e2e -- --debug
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### 使用 [ESLint](https://eslint.org/) 进行代码检查
 
 ```sh
 npm run lint

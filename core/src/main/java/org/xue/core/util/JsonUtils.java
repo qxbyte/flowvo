@@ -9,7 +9,9 @@ public class JsonUtils {
 
     static {
         // 在这里配置objectMapper
+        // 设置只序列化非空（non-null）字段
         OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
         // 其他配置...
     }
 

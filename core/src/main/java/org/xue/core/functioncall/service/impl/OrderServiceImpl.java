@@ -52,6 +52,11 @@ public class OrderServiceImpl implements OrderService {
     public Optional<Order> findById(Long id) {
         return orderRepository.findById(id);
     }
+    
+    @Override
+    public Optional<Order> findByOrderNo(String orderNo) {
+        return orderRepository.findByOrderNo(orderNo);
+    }
 
     @Override
     public Page<Order> findOrders(String orderNo, Long customerId, String status,
@@ -87,6 +92,18 @@ public class OrderServiceImpl implements OrderService {
             return orderRepository.save(order);
         }
         throw new RuntimeException("订单不存在，ID: " + id);
+    }
+    
+    @Override
+    @Transactional
+    public Order updateOrderStatusByOrderNo(String orderNo, String status) {
+        Optional<Order> orderOpt = orderRepository.findByOrderNo(orderNo);
+        if (orderOpt.isPresent()) {
+            Order order = orderOpt.get();
+            order.setStatus(status);
+            return orderRepository.save(order);
+        }
+        throw new RuntimeException("订单不存在，订单号: " + orderNo);
     }
 
     @Override

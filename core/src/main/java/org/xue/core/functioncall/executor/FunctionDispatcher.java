@@ -1,93 +1,111 @@
 package org.xue.core.functioncall.executor;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.xue.core.functioncall.annotation.FunctionCallable;
-import org.xue.core.functioncall.executor.functions.TestFunction;
-import org.xue.core.functioncall.util.FunctionCallParser;
+import org.xue.core.util.JsonUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
- * 根据方法名和参数 Map 调用本地方法（支持多参数 + 注解过滤）
+ * 将所有 FunctionRegistry Bean 注入进来，根据方法名分发调用
  */
 @Slf4j
+@Component
 public class FunctionDispatcher {
 
-    private final Object target; // 被调用的函数对象，如 FunctionRegistry
+    private final List<FunctionRegistry> registries;
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public FunctionDispatcher(Object target) {
-        this.target = target;
+    private static final TypeFactory TF = mapper.getTypeFactory();
+
+    @Autowired
+    public FunctionDispatcher(List<FunctionRegistry> registries) {
+        this.registries = registries;
     }
 
-    public Object dispatch(String methodName, Map<String, Object> arguments) {
-        try {
-            log.debug("开始调度方法: {}", methodName);
-            log.debug("输入参数: {}", arguments);
-
-            for (Method method : target.getClass().getDeclaredMethods()) {
-                log.debug("检查方法: {}", method.getName());
-                if (!method.getName().equals(methodName)) continue;
+    /**
+     * 根据传入的方法名和参数 Map，找到对应的 registry Bean 调用
+     *
+     * @param methodName 方法名
+     * @param arguments  参数 map（key 要与函数的参数名一致）
+     * @return 方法执行结果
+     * @throws Exception 找不到方法或反射调用失败时抛出
+     */
+    public String dispatch(String methodName, Map<String, Object> arguments) throws Exception {
+        log.debug("调度函数: {}，参数: {}", methodName, arguments);
+        for (FunctionRegistry registry : registries) {
+            Class<?> clazz = registry.getClass();
+            // 遍历它的所有方法
+            for (Method method : clazz.getDeclaredMethods()) {
+                if (!method.getName().equals(methodName)) {
+                    continue;
+                }
+                // 只调有 @FunctionCallable 的
                 if (!method.isAnnotationPresent(FunctionCallable.class)) {
-                    log.debug("方法 {} 未标注 @FunctionCallable，跳过", method.getName());
                     continue;
                 }
 
-                Parameter[] parameters = method.getParameters();
-                Object[] resolvedArgs = new Object[parameters.length];
+                // 解析参数
+                // --- 新增：先按参数个数过滤 ---
+                Parameter[] params = method.getParameters();
+                if (params.length != arguments.size()) {
+                    continue;
+                }
 
-                for (int i = 0; i < parameters.length; i++) {
-                    Parameter param = parameters[i];
-                    String paramName = param.getName();
-                    Object rawValue = arguments.get(paramName);
-                    Object value = mapper.convertValue(rawValue, param.getType());
-                    resolvedArgs[i] = value;
-                    log.debug("参数 {} = {}", paramName, value);
+                // --- 再按参数名过滤（保证每个参数名都在 arguments 里） ---
+                boolean allMatch = true;
+                for (Parameter p : params) {
+                    if (!arguments.containsKey(p.getName())) {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                if (!allMatch) {
+                    continue;
+                }
+                Object[] args = new Object[params.length];
+                for (int i = 0; i < params.length; i++) {
+                    Parameter p = params[i];
+                    Object raw = arguments.get(p.getName());
+
+                    args[i] = raw;
                 }
 
                 method.setAccessible(true);
-                log.debug("正在调用方法: {}", method.getName());
-                Object result = method.invoke(target, resolvedArgs);
-                log.debug("方法调用结果: {}", result);
-                return result;
+                log.debug("正在调用 {}#{}()", clazz.getSimpleName(), methodName);
+                Object result = method.invoke(registry, args);
+                log.debug("调用结果: {}", result);
+                return result.toString();
             }
-
-            throw new NoSuchMethodException("找不到允许调用的方法: " + methodName);
-        } catch (Exception e) {
-            log.error("方法调用失败: {}", e.getMessage(), e);
-            throw new RuntimeException("执行方法失败: " + methodName, e);
         }
+        throw new NoSuchMethodException("找不到可调用的方法: " + methodName);
     }
 
-    public Object dispatchFromJson(String json, String methodName) throws Exception {
-        log.debug("从 JSON 调度: method={}, json={} ", methodName, json);
-        Map<String, Object> args = mapper.readValue(json, HashMap.class);
-        return dispatch(methodName, args);
-    }
+    /**
+     * 从大模型 function_call JSON 直接分发
+     *
+     * @param functionCallNode 整个 function_call 节点
+     */
+    public String dispatchFromJson(JsonNode functionCallNode) throws Exception {
 
-
-    public static void main(String[] args) {
-        String json = """
-                {
-                  "function_call": {
-                    "name": "getWeather",
-                    "arguments": {
-                      "city": "上海"
-                    }
-                  }
-                }""";  // 大模型返回的 JSON 字符串
-
-        String method = FunctionCallParser.extractFunctionName(json);
-        Map<String, Object> arguments = FunctionCallParser.extractArgumentsAsMap(json);
-
-        FunctionDispatcher dispatcher = new FunctionDispatcher(new TestFunction());
-        Object result = dispatcher.dispatch(method, arguments);
-
-        System.out.println("函数执行结果: " + result);
+        String fn = functionCallNode.path("function").path("name").asText();
+        // arguments 是一个 JSON 对象
+        String args = functionCallNode.path("function").path("arguments").asText();
+        // 转成 Map
+        @SuppressWarnings("unchecked")
+        Map<String, Object> argsMap = mapper.convertValue(mapper.readTree(args), Map.class);
+        return dispatch(fn, argsMap);
     }
 }
-

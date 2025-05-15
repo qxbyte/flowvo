@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.xue.core.functioncall.entity.Order;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     
@@ -18,6 +19,13 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * @return 订单分页列表
      */
     Page<Order> findByOrderNoContaining(String orderNo, Pageable pageable);
+
+    /**
+     * 根据订单号精确查询订单
+     * @param orderNo 订单号
+     * @return 订单信息
+     */
+    Optional<Order> findByOrderNo(String orderNo);
 
     /**
      * 根据客户ID查询订单列表
