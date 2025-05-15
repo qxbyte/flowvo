@@ -49,8 +49,8 @@ spring:
 
   ai:
     openai:
-      api-key: sk-741ef1518f0945c78157f4926c2ddde6
-      base-url: https://api.deepseek.com
+      api-key:
+      base-url:
       chat:
         options:
           model: deepseek-chat
@@ -90,9 +90,8 @@ jwt:
 # OkHttp实现openai api调用
 ai:
   openai:
-    api-key: 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
-#      api-key: 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
-    base-url: https://api.openai.com
+    api-key:
+    base-url:
     # 网络连接超时设置（秒）
     connect-timeout: 30
     read-timeout: 120
