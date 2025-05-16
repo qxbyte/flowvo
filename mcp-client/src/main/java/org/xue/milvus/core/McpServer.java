@@ -1,4 +1,4 @@
-package org.xue.mcp_client.core;
+package org.xue.milvus.core;
 
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import org.xue.mcp_client.model.JsonRpcRequest;
-import org.xue.mcp_client.model.JsonRpcResponse;
+import org.xue.milvus.model.JsonRpcRequest;
+import org.xue.milvus.model.JsonRpcResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +29,11 @@ public class McpServer {
      * 服务配置
      */
     private final McpProperties.ServerConfig config;
+    
+    /**
+     * 服务URL
+     */
+    private final String serviceUrl;
 
     /**
      * REST模板
@@ -60,12 +65,16 @@ public class McpServer {
      *
      * @param name 服务名称
      * @param config 服务配置
+     * @param serviceUrl 服务URL
      * @param restTemplate REST模板
      */
-    public McpServer(String name, McpProperties.ServerConfig config, RestTemplate restTemplate) {
+    public McpServer(String name, McpProperties.ServerConfig config, String serviceUrl, RestTemplate restTemplate) {
         this.name = name;
         this.config = config;
+        this.serviceUrl = serviceUrl;
         this.restTemplate = restTemplate;
+        
+        logger.debug("创建MCP服务连接 {} -> {}", name, serviceUrl);
     }
 
     /**
@@ -106,7 +115,7 @@ public class McpServer {
     @SuppressWarnings("unchecked")
     private Map<String, Object> fetchApiSchema() {
         try {
-            String schemaUrl = config.getUrl() + "/api/schema/db";
+            String schemaUrl = serviceUrl + "/api/schema/db";
             ResponseEntity<Map> response = restTemplate.getForEntity(schemaUrl, Map.class);
             
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
@@ -172,7 +181,7 @@ public class McpServer {
      */
     public JsonRpcResponse executeRpc(JsonRpcRequest request) {
         try {
-            String rpcUrl = config.getUrl() + "/api/rpc/db";
+            String rpcUrl = serviceUrl + "/api/rpc/db";
             ResponseEntity<JsonRpcResponse> response = restTemplate.postForEntity(
                     rpcUrl, 
                     request, 
@@ -205,6 +214,6 @@ public class McpServer {
      * @return 服务URL
      */
     public String getServiceUrl() {
-        return config.getUrl();
+        return serviceUrl;
     }
 } 

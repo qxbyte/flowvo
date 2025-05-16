@@ -22,12 +22,23 @@ mcp:
     interval: 10000 # 心跳检查间隔（毫秒）
   servers:
     mysql:
-      url: http://localhost:50941
+      # 设置为false，表示本地模式连接
+      # 本地模式下，将使用localhost和当前应用的server.port作为目标服务地址
+      remote: true
+      # 以下host和port在本地模式下不会使用，但可以保留以便切换到远程模式
+      host: localhost
+      port: 50941
+      protocol: http
+      # 兼容旧版本配置
+      # url: http://localhost:50941
       retry:
         enabled: true
         interval: 10000  # 毫秒
 #    redis:
-#      url: http://localhost:50942
+#      remote: true
+#      host: localhost
+#      port: 50942
+#      protocol: http
 #      retry:
 #        enabled: true
 #        interval: 10000  # 毫秒

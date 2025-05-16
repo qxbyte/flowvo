@@ -1,9 +1,10 @@
-package org.xue.mcp_client.core;
+package org.xue.milvus.core;
 
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.client.RestTemplate;
 
@@ -26,22 +27,47 @@ public class ConnectionManager {
      * REST模板
      */
     private final RestTemplate restTemplate;
+    
+    /**
+     * Spring环境
+     */
+    private final Environment environment;
 
     /**
      * 服务连接映射
      */
     private final Map<String, McpServer> serverMap = new ConcurrentHashMap<>();
+    
+    /**
+     * 本地应用端口
+     */
+    private int localPort = 8080;
 
     /**
      * 构造函数
      *
      * @param mcpProperties MCP属性配置
+     * @param restTemplate RestTemplate实例
+     * @param environment Spring环境
      */
     @Autowired
-    public ConnectionManager(McpProperties mcpProperties) {
+    public ConnectionManager(McpProperties mcpProperties, RestTemplate restTemplate, Environment environment) {
         this.mcpProperties = mcpProperties;
-        this.restTemplate = new RestTemplate();
-        configureRestTemplate();
+        this.restTemplate = restTemplate;
+        this.environment = environment;
+        
+        // 尝试从环境中获取当前应用的端口
+        String portValue = environment.getProperty("server.port");
+        if (portValue != null && !portValue.isEmpty()) {
+            try {
+                this.localPort = Integer.parseInt(portValue);
+                logger.info("本地应用端口: {}", this.localPort);
+            } catch (NumberFormatException e) {
+                logger.warn("解析本地应用端口失败，使用默认端口8080: {}", e.getMessage());
+            }
+        } else {
+            logger.info("未找到server.port配置，使用默认端口8080");
+        }
     }
 
     /**
@@ -60,23 +86,30 @@ public class ConnectionManager {
         
         // 遍历配置中的所有服务
         mcpProperties.getServers().forEach((name, config) -> {
-            if (config != null && config.getUrl() != null && !config.getUrl().isEmpty()) {
-                try {
-                    McpServer server = new McpServer(name, config, restTemplate);
+            try {
+                // 获取服务URL（考虑本地/远程模式）
+                String serviceUrl = config.getFullUrl(localPort);
+                
+                if (serviceUrl != null && !serviceUrl.isEmpty()) {
+                    McpServer server = new McpServer(name, config, serviceUrl, restTemplate);
                     boolean connected = server.init();
                     
                     serverMap.put(name, server);
                     
                     if (connected) {
-                        logger.info("MCP服务 {} 连接成功: {}", name, config.getUrl());
+                        if (config.isRemote()) {
+                            logger.info("MCP服务 {} 远程连接成功: {}", name, serviceUrl);
+                        } else {
+                            logger.info("MCP服务 {} 本地连接成功: {}", name, serviceUrl);
+                        }
                     } else {
-                        logger.warn("MCP服务 {} 连接失败，将在后台尝试重连: {}", name, config.getUrl());
+                        logger.warn("MCP服务 {} 连接失败，将在后台尝试重连: {}", name, serviceUrl);
                     }
-                } catch (Exception e) {
-                    logger.error("初始化MCP服务 {} 连接时发生错误: {}", name, e.getMessage(), e);
+                } else {
+                    logger.warn("MCP服务 {} 配置无效，URL为空", name);
                 }
-            } else {
-                logger.warn("MCP服务 {} 配置无效，URL为空", name);
+            } catch (Exception e) {
+                logger.error("初始化MCP服务 {} 连接时发生错误: {}", name, e.getMessage(), e);
             }
         });
         
@@ -142,5 +175,14 @@ public class ConnectionManager {
     public boolean isServerAvailable(String serverName) {
         McpServer server = serverMap.get(serverName);
         return server != null && server.isConnected();
+    }
+    
+    /**
+     * 获取本地端口
+     * 
+     * @return 本地应用端口
+     */
+    public int getLocalPort() {
+        return localPort;
     }
 } 
