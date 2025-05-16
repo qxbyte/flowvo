@@ -1,106 +1,100 @@
+# MCP Client
 
-# MCP-Client 模块分析
+MCP客户端是一个用于连接MCP服务的Java客户端库。它提供了一个简单的API来访问MCP服务，并支持多个服务连接和自动重连。
 
-MCP-Client 是一个客户端模块，主要用于通过 JSON-RPC 协议与远程 MCP-MySQL 服务进行通信。该模块提供了一个简洁的 API 接口，使应用程序能够方便地执行 SQL 查询、更新操作以及获取数据库元数据等功能。
+## 特性
 
-## 核心组件
+- 自动配置与集成：只需引入依赖并配置MCP服务地址即可使用
+- 支持多服务连接：可同时连接多个MCP服务
+- 自动心跳检测：定时检测服务连接状态，自动重连断开的服务
+- 简单易用的API：提供丰富的API来执行数据库操作
+- 异常处理：提供统一的异常处理机制
 
-### 1. MCPDatabaseService 接口
+## 快速开始
 
-这是一个使用 JSON-RPC 协议定义的接口，包含以下主要方法：
+### 添加依赖
 
-- `executeQuery`: 执行 SQL 查询
-- `executeUpdate`: 执行 SQL 更新（INSERT/UPDATE/DELETE）
-- `executeBatch`: 批量执行 SQL 语句（在事务中）
-- `listTables`: 获取所有表名
-- `getTableSchema`: 获取表结构
-- `getDatabaseMetadata`: 获取数据库元数据
-- `getQueryMetadata`: 获取查询元数据
-- `heartbeat`: 心跳检查，用于检查服务是否可用
+```xml
+<dependency>
+    <groupId>org.xue</groupId>
+    <artifactId>mcp-client</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+```
 
-### 2. MCPDatabaseServiceWrapper 类
+### 配置MCP服务
 
-这是对 MCPDatabaseService 的包装类，提供了更友好的 API：
+在application.yml中添加MCP服务配置：
 
-- 简化了参数传递
-- 处理了返回结果的转换
-- 提供了更直观的方法名称
+```yaml
+# MCP客户端配置
+mcp:
+  enabled: true
+  heartbeat:
+    interval: 10000 # 心跳检查间隔（毫秒）
+  servers:
+    mysql:  # 服务名称，可自定义
+      url: http://localhost:50941  # MCP服务地址
+      retry:
+        enabled: true  # 是否启用重试
+        interval: 10000  # 重试间隔（毫秒）
+    redis:  # 另一个服务
+      url: http://localhost:50942
+      retry:
+        enabled: true
+        interval: 10000
+```
 
-### 3. JsonRpcClientConfig 配置类
-
-负责配置和创建 JSON-RPC 客户端：
-
-- 从配置文件中读取 MCP-MySQL 服务的 URL
-- 创建 JsonRpcHttpClient 实例
-- 设置连接超时和读取超时
-- 提供降级服务实现，当远程服务不可用时返回友好的错误信息
-
-### 4. ConnectionMonitor 连接监控组件
-
-定期检查与 MCP-MySQL 服务的连接状态：
-
-- 使用 `@Scheduled` 注解定期执行检查
-- 通过多种方式尝试检测服务可用性（JSON-RPC 心跳、REST API 心跳、元数据检查）
-- 当检测到服务不可用时，尝试重新连接
-- 使用反射技术动态更新服务代理，无需重启应用
-
-## 使用示例
-
-ExampleService 类展示了如何使用 MCPDatabaseServiceWrapper：
+### 使用MCP客户端
 
 ```java
-// 查询示例
-public List<Map<String, Object>> getUsersByAge(int minAge) {
-    SqlParamBuilder builder = SqlParamBuilder.create(
-            "SELECT * FROM users WHERE age >= :minAge ORDER BY age");
-    builder.param("minAge", minAge);
+@Service
+public class MyService {
     
-    return mcpDb.query(builder.getSql(), builder.getParams());
-}
-
-// 更新示例
-public boolean createUser(String username, int age) {
-    SqlParamBuilder builder = SqlParamBuilder.create(
-            "INSERT INTO users (username, age) VALUES (:username, :age)");
-    builder.param("username", username)
-           .param("age", age);
+    @Autowired
+    private McpClientTemplate mcpTemplate;
     
-    int affected = mcpDb.update(builder.getSql(), builder.getParams());
-    return affected > 0;
-}
-
-// 批量操作示例
-public int createUsers(List<Map<String, Object>> users) {
-    List<SqlParamBuilder> builders = new ArrayList<>();
-    
-    for (Map<String, Object> user : users) {
-        SqlParamBuilder builder = SqlParamBuilder.create(
-                "INSERT INTO users (username, age) VALUES (:username, :age)");
-        builder.param("username", user.get("username"))
-               .param("age", user.get("age"));
-        builders.add(builder);
+    public List<Map<String, Object>> getUserList() {
+        // 执行SQL查询
+        return mcpTemplate.query("mysql", "SELECT * FROM users");
     }
     
-    return mcpDb.executeBatch(SqlParamBuilder.createBatchParams(builders));
+    public int createUser(String name, String email) {
+        // 执行带参数的SQL更新
+        Map<String, Object> params = new HashMap<>();
+        params.put("name", name);
+        params.put("email", email);
+        
+        return mcpTemplate.update("mysql", 
+                "INSERT INTO users (name, email) VALUES (:name, :email)", 
+                params);
+    }
+    
+    public List<String> getTables() {
+        // 获取所有表名
+        return mcpTemplate.listTables("mysql");
+    }
 }
 ```
 
-## 容错机制
+## 接口说明
 
-该模块实现了多种容错机制：
+MCP客户端提供以下主要接口：
 
-1. **服务降级**：当远程服务不可用时，返回友好的错误信息而不是抛出异常
-2. **自动重连**：定期检查连接状态，并在服务恢复时自动重新连接
-3. **多种检测方式**：通过多种方式（JSON-RPC、REST API）检测服务可用性
-4. **超时设置**：设置合理的连接超时和读取超时，避免长时间等待
+- `query`：执行SQL查询
+- `update`：执行SQL更新（INSERT/UPDATE/DELETE）
+- `executeBatch`：批量执行SQL语句（在事务中）
+- `listTables`：获取所有表名
+- `getTableSchema`：获取表结构
+- `getDatabaseMetadata`：获取数据库元数据
+- `getQueryMetadata`：获取查询元数据
+- `executeRpc`：执行自定义RPC方法
+- `isServerAvailable`：检查服务是否可用
+- `getServersStatus`：获取所有服务状态信息
 
-## 总结
+## 异常处理
 
-MCP-Client 模块是一个设计良好的客户端库，具有一下特点：
+MCP客户端提供两种异常类型：
 
-1. 提供了简洁易用的 API 接口
-2. 实现了完善的容错和自动恢复机制
-3. 使用 JSON-RPC 协议与远程服务通信，支持各种数据库操作
-4. 通过包装类和工具类简化了开发流程
-
-这个模块使应用程序能够方便地与远程 MCP-MySQL 服务进行交互，同时处理了各种异常情况，提高了系统的稳定性和可用性。
+- `McpClientException`：客户端异常，通常表示客户端配置错误或连接问题
+- `McpServerException`：服务端异常，通常表示服务端执行请求时发生错误
