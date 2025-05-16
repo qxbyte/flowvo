@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.xue.mcp_client.config.McpClientAutoConfiguration 
+org.xue.milvus.config.McpClientAutoConfiguration 

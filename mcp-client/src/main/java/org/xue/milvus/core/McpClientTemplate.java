@@ -1,11 +1,11 @@
-package org.xue.mcp_client.core;
+package org.xue.milvus.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xue.mcp_client.model.JsonRpcRequest;
-import org.xue.mcp_client.model.JsonRpcResponse;
-import org.xue.mcp_client.exception.McpClientException;
-import org.xue.mcp_client.exception.McpServerException;
+import org.xue.milvus.model.JsonRpcRequest;
+import org.xue.milvus.model.JsonRpcResponse;
+import org.xue.milvus.exception.McpClientException;
+import org.xue.milvus.exception.McpServerException;
 
 import java.util.Collections;
 import java.util.HashMap;

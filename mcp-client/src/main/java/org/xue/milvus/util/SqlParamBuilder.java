@@ -1,4 +1,4 @@
-package org.xue.mcp_client.util;
+package org.xue.milvus.util;
 
 import lombok.Getter;
 
