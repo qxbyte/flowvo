@@ -15,10 +15,19 @@ logging:
     org.xue.mcpcommon: DEBUG
     com.googlecode.jsonrpc4j: DEBUG
 
+# MCP客户端配置
 mcp:
-  mysql:
-    # MCP-MySQL服务URL
-    url: http://localhost:50941
-    retry:
-      enabled: true
-      interval: 10000  # 毫秒 
+  enabled: true
+  heartbeat:
+    interval: 10000 # 心跳检查间隔（毫秒）
+  servers:
+    mysql:
+      url: http://localhost:50941
+      retry:
+        enabled: true
+        interval: 10000  # 毫秒
+#    redis:
+#      url: http://localhost:50942
+#      retry:
+#        enabled: true
+#        interval: 10000  # 毫秒
