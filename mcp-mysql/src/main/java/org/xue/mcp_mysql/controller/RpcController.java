@@ -20,7 +20,7 @@ import java.util.Map;
  * 使用Spring MVC处理JSON-RPC请求
  */
 @RestController
-@RequestMapping("${app.rpc.path:/api/rpc/db}")
+@RequestMapping("/api/rpc/db")
 public class RpcController {
     
     private static final Logger logger = LoggerFactory.getLogger(RpcController.class);
@@ -143,7 +143,7 @@ public class RpcController {
             @SuppressWarnings("unchecked")
             Map<String, Object> queryParams = (Map<String, Object>) paramsMap.get("params");
             if (sql != null) {
-                return jsonRpcService.executeQuery(sql, queryParams);
+                return jsonRpcService.query(sql, queryParams);
             }
         }
         
@@ -154,7 +154,7 @@ public class RpcController {
             @SuppressWarnings("unchecked")
             Map<String, Object> updateParams = (Map<String, Object>) paramsMap.get("params");
             if (sql != null) {
-                return jsonRpcService.executeUpdate(sql, updateParams);
+                return jsonRpcService.update(sql, updateParams);
             }
         }
         
@@ -164,7 +164,7 @@ public class RpcController {
             @SuppressWarnings("unchecked")
             Object statements = paramsMap.get("statements");
             if (statements instanceof java.util.List) {
-                return jsonRpcService.executeBatch((java.util.List<Map<String, Object>>) statements);
+                return jsonRpcService.batch((java.util.List<Map<String, Object>>) statements);
             }
         }
         

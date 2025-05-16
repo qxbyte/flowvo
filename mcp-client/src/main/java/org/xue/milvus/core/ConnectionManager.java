@@ -134,7 +134,7 @@ public class ConnectionManager {
             if (retry.isEnabled()) {
                 try {
                     boolean success = server.sendHeartbeat();
-                    
+                    logger.info("❤️MCP服务 {} 心跳 ==== "+System.currentTimeMillis(), name);
                     if (success && !server.isConnected()) {
                         logger.info("MCP服务 {} 已恢复连接", name);
                     } else if (!success && server.isConnected()) {

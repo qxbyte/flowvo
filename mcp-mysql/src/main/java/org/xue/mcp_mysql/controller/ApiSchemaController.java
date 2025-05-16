@@ -13,30 +13,32 @@ import org.xue.mcp_mysql.service.ExposureApiService;
 import java.util.Map;
 
 /**
- * API描述暴露控制器
- * 提供API描述接口，供客户端使用
+ * API模式描述控制器
+ * 提供API模式描述接口
  */
 @RestController
-@RequestMapping("/api")
-public class ApiExposureController {
+@RequestMapping("/api/schema/db")
+public class ApiSchemaController {
     
-    private static final Logger logger = LoggerFactory.getLogger(ApiExposureController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ApiSchemaController.class);
     
     private final ExposureApiService exposureApiService;
     
     @Autowired
-    public ApiExposureController(ExposureApiService exposureApiService) {
+    public ApiSchemaController(ExposureApiService exposureApiService) {
         this.exposureApiService = exposureApiService;
     }
     
     /**
-     * 获取API描述
+     * 获取API模式描述
+     * 
      * @param format 格式类型，可选值：function_calling, rpc_json
-     * @return API描述
+     * @return API模式描述
      */
-    @GetMapping("/schema")
-    public Map<String, Object> getApiSchema(@RequestParam(value = "format", defaultValue = "function_calling") String format) {
-        logger.debug("请求API描述，格式: {}", format);
+    @GetMapping
+    public Map<String, Object> getApiSchema(
+            @RequestParam(value = "format", defaultValue = "rpc_json") String format) {
+        logger.debug("请求API模式描述，格式: {}", format);
         
         ApiFormatType formatType;
         if ("function_calling".equalsIgnoreCase(format)) {
@@ -44,7 +46,7 @@ public class ApiExposureController {
         } else if ("rpc_json".equalsIgnoreCase(format)) {
             formatType = ApiFormatType.RPC_JSON;
         } else {
-            formatType = ApiFormatType.FUNCTION_CALLING; // 默认格式
+            formatType = ApiFormatType.RPC_JSON; // 默认格式
         }
         
         return exposureApiService.getApiDescription(formatType);

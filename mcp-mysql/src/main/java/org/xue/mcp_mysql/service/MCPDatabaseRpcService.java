@@ -16,19 +16,19 @@ public interface MCPDatabaseRpcService {
      * 执行SQL查询
      */
     @FunctionCallable(description = "执行SQL查询语句")
-    Map<String, Object> executeQuery(@FunctionParam(description = "SQL查询语句，如：SELECT * FROM users WHERE age >or= :minAge") String sql, @FunctionParam(description = "命名参数映射，如：{\"minAge\": 18}")Map<String, Object> params);
+    Map<String, Object> query(@FunctionParam(description = "SQL查询语句，如：SELECT * FROM users WHERE age >or= :minAge") String sql, @FunctionParam(description = "命名参数映射，如：{\"minAge\": 18}")Map<String, Object> params);
     
     /**
      * 执行SQL更新（INSERT/UPDATE/DELETE）
      */
     @FunctionCallable(description = "执行SQL更新语句（INSERT/UPDATE/DELETE）")
-    Map<String, Object> executeUpdate(@FunctionParam(description = "SQL更新语句，如：INSERT INTO users (name, age) VALUES (:name, :age)") String sql, @FunctionParam(description = "命名参数映射，如：{\"name\": \"张三\", \"age\": 25}") Map<String, Object> params);
+    Map<String, Object> update(@FunctionParam(description = "SQL更新语句，如：INSERT INTO users (name, age) VALUES (:name, :age)") String sql, @FunctionParam(description = "命名参数映射，如：{\"name\": \"张三\", \"age\": 25}") Map<String, Object> params);
     
     /**
      * 批量执行SQL语句（在事务中）
      */
     @FunctionCallable(description = "批量执行SQL语句（在事务中）")
-    Map<String, Object> executeBatch(@FunctionParam(description = "SQL语句列表，每个语句包含sql和params") List<Map<String, Object>> statements);
+    Map<String, Object> batch(@FunctionParam(description = "SQL语句列表，每个语句包含sql和params") List<Map<String, Object>> statements);
     
     /**
      * 获取所有表名
