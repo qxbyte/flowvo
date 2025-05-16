@@ -134,11 +134,11 @@ public class ConnectionManager {
             if (retry.isEnabled()) {
                 try {
                     boolean success = server.sendHeartbeat();
-                    logger.info("❤️MCP服务 {} 心跳 ==== "+System.currentTimeMillis(), name);
+                    logger.info("❤️ MCP服务 {} 心跳 ==== "+System.currentTimeMillis(), name);
                     if (success && !server.isConnected()) {
-                        logger.info("MCP服务 {} 已恢复连接", name);
+                        logger.info("✅ MCP服务 {} 已恢复连接", name);
                     } else if (!success && server.isConnected()) {
-                        logger.warn("MCP服务 {} 连接已断开", name);
+                        logger.warn("🚫MCP服务 {} 连接已断开", name);
                     }
                 } catch (Exception e) {
                     logger.debug("MCP服务 {} 心跳检查异常: {}", name, e.getMessage());
