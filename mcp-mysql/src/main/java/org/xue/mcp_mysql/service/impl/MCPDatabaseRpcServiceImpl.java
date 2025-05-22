@@ -18,7 +18,7 @@ import java.util.Map;
  * JSON-RPC控制器
  * 实现RPC服务接口，供RpcController调用
  */
-@Service("mcpDatabaseRpcController")
+@Service
 public class MCPDatabaseRpcServiceImpl implements MCPDatabaseRpcService {
     
     private static final Logger logger = LoggerFactory.getLogger(MCPDatabaseRpcServiceImpl.class);
@@ -34,7 +34,7 @@ public class MCPDatabaseRpcServiceImpl implements MCPDatabaseRpcService {
      * 执行SQL查询
      */
     @Override
-    public Map<String, Object> executeQuery(String sql, Map<String, Object> params) {
+    public Map<String, Object> query(String sql, Map<String, Object> params) {
         logger.debug("RPC调用: executeQuery, SQL: {}", sql);
         try {
             // 确保params不为null
@@ -65,7 +65,7 @@ public class MCPDatabaseRpcServiceImpl implements MCPDatabaseRpcService {
      * 执行SQL更新（INSERT/UPDATE/DELETE）
      */
     @Override
-    public Map<String, Object> executeUpdate(String sql, Map<String, Object> params) {
+    public Map<String, Object> update(String sql, Map<String, Object> params) {
         logger.debug("RPC调用: executeUpdate, SQL: {}", sql);
         try {
             // 确保params不为null
@@ -94,7 +94,7 @@ public class MCPDatabaseRpcServiceImpl implements MCPDatabaseRpcService {
      * 批量执行SQL语句（在事务中）
      */
     @Override
-    public Map<String, Object> executeBatch(List<Map<String, Object>> statements) {
+    public Map<String, Object> batch(List<Map<String, Object>> statements) {
         logger.debug("RPC调用: executeBatch, 语句数量: {}", statements != null ? statements.size() : 0);
         try {
             // 确保statements不为null

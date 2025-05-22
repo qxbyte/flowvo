@@ -1,87 +1,115 @@
-# MCP-MySQL 模块分析
+# MCP MySQL
 
-根据请求，我将为您分析 MCP-MySQL 模块。虽然没有直接提供关于此模块的具体信息，但结合前面关于 MCP-Client 的内容，我可以推断出 MCP-MySQL 模块的基本功能和结构。
+MCP MySQL是一个微服务，提供了MySQL数据库的JSON-RPC接口，支持远程执行SQL查询、更新和获取元数据等操作。
 
-## MCP-MySQL 模块概述
+## 特性
 
-MCP-MySQL 应该是一个服务端模块，作为 MCP-Client 的对应服务端组件，主要负责处理来自客户端的 JSON-RPC 请求，并执行实际的数据库操作。
+- JSON-RPC接口：提供标准的JSON-RPC 2.0接口
+- API模式描述：自动生成API模式描述，便于集成
+- 参数化SQL：支持命名参数的SQL语句
+- 事务支持：批量操作时支持事务
+- 简单集成：与MCP Client无缝集成
 
-## 可能的核心组件
+## API接口
 
-### 1. JSON-RPC 服务端实现
+MCP MySQL提供两个主要的API接口：
 
-- 实现了 MCPDatabaseService 接口中定义的所有方法
-- 处理来自 MCP-Client 的 RPC 调用
-- 将 RPC 请求转换为实际的数据库操作
+1. `/api/schema/db`：获取API模式描述
+2. `/api/rpc/db`：执行JSON-RPC请求
 
-### 2. 数据库连接管理
+### API模式描述
 
-- 管理与 MySQL 数据库的连接池
-- 处理数据库连接的创建、回收和监控
-- 实现高效的连接复用机制
+可以通过以下方式获取API模式描述：
 
-### 3. SQL 执行引擎
+```
+GET /api/schema/db?format=rpc_json
+```
 
-- 执行 SQL 查询和更新操作
-- 处理参数绑定和 SQL 注入防护
-- 支持批量操作和事务管理
+支持的格式有：
+- `rpc_json`：JSON-RPC格式（默认）
+- `function_calling`：函数调用格式
 
-### 4. 元数据服务
+### JSON-RPC接口
 
-- 提供数据库表结构和元数据信息
-- 支持表名列表、字段定义等数据的查询
-- 可能包含数据库结构的缓存机制
+所有的数据库操作都通过JSON-RPC接口执行，例如：
 
-### 5. 健康监控与诊断
+```
+POST /api/rpc/db
+Content-Type: application/json
 
-- 提供心跳检测接口
-- 监控服务状态和性能指标
-- 记录访问日志和错误信息
+{
+  "jsonrpc": "2.0",
+  "method": "query",
+  "params": {
+    "sql": "SELECT * FROM users WHERE age >= :minAge",
+    "params": {
+      "minAge": 18
+    }
+  },
+  "id": 1
+}
+```
 
-## 可能的特性
+## 支持的方法
 
-### 1. 高可用性设计
+MCP MySQL支持以下RPC方法：
 
-- 支持集群部署和负载均衡
-- 实现故障检测和自动恢复
-- 可能支持主从结构或读写分离
+- `query`：执行SQL查询
+- `update`：执行SQL更新（INSERT/UPDATE/DELETE）
+- `batch`：批量执行SQL语句（在事务中）
+- `listTables`：获取所有表名
+- `getTableSchema`：获取表结构
+- `getDatabaseMetadata`：获取数据库元数据
+- `getQueryMetadata`：获取查询元数据
+- `heartbeat`：检查服务是否可用
 
-### 2. 安全机制
+## 配置与部署
 
-- 身份验证和授权控制
-- SQL 注入防护
-- 敏感数据加密
+在`application.yml`中配置数据库连接信息：
 
-### 3. 性能优化
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/your_database
+    username: your_username
+    password: your_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+```
 
-- SQL 查询优化
-- 结果集缓存
-- 连接池参数调优
+以及服务端口：
 
-### 4. 事务支持
+```yaml
+server:
+  port: 50941
+```
 
-- 支持 ACID 事务
-- 提供分布式事务协调
-- 事务隔离级别控制
+## 与MCP Client集成
 
-### 5. 数据转换
+MCP MySQL可以与MCP Client无缝集成，只需在MCP Client的配置中添加：
 
-- 在 JSON 格式和数据库原生格式之间进行转换
-- 处理各种数据类型和日期时间格式
-- 支持大数据量传输的分页机制
+```yaml
+mcp:
+  servers:
+    mysql:
+      url: http://localhost:50941
+      retry:
+        enabled: true
+        interval: 10000  # 毫秒
+```
 
-## 与 MCP-Client 的交互
+然后就可以使用MCP Client的API来访问MySQL数据库：
 
-MCP-MySQL 模块应该通过 JSON-RPC 协议与 MCP-Client 模块进行交互：
+```java
+@Autowired
+private McpClientTemplate mcpTemplate;
 
-1. 接收来自 MCP-Client 的 RPC 请求
-2. 解析请求参数并验证
-3. 执行相应的数据库操作
-4. 将结果转换为 JSON 格式
-5. 返回结果或错误信息给客户端
+// 执行查询
+List<Map<String, Object>> users = mcpTemplate.query("mysql", 
+                                                   "SELECT * FROM users WHERE age >= :minAge", 
+                                                   Map.of("minAge", 18));
 
-## 总结
-
-MCP-MySQL 模块应该是一个专门设计的服务端组件，通过 JSON-RPC 协议为 MCP-Client 提供数据库服务。它封装了直接的数据库操作，提供了一个统一、安全和高效的数据访问层。这种设计使得客户端应用程序无需直接连接数据库，而是通过 RPC 接口进行交互，提高了系统的安全性、可扩展性和可维护性。
-
-该模块很可能是一个微服务架构中的关键组件，专门负责数据持久化层的访问，遵循单一责任原则，专注于提供高质量的数据库服务。
+// 执行更新
+int affected = mcpTemplate.update("mysql", 
+                                 "INSERT INTO users (name, age) VALUES (:name, :age)", 
+                                 Map.of("name", "张三", "age", 25));
+```
