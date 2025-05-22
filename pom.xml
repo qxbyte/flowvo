@@ -17,6 +17,8 @@
     <modules>
         <module>core</module>
         <module>api</module>
+        <module>agent</module>
+        <module>app</module>
         <!-- 你有其他子模块可以加在这里 -->
     </modules>
 

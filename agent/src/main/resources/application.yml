@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: agent-service
+  profiles:
+    active: dev
+
+server:
+  port: 8082
+  servlet:
+    context-path: /
+
+logging:
+  level:
+    root: INFO
+    org.xue.agent: DEBUG
+#    org.springframework.boot.autoconfigure: DEBUG
+
+
+# Agent配置
+agent:
+  enabled: true
+  maxInteractions: 10
+  defaultModel: gpt-4-turbo
+  systemPrompt: "你是一个智能助手，需要得到用户想要的最终回复时才停止调用function，否则你需要持续响应function_call JSON与function API交互。"
+  temperature: 0.7
+  llmApi:
+    url: https://api.openai.com/v1/chat/completions
+    key: ${OPENAI_API_KEY:your_api_key_here}
+    timeout: 60000
+
+# MCP客户端配置
+mcp:
+  enabled: true
+  heartbeat:
+    interval: 10000 # 心跳检查间隔（毫秒）
+  servers:
+    mysql:
+      name: mcp-mysql  # 服务名称，用于URL拼接
+      remote: true    # 本地模式，使用当前应用端口连接
+      host: localhost
+      port: 50941
+      protocol: http
+      retry:
+        enabled: true
+        interval: 10000  # 毫秒

@@ -22,11 +22,6 @@ spring:
       connection-timeout: 30000
       connection-test-query: SELECT 1
 
-# 应用配置
-app:
-  rpc:
-    path: /api/rpc/db
-
 # CORS配置
 cors:
   allowed-origins: "*"
