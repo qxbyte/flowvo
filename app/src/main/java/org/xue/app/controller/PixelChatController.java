@@ -1,5 +1,6 @@
 package org.xue.app.controller;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.xue.app.dto.ChatMessageDTO;
 import org.xue.app.dto.ChatRequestDTO;
 import org.xue.app.dto.ConversationCreateDTO;
@@ -14,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.persistence.EntityNotFoundException; // For handling service layer exceptions
 import java.util.List;
 import java.util.Map; // For potential simple updates if needed, though sticking to DTO
 
@@ -187,4 +187,4 @@ public class PixelChatController {
         }
     }
 }
-```
+

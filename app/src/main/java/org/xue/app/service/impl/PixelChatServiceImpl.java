@@ -1,7 +1,7 @@
 package org.xue.app.service.impl;
 
-import org.xue.app.domain.ChatMessage;
-import org.xue.app.domain.Conversation;
+import org.xue.app.entity.ChatMessage;
+import org.xue.app.entity.Conversation;
 import org.xue.app.dto.ChatMessageDTO;
 import org.xue.app.dto.ChatRequestDTO;
 import org.xue.app.dto.ConversationCreateDTO;
@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityNotFoundException; // Standard JPA exception
+import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -234,4 +234,4 @@ public class PixelChatServiceImpl implements PixelChatService {
 // 12. `javax.persistence.EntityNotFoundException` is appropriate.
 // 13. `ConversationCreateDTO` has `getUserId()` and `getTitle()`.
 // 14. `ConversationUpdateDTO` has `getTitle()`.
-```
+
