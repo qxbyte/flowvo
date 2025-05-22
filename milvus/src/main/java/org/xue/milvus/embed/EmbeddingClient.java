@@ -1,4 +1,4 @@
-package org.xue.mcp_client.embed;
+package org.xue.milvus.embed;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;

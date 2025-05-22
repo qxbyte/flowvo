@@ -1,4 +1,4 @@
-package org.xue.mcp_client;
+package org.xue.milvus;
 
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.param.ConnectParam;

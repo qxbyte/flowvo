@@ -1,0 +1,342 @@
+
+设计一个agent，模块我已经创建好了/flowvo/agent，它的功能是用于控制mcp client与大模型交互得到大模型最终回复（一定要仔细分析下面的需求）
+1、agent有一个入口rest接口，用来接收用户发送来的问题，将用户问题作为提示词，前面再加系统提示词（系统提示次固定内容），组装成function call json（这里可以通过mcp暴露的接口getApiSchema方法获取到，拿到其中的tools使用），发送给大模型（请求大模型报文）
+2、将大模型响应报文的tool_calls(为一个list)转为一个调用mcp请求参数的list，然后循环调用mcp不同的服务，调用完成之后再将结果组装后请求大模型，再次请求大模型时需要注意，将mcp响应的结果组成一个role为“tool”的提示词，并且一定要将前面大模型返回的tool_calls中的ID放到Tool_call_id中
+3、支持与大模型多轮对话，这里可以设计大模型与mcp的调用放在一个循环中，让它们可以一直交互，直到大模型返回的tool中没有值，切content有值时结束循环，当然这里需要在yml中设置一个最大循环交互count，当交互次数达到这个数值时，交互强制终止。切记每次大模型回复才算一次交互
+4、参照下面的对话交互报文分析（当然实际循环对话中可能不止4组对话），可以设计一个对话历史map用来全程所有保存对话的信息，以便其他对话实用信息
+5、为agent生成README.md
+一、请求大模型报文：
+{
+    "model": "gpt-4-turbo",
+    "messages": [
+        {
+            "role": "system",
+            "content": "你是一个智能助手，需要得到用户想要的最终回复时才停止调用function，否则你需要持续响应function_call JSON与function API交互。"
+        },
+        {
+            "role": "user",
+            "content": "用户发送的信息内容"
+        }
+    ],
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "foo",
+                "description": "测试方法",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "categorys": {
+                            "type": "array",
+                            "description": "参数1",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "参数2"
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "参数3"
+                        }
+                    },
+                    "required": [
+                        "categorys",
+                        "name",
+                        "count"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getWeather",
+                "description": "获取天气信息",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "description": "城市名称"
+                        }
+                    },
+                    "required": [
+                        "city"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getNews",
+                "description": "获取新闻信息",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "categorys": {
+                            "type": "array",
+                            "description": "多个新闻类别ID",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "required": [
+                        "categorys"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "batchCancelOrdersByOrderNo",
+                "description": "根据订单号批量取消订单",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "orderNos": {
+                            "type": "array",
+                            "description": "订单号列表",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "orderNos"
+                    ]
+                }
+            }
+        }
+    ],
+    "tool_choice": "auto",
+    "temperature": 0.7,
+    "stream": false
+}
+
+二、大模型响应报文：
+{
+  "id": "chatcmpl-BXrvmD60GuXw75iQ5YvJjPnSdEw6e",
+  "object": "chat.completion",
+  "created": 1747411834,
+  "model": "gpt-4-turbo-2024-04-09",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_7UjkvIZrlmpFRa36bSDdAbza",
+            "type": "function",
+            "function": {
+              "name": "batchCancelOrdersByOrderNo",
+              "arguments": "{\"orderNo\":\"ORD20250514118566\"}"
+            }
+          }，
+          {
+            "id": "call_U7223vIrlmpFRa36bSDdAbza",
+            "type": "function",
+            "function": {
+              "name": "getWeather",
+              "arguments": "{\"city\":\"上海\"}"
+            }
+          }
+        ],
+        "refusal": null,
+        "annotations": []
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 188,
+    "completion_tokens": 16,
+    "total_tokens": 204,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": "fp_de235176ee"
+}
+
+三、再次请求大模型报文：
+{
+    "model": "gpt-4-turbo",
+    "messages": [
+        {
+            "role": "system",
+            "content": "你是一个智能助手，需要得到用户想要的最终回复时才停止调用function，否则你需要持续响应function_call JSON与function API交互。"
+        },
+        {
+            "role": "user",
+            "content": "你有哪些function可以调用"
+        },
+        {
+            "role": "tool",
+            "tool_call_id": "call_7UjkvIZrlmpFRa36bSDdAbza", //必须带上前面大模型要调用的function的ID
+            "name": "batchCancelOrdersByOrderNo", //调用的function名
+            "content": "{"fail":{"orderNo": ""ORD20250514118566"","reason": "订单状态已经为取消状态"}}" //这里就是每个mcp服务返回的信息
+        }，
+        {
+            "role": "tool",
+            "tool_call_id": "call_U7223vIrlmpFRa36bSDdAbza", //必须带上前面大模型要调用的function的ID
+            "name": "getWeather", //调用的function名
+            "content": "{"fail":{"orderNo": ""ORD20250514118566"","reason": "订单状态已经为取消状态"}}" //这里就是每个mcp服务返回的信息
+        }
+    ],
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "foo",
+                "description": "测试方法",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "categorys": {
+                            "type": "array",
+                            "description": "参数1",
+                            "items": {
+                                "type": "integer"
+                            }
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "参数2"
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "参数3"
+                        }
+                    },
+                    "required": [
+                        "categorys",
+                        "name",
+                        "count"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getWeather",
+                "description": "获取天气信息",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "description": "城市名称"
+                        }
+                    },
+                    "required": [
+                        "city"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "getNews",
+                "description": "获取新闻信息",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "categorys": {
+                            "type": "array",
+                            "description": "多个新闻类别ID",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "required": [
+                        "categorys"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "batchCancelOrdersByOrderNo",
+                "description": "根据订单号批量取消订单",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "orderNos": {
+                            "type": "array",
+                            "description": "订单号列表",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "required": [
+                        "orderNos"
+                    ]
+                }
+            }
+        }
+    ],
+    "tool_choice": "auto",
+    "temperature": 0.7,
+    "stream": false
+}
+
+四、大模型再次响应：
+{
+  "id": "chatcmpl-BXs8mdNbA0FVpwUwogx1X3OuwhApA",
+  "object": "chat.completion",
+  "created": 1747412640,
+  "model": "gpt-4-turbo-2024-04-09",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "我可以调用以下几个function：\n\n1. **获取天气信息** (`getWeather`): 根据提供的城市名称获取该城市的天气信息。\n2. **获取新闻信息** (`getNews`): 根据提供的新闻类别ID获取相关新闻信息。\n3. **根据订单号批量取消订单** (`batchCancelOrdersByOrderNo`): 根据提供的订单号列表批量取消订单。\n4. **测试方法** (`foo`): 这是一个测试方法，可以根据提供的类别、名称和数量进行某些操作。\n\n如果需要具体的帮助或示例调用，请告诉我！",
+        "refusal": null,
+        "annotations": []
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 192,
+    "completion_tokens": 171,
+    "total_tokens": 363,
+    "prompt_tokens_details": {
+      "cached_tokens": 0,
+      "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 0,
+      "audio_tokens": 0,
+      "accepted_prediction_tokens": 0,
+      "rejected_prediction_tokens": 0
+    }
+  },
+  "service_tier": "default",
+  "system_fingerprint": "fp_de235176ee"
+}

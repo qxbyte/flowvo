@@ -17,7 +17,7 @@ import java.util.Map;
  * 提供API模式描述接口
  */
 @RestController
-@RequestMapping("/api/schema/db")
+@RequestMapping("${spring.application.name}/api/schema")
 public class ApiSchemaController {
     
     private static final Logger logger = LoggerFactory.getLogger(ApiSchemaController.class);
