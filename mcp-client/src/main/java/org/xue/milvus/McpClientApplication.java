@@ -1,4 +1,4 @@
-package org.xue.mcp_client;
+package org.xue.milvus;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,7 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.xue.mcp_client.core.McpClientTemplate;
+import org.xue.milvus.core.McpClientTemplate;
 
 /**
  * MCP客户端应用程序

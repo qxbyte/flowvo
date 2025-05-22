@@ -1,10 +1,10 @@
-package org.xue.mcpcache;
+package org.xue.app;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class McpCacheApplicationTests {
+class AppApplicationTests {
 
 	@Test
 	void contextLoads() {

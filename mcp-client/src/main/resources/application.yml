@@ -22,6 +22,7 @@ mcp:
     interval: 10000 # 心跳检查间隔（毫秒）
   servers:
     mysql:
+      name: mcp-mysql  # 服务名称，用于URL拼接
       # 设置为false，表示本地模式连接
       # 本地模式下，将使用localhost和当前应用的server.port作为目标服务地址
       remote: true
@@ -35,6 +36,7 @@ mcp:
         enabled: true
         interval: 10000  # 毫秒
 #    redis:
+#      name: mcp-redis  # 服务名称，用于URL拼接
 #      remote: true
 #      host: localhost
 #      port: 50942

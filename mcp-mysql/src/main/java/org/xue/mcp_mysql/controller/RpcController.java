@@ -20,7 +20,7 @@ import java.util.Map;
  * 使用Spring MVC处理JSON-RPC请求
  */
 @RestController
-@RequestMapping("/api/rpc/db")
+@RequestMapping("${spring.application.name}/api/rpc")
 public class RpcController {
     
     private static final Logger logger = LoggerFactory.getLogger(RpcController.class);

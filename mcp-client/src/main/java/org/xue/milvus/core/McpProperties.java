@@ -1,4 +1,4 @@
-package org.xue.mcp_client.core;
+package org.xue.milvus.core;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

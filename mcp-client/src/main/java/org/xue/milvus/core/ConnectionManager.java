@@ -1,4 +1,4 @@
-package org.xue.mcp_client.core;
+package org.xue.milvus.core;
 
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;

@@ -2,7 +2,7 @@
 <configuration>
     <!-- 日志文件路径与项目名 -->
     <property name="LOG_PATH" value="/${user.dir}/_logs" />
-    <property name="PROJECT_NAME" value="mcp-cache" />
+    <property name="PROJECT_NAME" value="app" />
 
     <!-- 控制台输出 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
