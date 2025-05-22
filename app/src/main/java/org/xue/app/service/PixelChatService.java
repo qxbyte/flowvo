@@ -1,6 +1,6 @@
 package org.xue.app.service;
 
-import org.xue.app.domain.AgentResponse;
+import org.xue.agent.model.AgentResponse;
 import org.xue.app.dto.ChatMessageDTO;
 import org.xue.app.dto.ChatRequestDTO;
 import org.xue.app.dto.ConversationCreateDTO;
