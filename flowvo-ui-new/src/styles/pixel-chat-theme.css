@@ -1,0 +1,129 @@
+/* Pixel Chat Theme */
+
+:root {
+  --pixel-bg-primary: #222034;   /* Dark purple/blue */
+  --pixel-bg-secondary: #302C42; /* Slightly lighter purple/blue */
+  --pixel-border-color: #4E4A57; /* Mid-tone for borders */
+  --pixel-text-color: #FFFFFF;   /* White text */
+  --pixel-accent-color: #FF5579; /* Bright pink/red accent */
+  --pixel-input-bg: #1A1826;    /* Very dark for input backgrounds */
+  --pixel-success-color: #50FA7B; /* Bright green for success/validation */
+  --pixel-warning-color: #F1FA8C; /* Bright yellow for warnings */
+  --pixel-error-color: #FF5555;   /* Bright red for errors (slightly different from accent) */
+  --pixel-link-color: #8BE9FD;    /* Cyan/light blue for links */
+
+  /* Font specific variables */
+  --pixel-font-family: 'Press Start 2P', cursive;
+  --pixel-font-size-base: 10px; /* Base size for pixel fonts, can be scaled up */
+  --pixel-font-size-small: 8px;
+  --pixel-font-size-large: 12px;
+}
+
+/* Import Google Font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* Global reset and base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* Disables anti-aliasing for a sharper, pixelated font look */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+  image-rendering: -webkit-optimize-contrast; /* Chrome/Safari */
+  image-rendering: crisp-edges; /* Firefox */
+  image-rendering: pixelated; /* Standard */
+}
+
+body {
+  font-family: var(--pixel-font-family);
+  color: var(--pixel-text-color);
+  background-color: var(--pixel-bg-primary);
+  font-size: var(--pixel-font-size-base);
+  line-height: 1.6; /* Adjust line height for pixel font readability */
+}
+
+/* Basic Pixelated Button Style */
+.pixel-button {
+  font-family: var(--pixel-font-family);
+  font-size: var(--pixel-font-size-base);
+  color: var(--pixel-text-color);
+  background-color: var(--pixel-accent-color);
+  border: 2px solid var(--pixel-border-color);
+  padding: 8px 12px; /* Adjust padding for pixel style */
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: center;
+  display: inline-block;
+
+  /* Remove default browser appearance */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* No rounded corners for pixel style */
+  border-radius: 0;
+
+  /* Optional: Add a slight shadow or different state for hover/active for interaction */
+  transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+.pixel-button:hover,
+.pixel-button:focus {
+  background-color: var(--pixel-text-color);
+  color: var(--pixel-accent-color);
+  outline: none; /* Or a pixelated outline */
+}
+
+.pixel-button:active {
+  transform: translateY(1px); /* Simple press effect */
+}
+
+/* Basic Pixelated Input Style */
+.pixel-input {
+  font-family: var(--pixel-font-family);
+  font-size: var(--pixel-font-size-base);
+  color: var(--pixel-text-color);
+  background-color: var(--pixel-input-bg);
+  border: 2px solid var(--pixel-border-color);
+  padding: 8px;
+  width: 100%; /* Or specific width */
+
+  /* Remove default browser appearance */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  
+  /* No rounded corners */
+  border-radius: 0;
+}
+
+.pixel-input::placeholder {
+  color: var(--pixel-border-color);
+  opacity: 1; /* Firefox fix */
+}
+
+.pixel-input:focus {
+  outline: 2px solid var(--pixel-accent-color); /* Simple focus indicator */
+  border-color: var(--pixel-accent-color); /* Change border color on focus */
+}
+
+/* Basic Pixelated Container (Optional) */
+.pixel-container {
+  background-color: var(--pixel-bg-secondary);
+  border: 2px solid var(--pixel-border-color);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* Basic Pixelated Link Style */
+a.pixel-link, .pixel-link a {
+  color: var(--pixel-link-color);
+  text-decoration: none; /* Often pixel art UIs avoid underlines */
+}
+
+a.pixel-link:hover, .pixel-link a:hover {
+  color: var(--pixel-accent-color);
+  text-decoration: underline; /* Or a different style for hover */
+}
+```
