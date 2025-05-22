@@ -1,4 +1,4 @@
-package org.xue.milvus;
+package org.xue.mcp_client;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

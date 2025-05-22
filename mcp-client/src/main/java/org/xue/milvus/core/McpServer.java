@@ -1,4 +1,4 @@
-package org.xue.milvus.core;
+package org.xue.mcp_client.core;
 
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
-import org.xue.milvus.model.JsonRpcRequest;
-import org.xue.milvus.model.JsonRpcResponse;
+import org.xue.mcp_client.model.JsonRpcRequest;
+import org.xue.mcp_client.model.JsonRpcResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -115,7 +115,7 @@ public class McpServer {
     @SuppressWarnings("unchecked")
     private Map<String, Object> fetchApiSchema() {
         try {
-            String schemaUrl = serviceUrl + "/api/schema/db";
+            String schemaUrl = getSchemaUrl();
             ResponseEntity<Map> response = restTemplate.getForEntity(schemaUrl, Map.class);
             
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
@@ -181,7 +181,7 @@ public class McpServer {
      */
     public JsonRpcResponse executeRpc(JsonRpcRequest request) {
         try {
-            String rpcUrl = serviceUrl + "/api/rpc/db";
+            String rpcUrl = getRpcUrl();
             ResponseEntity<JsonRpcResponse> response = restTemplate.postForEntity(
                     rpcUrl, 
                     request, 
@@ -200,20 +200,56 @@ public class McpServer {
     }
 
     /**
-     * 是否已连接
-     *
-     * @return 是否已连接
+     * 获取Schema API URL
+     * 
+     * @return Schema API的完整URL
      */
-    public boolean isConnected() {
-        return connected;
+    public String getSchemaUrl() {
+        return serviceUrl + "/api/schema";
+    }
+    
+    /**
+     * 获取Schema API URL（带格式参数）
+     * 
+     * @param format API格式（如function_calling）
+     * @return Schema API的完整URL（带格式参数）
+     */
+    public String getSchemaUrl(String format) {
+        return getSchemaUrl() + "?format=" + format;
+    }
+    
+    /**
+     * 获取RPC API URL
+     * 
+     * @return RPC API的完整URL
+     */
+    public String getRpcUrl() {
+        return serviceUrl + "/api/rpc";
+    }
+    
+    /**
+     * 获取服务名称
+     * 优先使用配置中的name属性，如果没有则使用服务标识符
+     * 
+     * @return 服务名称
+     */
+    public String getServerName() {
+        // 优先使用配置的name属性
+        if (config.getName() != null && !config.getName().isEmpty()) {
+            return config.getName();
+        }
+        // 回退使用服务标识符
+        return name;
     }
 
     /**
-     * 获取服务URL
-     *
-     * @return 服务URL
+     * 判断服务是否已连接
      */
-    public String getServiceUrl() {
-        return serviceUrl;
+    public boolean isConnected() {
+        // 如果超过心跳间隔两倍的时间没有成功心跳，则认为连接已断开
+        long heartbeatInterval = config.getRetry().getInterval();
+        boolean heartbeatTimeout = System.currentTimeMillis() - lastHeartbeatTime > heartbeatInterval * 2;
+        
+        return connected && !heartbeatTimeout;
     }
 } 

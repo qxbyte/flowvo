@@ -1,4 +1,4 @@
-package org.xue.milvus.config;
+package org.xue.mcp_client.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,4 +1,4 @@
-package org.xue.milvus.exception;
+package org.xue.mcp_client.exception;
 
 /**
  * MCP客户端异常

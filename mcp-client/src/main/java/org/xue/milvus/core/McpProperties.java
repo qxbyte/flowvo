@@ -1,4 +1,4 @@
-package org.xue.milvus.core;
+package org.xue.mcp_client.core;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -44,6 +44,12 @@ public class McpProperties {
      */
     @Data
     public static class ServerConfig {
+        /**
+         * 服务名称，用于API路径拼接
+         * 如果不设置，将使用服务标识符
+         */
+        private String name;
+        
         /**
          * 服务URL - 兼容旧配置
          */

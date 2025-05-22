@@ -1,11 +1,12 @@
-package org.xue.milvus.core;
+package org.xue.mcp_client.core;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xue.milvus.model.JsonRpcRequest;
-import org.xue.milvus.model.JsonRpcResponse;
-import org.xue.milvus.exception.McpClientException;
-import org.xue.milvus.exception.McpServerException;
+import org.springframework.stereotype.Component;
+import org.xue.mcp_client.model.JsonRpcRequest;
+import org.xue.mcp_client.model.JsonRpcResponse;
+import org.xue.mcp_client.exception.McpClientException;
+import org.xue.mcp_client.exception.McpServerException;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import java.util.Map;
  * MCP客户端模板类
  * 提供主要的MCP操作API
  */
+@Component
 public class McpClientTemplate {
     private static final Logger logger = LoggerFactory.getLogger(McpClientTemplate.class);
 
@@ -31,6 +33,49 @@ public class McpClientTemplate {
      */
     public McpClientTemplate(ConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
+    }
+
+    /**
+     * 获取Schema API URL
+     *
+     * @param serverName 服务名称
+     * @return Schema API的完整URL
+     */
+    public String getSchemaUrl(String serverName) {
+        McpServer server = connectionManager.getServer(serverName);
+        if (server == null) {
+            throw new McpClientException("未找到服务: " + serverName);
+        }
+        return server.getSchemaUrl();
+    }
+    
+    /**
+     * 获取Schema API URL（带格式参数）
+     *
+     * @param serverName 服务名称
+     * @param format API格式（如function_calling）
+     * @return Schema API的完整URL（带格式参数）
+     */
+    public String getSchemaUrl(String serverName, String format) {
+        McpServer server = connectionManager.getServer(serverName);
+        if (server == null) {
+            throw new McpClientException("未找到服务: " + serverName);
+        }
+        return server.getSchemaUrl(format);
+    }
+    
+    /**
+     * 获取RPC API URL
+     *
+     * @param serverName 服务名称
+     * @return RPC API的完整URL
+     */
+    public String getRpcUrl(String serverName) {
+        McpServer server = connectionManager.getServer(serverName);
+        if (server == null) {
+            throw new McpClientException("未找到服务: " + serverName);
+        }
+        return server.getRpcUrl();
     }
 
     /**
