@@ -1,4 +1,4 @@
-package org.xue.milvus.config;
+package org.xue.mcp_client.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

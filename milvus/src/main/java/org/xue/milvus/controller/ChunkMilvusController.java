@@ -1,4 +1,4 @@
-package org.xue.milvus.controller;
+package org.xue.mcp_client.controller;
 
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -8,7 +8,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.xue.api.milvus.dto.InsertChunksRequest;
 import org.xue.api.milvus.dto.SearchChunksRequest;
-import org.xue.milvus.service.ChunkMilvusService;
+import org.xue.mcp_client.service.ChunkMilvusService;
 
 import java.util.List;
 

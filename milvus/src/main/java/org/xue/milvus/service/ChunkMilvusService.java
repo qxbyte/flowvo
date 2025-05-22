@@ -1,4 +1,4 @@
-package org.xue.milvus.service;
+package org.xue.mcp_client.service;
 
 import io.milvus.client.*;
 import io.milvus.grpc.DataType;
@@ -10,7 +10,7 @@ import io.milvus.param.index.CreateIndexParam;
 import io.milvus.response.SearchResultsWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.xue.milvus.embed.EmbeddingClient;
+import org.xue.mcp_client.embed.EmbeddingClient;
 
 import java.util.*;
 

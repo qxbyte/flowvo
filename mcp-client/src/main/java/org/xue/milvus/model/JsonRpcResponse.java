@@ -1,4 +1,4 @@
-package org.xue.milvus.model;
+package org.xue.mcp_client.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -1,4 +1,4 @@
-package org.xue.milvus.example;
+package org.xue.mcp_client.example;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.xue.milvus.core.McpClientTemplate;
-import org.xue.milvus.exception.McpClientException;
+import org.xue.mcp_client.core.McpClientTemplate;
+import org.xue.mcp_client.exception.McpClientException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -73,7 +73,7 @@ public class ExampleController {
             
             // 构建API模式描述请求URL
             String serviceUrl = (String) serverStatus.get("url");
-            String schemaUrl = serviceUrl + "/api/schema/db?format=" + format;
+            String schemaUrl = serviceUrl + "/api/schema?format=" + format;
             
             // 发送请求获取API模式描述
             ResponseEntity<Map> response = restTemplate.getForEntity(schemaUrl, Map.class);

@@ -1,4 +1,4 @@
-package org.xue.milvus.core;
+package org.xue.mcp_client.core;
 
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -6,8 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,6 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * MCP连接管理器
  * 负责管理所有MCP服务连接，执行心跳检查和重连
  */
+@Component
 public class ConnectionManager {
     private static final Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
 
@@ -85,31 +89,39 @@ public class ConnectionManager {
         logger.info("初始化MCP服务连接...");
         
         // 遍历配置中的所有服务
-        mcpProperties.getServers().forEach((name, config) -> {
+        mcpProperties.getServers().forEach((nodeName, config) -> {
             try {
-                // 获取服务URL（考虑本地/远程模式）
-                String serviceUrl = config.getFullUrl(localPort);
+                // 获取基础服务URL（考虑本地/远程模式）
+                String baseUrl = config.getFullUrl(localPort);
                 
-                if (serviceUrl != null && !serviceUrl.isEmpty()) {
-                    McpServer server = new McpServer(name, config, serviceUrl, restTemplate);
+                if (baseUrl != null && !baseUrl.isEmpty()) {
+                    // 获取服务名，优先使用配置的name属性，如果未配置则使用节点名
+                    String serviceName = config.getName() != null && !config.getName().isEmpty() 
+                        ? config.getName() 
+                        : nodeName;
+                    
+                    // 完整服务URL = 基础URL + 服务名
+                    String serviceUrl = baseUrl + "/" + serviceName;
+                    
+                    McpServer server = new McpServer(nodeName, config, serviceUrl, restTemplate);
                     boolean connected = server.init();
                     
-                    serverMap.put(name, server);
+                    serverMap.put(nodeName, server);
                     
                     if (connected) {
                         if (config.isRemote()) {
-                            logger.info("MCP服务 {} 远程连接成功: {}", name, serviceUrl);
+                            logger.info("MCP服务 {} 远程连接成功: {}", nodeName, serviceUrl);
                         } else {
-                            logger.info("MCP服务 {} 本地连接成功: {}", name, serviceUrl);
+                            logger.info("MCP服务 {} 本地连接成功: {}", nodeName, serviceUrl);
                         }
                     } else {
-                        logger.warn("MCP服务 {} 连接失败，将在后台尝试重连: {}", name, serviceUrl);
+                        logger.warn("MCP服务 {} 连接失败，将在后台尝试重连: {}", nodeName, serviceUrl);
                     }
                 } else {
-                    logger.warn("MCP服务 {} 配置无效，URL为空", name);
+                    logger.warn("MCP服务 {} 配置无效，URL为空", nodeName);
                 }
             } catch (Exception e) {
-                logger.error("初始化MCP服务 {} 连接时发生错误: {}", name, e.getMessage(), e);
+                logger.error("初始化MCP服务 {} 连接时发生错误: {}", nodeName, e.getMessage(), e);
             }
         });
         
@@ -134,11 +146,15 @@ public class ConnectionManager {
             if (retry.isEnabled()) {
                 try {
                     boolean success = server.sendHeartbeat();
-                    logger.info("❤️ MCP服务 {} 心跳 ==== "+System.currentTimeMillis(), name);
+                    logger.info("❤️ MCP服务 [{}] 心跳成功 🟢 | 时间戳: {} | 时间: {}",
+                        name,
+                        System.currentTimeMillis(),
+                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
+                    );
                     if (success && !server.isConnected()) {
                         logger.info("✅ MCP服务 {} 已恢复连接", name);
                     } else if (!success && server.isConnected()) {
-                        logger.warn("🚫MCP服务 {} 连接已断开", name);
+                        logger.warn("🚫 MCP服务 {} 连接已断开", name);
                     }
                 } catch (Exception e) {
                     logger.debug("MCP服务 {} 心跳检查异常: {}", name, e.getMessage());
