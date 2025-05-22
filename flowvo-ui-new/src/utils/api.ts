@@ -89,4 +89,83 @@ export const chatApi = {
   sendMessage: (data: any) => api.post('/chat/send', data),
 };
 
+// --- Pixel Chat API ---
+
+// Basic types (assuming similar structure to existing chat or backend DTOs)
+// These might be defined elsewhere or need adjustment based on actual Conversation/Message types used in ChatPage.tsx
+export interface Conversation {
+  id: string;
+  title: string;
+  userId?: string;
+  createdAt: string; // Assuming ISO string date
+  updatedAt: string; // Assuming ISO string date
+  source?: string;
+  // Add other fields if necessary, e.g., lastMessage, messageCount
+}
+
+export interface Message {
+  id: string;
+  conversationId: string;
+  role: 'user' | 'assistant' | 'system'; // Role can be user or assistant
+  content: string;
+  createdAt: string; // Assuming ISO string date
+  userId?: string;
+}
+
+export interface ConversationCreatePayload {
+  title: string;
+  userId?: string; // Matching ConversationCreateDTO
+  // Optional fields as per original instructions, though backend DTO was simpler
+  service?: string;
+  model?: string;
+  initialMessage?: string;
+}
+
+export interface AgentResponse {
+  assistantReply: string; // Based on backend AgentResponse.getAssistantReply()
+  // Optional fields as per original instructions
+  status?: string;
+  error?: string;
+  [key: string]: any; // For any other properties
+}
+
+export interface ChatMessageSendPayload {
+    conversationId: string;
+    message: string;
+    userId?: string; // userId is often part of ChatRequestDTO
+}
+
+export const pixelChatApi = {
+  getPixelConversations: (): Promise<axios.AxiosResponse<Conversation[]>> => {
+    return api.get('/pixel_chat/conversations');
+  },
+
+  createPixelConversation: (data: ConversationCreatePayload): Promise<axios.AxiosResponse<Conversation>> => {
+    return api.post('/pixel_chat/conversations', data);
+  },
+
+  getPixelConversation: (id: string): Promise<axios.AxiosResponse<Conversation>> => {
+    return api.get(`/pixel_chat/conversations/${id}`);
+  },
+
+  updatePixelConversationTitle: (id: string, data: { title: string }): Promise<axios.AxiosResponse<Conversation>> => {
+    return api.put(`/pixel_chat/conversations/${id}/title`, data);
+  },
+
+  deletePixelConversation: (id: string): Promise<axios.AxiosResponse<void>> => {
+    return api.delete(`/pixel_chat/conversations/${id}`);
+  },
+
+  getPixelMessages: (conversationId: string): Promise<axios.AxiosResponse<Message[]>> => {
+    return api.get(`/pixel_chat/conversations/${conversationId}/messages`);
+  },
+
+  sendPixelMessage: (data: ChatMessageSendPayload): Promise<axios.AxiosResponse<AgentResponse>> => {
+    // Backend ChatRequestDTO includes conversationId, message, userId.
+    // The prompt for this function specified `data: { conversationId: string; message: string }`
+    // I've created ChatMessageSendPayload to include userId as well, as it's typically needed.
+    return api.post('/pixel_chat/send', data);
+  },
+};
+
 export default api; 
