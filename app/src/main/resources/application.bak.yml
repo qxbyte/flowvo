@@ -1,0 +1,155 @@
+server:
+  port: 8084
+# http://localhost:8080/sendStream-test
+
+spring:
+  application:
+    name: app
+
+  security:
+    user:
+      name: admin
+      password: 123456
+
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+  # ?? Spring Boot/Spring Framework ????????????? Bean ??????????? Bean ??????
+  main:
+    allow-bean-definition-overriding: true
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/FlowVo?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
+    username: root
+    password: Aa111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  ai:
+    openai:
+      api-key: sk-403c64623f57416b8bd93b2a07400380
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.8
+          max-tokens: 2048
+      embedding:
+        options:
+          model: deepseek-embedding
+          # max-tokens: 8191         # ?? deepseek embedding API ?????????????
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+    cache: false
+
+  # Cloud??
+  cloud:
+    discovery:
+      enabled: false  # ??????
+    service-registry:
+      auto-registration:
+        enabled: false  # ??????
+
+eureka:
+  client:
+    enabled: false                           # ??Eureka???
+    service-url:                             # ??????
+      defaultZone: http://localhost:8761/eureka
+    fetch-registry: false                    # ??????
+    register-with-eureka: false              # ??????
+  instance:
+    instance-id: ${spring.application.name}_${server.port}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30    # ?????????????
+    lease-expiration-duration-in-seconds: 90 # ??????????????90?
+
+# JWT??
+jwt:
+  secret: bTn5CjmhDSqFdBvKWLhPcCmH4n42jKnZeY6LzmNKRnawT2JyX9dM3h5L6qTVczK8
+  expiration: 86400000  # 24?????????
+
+ai:
+  openai:
+    api-key:
+    base-url: https://api.openai.com
+    # ???????????
+    connect-timeout: 30
+    read-timeout: 120
+    # ????
+    proxy:
+      enabled: true  # ??????
+      host: 127.0.0.1
+      port: 7890
+    chat:
+      options:
+        model: gpt-4-turbo
+        temperature: 0.8
+        max-tokens: 2048
+
+
+# Agent??
+agent:
+  enabled: true
+  maxInteractions: 10
+  # openai model
+#  defaultModel: gpt-4-turbo
+  # deepseek model??
+  defaultModel: deepseek-chat
+  systemPrompt: "????????????????????????????function??????????function_call JSON?function API???????????function API???????????????"
+  temperature: 0.7
+  llmApi:
+    # openai url
+#    url:
+#    key:
+    # deepseek url??
+    url: https://api.deepseek.com/chat/completions
+    key:
+    timeout: 60000
+
+# MCP?????
+mcp:
+  enabled: true
+  heartbeat:
+    interval: 10000 # ??????????
+  servers:
+    mysql:
+      name: mcp-mysql  # ???????URL??
+      remote: true    # ???????????????
+      host: localhost
+      port: 50941
+      protocol: http
+      retry:
+        enabled: true
+        interval: 10000  # ??
+
+
+logging:
+  level:
+    root: INFO
+    org.springframework.boot.autoconfigure: WARN
+    org.springframework.security: DEBUG
+    org.xue.milvus: DEBUG
+    org.springframework.cloud.netflix.eureka: OFF
+
+proxy:
+  host: 127.0.0.1
+  port: 7890
+
+# ????/?????
+local:
+  embedding:
+    server: http://localhost:8000
+
