@@ -139,6 +139,14 @@ public class ChatServiceImpl implements ChatService {
         conversation.setService(createDTO.getService());
         conversation.setModel(createDTO.getModel());
         
+        // 设置用户ID
+        if (createDTO.getUserId() != null && !createDTO.getUserId().isEmpty()) {
+            conversation.setUserId(createDTO.getUserId());
+            log.info("设置对话所属用户ID: {}", createDTO.getUserId());
+        } else {
+            log.warn("创建对话时未提供用户ID");
+        }
+        
         // 设置来源，如果为空则默认为chat
         if (createDTO.getSource() != null && !createDTO.getSource().isEmpty()) {
             conversation.setSource(createDTO.getSource());
@@ -147,6 +155,7 @@ public class ChatServiceImpl implements ChatService {
         }
         
         Conversation savedConversation = conversationRepository.save(conversation);
+        log.info("创建对话成功，ID: {}, 用户ID: {}", savedConversation.getId(), savedConversation.getUserId());
         
         return convertToDTO(savedConversation);
     }
@@ -779,6 +788,28 @@ public class ChatServiceImpl implements ChatService {
     }
     
     /**
+     * 根据用户ID获取对话列表
+     * 
+     * @param userId 用户ID
+     * @return 对话列表
+     */
+    public List<ConversationDTO> getConversationsByUserId(String userId) {
+        List<Conversation> conversations;
+        
+        if (userId == null || userId.isEmpty()) {
+            log.warn("获取对话列表时未提供用户ID，返回所有对话");
+            conversations = conversationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        } else {
+            log.info("获取用户{}的对话列表", userId);
+            conversations = conversationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        }
+        
+        return conversations.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
      * 根据来源获取对话列表
      * 
      * @param source 对话来源，如果为null则获取所有对话
@@ -791,6 +822,35 @@ public class ChatServiceImpl implements ChatService {
             conversations = conversationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
         } else {
             conversations = conversationRepository.findBySourceOrderByCreatedAtDesc(source);
+        }
+        
+        return conversations.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 根据来源和用户ID获取对话列表
+     * 
+     * @param source 对话来源
+     * @param userId 用户ID
+     * @return 对话列表
+     */
+    public List<ConversationDTO> getConversationsBySourceAndUserId(String source, String userId) {
+        List<Conversation> conversations;
+        
+        if (source == null && (userId == null || userId.isEmpty())) {
+            log.warn("获取对话列表时未提供来源和用户ID，返回所有对话");
+            conversations = conversationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        } else if (source == null) {
+            log.info("获取用户{}的对话列表", userId);
+            conversations = conversationRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        } else if (userId == null || userId.isEmpty()) {
+            log.info("获取来源为{}的对话列表", source);
+            conversations = conversationRepository.findBySourceOrderByCreatedAtDesc(source);
+        } else {
+            log.info("获取来源为{}、用户ID为{}的对话列表", source, userId);
+            conversations = conversationRepository.findBySourceAndUserIdOrderByCreatedAtDesc(source, userId);
         }
         
         return conversations.stream()

@@ -1,0 +1,127 @@
+/* Pixel Chat Theme */
+
+:root {
+  --pixel-bg-primary: #FFFFFF;   /* 从深色改为白色 */
+  --pixel-bg-secondary: #F5F5F5; /* 浅灰色背景 */
+  --pixel-border-color: #E0E0E0; /* 浅灰色边框 */
+  --pixel-text-color: #333333;   /* 黑色文本 */
+  --pixel-accent-color: #4A8CFF; /* 蓝色强调色 */
+  --pixel-input-bg: #FFFFFF;     /* 白色输入框背景 */
+  --pixel-success-color: #4CAF50; /* 成功色 */
+  --pixel-warning-color: #FFC107; /* 警告色 */
+  --pixel-error-color: #F44336;   /* 错误色 */
+  --pixel-link-color: #2196F3;    /* 链接色 */
+
+  /* Font specific variables - 增加字体大小 */
+  --pixel-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --pixel-font-size-base: 16px; /* 从14px增加到16px */
+  --pixel-font-size-small: 14px; /* 从12px增加到14px */
+  --pixel-font-size-large: 18px; /* 从16px增加到18px */
+}
+
+/* Import Google Font - 仅在需要使用像素风格字体的组件中使用 */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* 将全局样式改为只影响.pixel-theme类内的元素 */
+.pixel-theme *, 
+.pixel-theme *::before, 
+.pixel-theme *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  /* 使用标准字体平滑 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 将body样式改为.pixel-theme类 */
+.pixel-theme {
+  font-family: var(--pixel-font-family);
+  color: var(--pixel-text-color);
+  background-color: var(--pixel-bg-primary);
+  font-size: var(--pixel-font-size-base);
+  line-height: 1.6;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+/* Basic Pixelated Button Style */
+.pixel-button {
+  font-family: var(--pixel-font-family);
+  font-size: var(--pixel-font-size-base);
+  color: white;
+  background-color: var(--pixel-accent-color);
+  border: 1px solid var(--pixel-accent-color);
+  padding: 8px 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: center;
+  display: inline-block;
+  min-height: 40px;
+  border-radius: 4px;
+
+  /* Remove default browser appearance */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+.pixel-button:hover,
+.pixel-button:focus {
+  background-color: #3A7DE0;
+  outline: none;
+}
+
+.pixel-button:active {
+  transform: translateY(1px);
+}
+
+/* Basic Pixelated Input Style */
+.pixel-input {
+  font-family: var(--pixel-font-family);
+  font-size: var(--pixel-font-size-base);
+  color: var(--pixel-text-color);
+  background-color: var(--pixel-input-bg);
+  border: 1px solid var(--pixel-border-color);
+  padding: 8px;
+  width: 100%;
+  min-height: 40px;
+  border-radius: 4px;
+
+  /* Remove default browser appearance */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.pixel-input::placeholder {
+  color: #999999;
+  opacity: 1;
+}
+
+.pixel-input:focus {
+  outline: none;
+  border-color: var(--pixel-accent-color);
+}
+
+/* Basic Pixelated Container (Optional) */
+.pixel-container {
+  background-color: var(--pixel-bg-secondary);
+  border: 1px solid var(--pixel-border-color);
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+/* Basic Pixelated Link Style */
+a.pixel-link, .pixel-link a {
+  color: var(--pixel-link-color);
+  text-decoration: none;
+}
+
+a.pixel-link:hover, .pixel-link a:hover {
+  color: #0D47A1;
+  text-decoration: underline;
+}

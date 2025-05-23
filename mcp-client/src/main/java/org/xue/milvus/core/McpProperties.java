@@ -34,6 +34,11 @@ public class McpProperties {
     @Data
     public static class HeartbeatConfig {
         /**
+         * 是否启用心跳检查
+         */
+        private boolean enabled = true;
+        
+        /**
          * 心跳间隔（毫秒）
          */
         private long interval = 10000;

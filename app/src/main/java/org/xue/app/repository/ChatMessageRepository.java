@@ -3,9 +3,11 @@ package org.xue.app.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.xue.app.entity.ChatMessage;
 
 import java.util.List;
@@ -35,6 +37,14 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
     List<ChatMessage> findByConversationIdOrderBySequenceAsc(String conversationId);
     
     /**
+     * 根据对话ID查找所有消息并按创建时间排序
+     *
+     * @param conversationId 对话ID
+     * @return 消息列表
+     */
+    List<ChatMessage> findByConversationIdOrderByCreatedAtAsc(String conversationId);
+    
+    /**
      * 查找对话中的最后一条消息
      *
      * @param conversationId 对话ID
@@ -60,4 +70,14 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
      */
     @Query("SELECT MAX(m.sequence) FROM ChatMessage m WHERE m.conversationId = :conversationId")
     Integer findMaxSequenceByConversationId(@Param("conversationId") String conversationId);
+    
+    /**
+     * 根据对话ID删除所有消息
+     *
+     * @param conversationId 对话ID
+     */
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM ChatMessage m WHERE m.conversationId = :conversationId")
+    void deleteByConversationId(@Param("conversationId") String conversationId);
 } 

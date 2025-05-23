@@ -4,11 +4,15 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,12 +22,14 @@ import java.nio.charset.StandardCharsets;
 
 @Service
 public class JwtService {
+    
+    private static final Logger log = LoggerFactory.getLogger(JwtService.class);
 
     // 注意：建议在生产环境中配置这个值到环境变量或配置文件
     @Value("${jwt.secret:zIORNkRJx1rE1I8RzyMrQ9ZPwn13RMLAHoXsKVgWB7WlqhUKGtvDe0Sd6rYV}")
     private String secretKey;
 
-    @Value("${jwt.expiration:86400000}")
+    @Value("${jwt.expiration:604800000}")  // 默认7天过期时间（毫秒）
     private long jwtExpiration;
 
     // 从token中提取用户名
@@ -61,7 +67,27 @@ public class JwtService {
 
     // 检查token是否过期
     private Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        Date expiration = extractExpiration(token);
+        boolean isExpired = expiration.before(new Date());
+        
+        // 添加过期时间检查的详细日志
+        if (isExpired) {
+            log.debug("Token已过期 - 过期时间: {}, 当前时间: {}", 
+                expiration, 
+                new Date());
+        } else {
+            LocalDateTime expirationDateTime = expiration.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+            LocalDateTime now = LocalDateTime.now();
+            log.debug("Token有效 - 过期时间: {}, 当前时间: {}, 剩余有效期: {} 天 {} 小时", 
+                expirationDateTime,
+                now,
+                java.time.Duration.between(now, expirationDateTime).toDays(),
+                java.time.Duration.between(now, expirationDateTime).toHours() % 24);
+        }
+        
+        return isExpired;
     }
 
     // 生成token
@@ -77,11 +103,20 @@ public class JwtService {
 
     // 创建token
     private String createToken(Map<String, Object> claims, String subject) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+        
+        log.info("创建新Token - 用户: {}, 创建时间: {}, 过期时间: {}, 有效期: {} 天", 
+            subject, 
+            now, 
+            expiryDate,
+            jwtExpiration / (1000 * 60 * 60 * 24));
+            
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -89,6 +124,11 @@ public class JwtService {
     // 验证token是否有效
     public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        boolean isValid = (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        
+        log.debug("验证Token - 用户: {}, Token用户: {}, 是否有效: {}", 
+            userDetails.getUsername(), username, isValid);
+            
+        return isValid;
     }
 } 

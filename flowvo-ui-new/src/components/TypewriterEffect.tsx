@@ -10,10 +10,9 @@ const blinkAnimation = keyframes`
 
 // 定义点动画
 const dotLoadingAnimation = keyframes`
-  0% { content: "."; }
-  33% { content: ".."; }
-  66% { content: "..."; }
-  100% { content: "."; }
+  0% { transform: translateY(0); opacity: 0.2; }
+  20% { transform: translateY(-2px); opacity: 1; }
+  40% { transform: translateY(0); opacity: 0.2; }
 `;
 
 // 定义波浪动画
@@ -33,7 +32,7 @@ interface TypewriterEffectProps {
 // 打字机效果组件
 const TypewriterEffect: React.FC<TypewriterEffectProps> = ({
   text,
-  speed = 30, 
+  speed = 50,
   onComplete
 }) => {
   const [displayedText, setDisplayedText] = useState('');
@@ -44,7 +43,7 @@ const TypewriterEffect: React.FC<TypewriterEffectProps> = ({
   // 为了更自然的打字效果，随机化打字速度
   const getRandomSpeed = () => {
     // 基础速度附近的随机值，模拟真实打字节奏
-    return speed + Math.floor(Math.random() * 30) - 15;
+    return speed + Math.floor(Math.random() * 20) - 10;
   };
   
   useEffect(() => {
@@ -75,11 +74,11 @@ const TypewriterEffect: React.FC<TypewriterEffectProps> = ({
         {[0, 1, 2].map((dot, i) => (
           <Box
             key={i}
-            width="5px"
-            height="5px"
+            width="3px"
+            height="3px"
             borderRadius="full"
             bg={textColor}
-            mx="1.5px"
+            mx="1px"
             animation={`${waveAnimation} 1.5s infinite ${i * 0.2}s`}
           />
         ))}

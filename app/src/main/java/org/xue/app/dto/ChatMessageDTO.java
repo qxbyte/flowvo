@@ -34,6 +34,11 @@ public class ChatMessageDTO {
     private String content;
     
     /**
+     * 用户ID
+     */
+    private String userId;
+    
+    /**
      * 工具调用ID
      */
     private String toolCallId;

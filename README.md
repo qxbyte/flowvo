@@ -88,6 +88,24 @@ _技术特点_
 - **多服务支持**：集成不同的对话服务（RPC、API、搜索等）
 - **长时间处理**：支持大模型长时间思考，超时时间延长至60秒
 
+#### PixelChatPage功能
+专门为PixelChat页面设计的对话功能，具有以下特点：
+
+- **用户认证**：所有操作都需要用户登录，确保数据安全
+- **权限控制**：用户只能访问和操作自己的对话
+- **直接AI调用**：使用OpenAI客户端直接调用大模型，不依赖MCP工具
+- **对话隔离**：PixelChat对话与其他对话分离存储（source="chat"）
+- **完整CRUD**：支持创建、读取、更新、删除对话的完整操作
+
+_API端点_
+- `POST /api/pixel_chat/conversations` - 创建对话
+- `GET /api/pixel_chat/conversations` - 获取用户对话列表
+- `GET /api/pixel_chat/conversations/{id}` - 获取对话详情
+- `PUT /api/pixel_chat/conversations/{id}/title` - 重命名对话
+- `DELETE /api/pixel_chat/conversations/{id}` - 删除对话
+- `GET /api/pixel_chat/conversations/{id}/messages` - 获取对话消息
+- `POST /api/pixel_chat/send` - 发送消息并获取AI回复
+
 _技术特点_
 - 集成Agent服务进行AI交互
 - 实现实时消息发送和接收

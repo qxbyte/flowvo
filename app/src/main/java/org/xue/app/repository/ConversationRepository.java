@@ -38,4 +38,21 @@ public interface ConversationRepository extends JpaRepository<Conversation, Stri
      * @return 对话列表
      */
     List<Conversation> findBySourceOrderByCreatedAtDesc(String source);
+    
+    /**
+     * 根据用户ID查找对话，按创建时间降序排序
+     *
+     * @param userId 用户ID
+     * @return 对话列表
+     */
+    List<Conversation> findByUserIdOrderByCreatedAtDesc(String userId);
+    
+    /**
+     * 根据来源和用户ID查找对话，按创建时间降序排序
+     *
+     * @param source 对话来源
+     * @param userId 用户ID
+     * @return 对话列表
+     */
+    List<Conversation> findBySourceAndUserIdOrderByCreatedAtDesc(String source, String userId);
 } 

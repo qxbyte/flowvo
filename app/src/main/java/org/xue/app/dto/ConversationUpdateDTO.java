@@ -17,4 +17,9 @@ public class ConversationUpdateDTO {
      * 对话名称
      */
     private String title;
+    
+    /**
+     * 模型名称
+     */
+    private String model;
 } 
