@@ -64,14 +64,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     
                     // 设置安全上下文的认证信息
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    logger.debug("成功验证token并设置认证上下文 - 用户: " + username);
+                } else {
+                    // 只有在token验证请求时才返回401
+                    if (isTokenValidationRequest(request)) {
+                        logger.warn("Token验证失败 - 用户: " + username);
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        return;
+                    } else {
+                        logger.warn("Token无效但不是验证请求，继续处理 - 用户: " + username);
+                    }
                 }
             }
         } catch (Exception e) {
             // JWT令牌无效或过期的情况
-            logger.error("无效的JWT令牌: " + e.getMessage());
+            // 只有在token验证请求时才返回401
+            if (isTokenValidationRequest(request)) {
+                logger.error("处理JWT令牌异常", e);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            } else {
+                logger.warn("Token解析失败但不是验证请求，继续处理", e);
+            }
         }
         
         // 继续执行过滤器链
         filterChain.doFilter(request, response);
+    }
+    
+    // 判断是否为token验证请求
+    private boolean isTokenValidationRequest(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path != null && (
+            path.contains("/auth/me") || 
+            path.contains("/auth/validate")
+        );
     }
 } 

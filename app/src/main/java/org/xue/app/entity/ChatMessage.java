@@ -42,6 +42,7 @@ public class ChatMessage {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+
     // 新增字段：用于 assistant 消息保存 tool_calls
     @Column(name = "tool_calls", columnDefinition = "JSON")
     private String tool_calls;

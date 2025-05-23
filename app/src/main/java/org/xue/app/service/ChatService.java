@@ -66,6 +66,23 @@ public interface ChatService {
     List<ConversationDTO> getConversationsBySource(String source);
     
     /**
+     * 根据用户ID获取对话列表
+     * 
+     * @param userId 用户ID
+     * @return 对话列表
+     */
+    List<ConversationDTO> getConversationsByUserId(String userId);
+    
+    /**
+     * 根据来源和用户ID获取对话列表
+     * 
+     * @param source 对话来源
+     * @param userId 用户ID
+     * @return 对话列表
+     */
+    List<ConversationDTO> getConversationsBySourceAndUserId(String source, String userId);
+    
+    /**
      * 发送消息并获取回复
      *
      * @param requestDTO 聊天请求DTO

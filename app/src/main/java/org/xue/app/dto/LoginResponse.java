@@ -13,18 +13,20 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
-    private String token;
-    private String username;
+    private boolean success;
     private String message;
+    private String token;
+    private UserInfoDTO userInfo;
     
     /**
      * 创建成功的登录响应
      */
-    public static LoginResponse success(String token, String username) {
+    public static LoginResponse success(String token, UserInfoDTO userInfo) {
         return LoginResponse.builder()
-                .token(token)
-                .username(username)
+                .success(true)
                 .message("登录成功")
+                .token(token)
+                .userInfo(userInfo)
                 .build();
     }
     
@@ -33,6 +35,7 @@ public class LoginResponse {
      */
     public static LoginResponse failure(String message) {
         return LoginResponse.builder()
+                .success(false)
                 .message(message)
                 .build();
     }

@@ -2,6 +2,7 @@ package org.xue.agent.client.core;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,13 +11,9 @@ import java.util.Map;
  * MCP配置属性类
  */
 @Data
+@Configuration
 @ConfigurationProperties(prefix = "mcp")
 public class McpProperties {
-
-    /**
-     * MCP服务配置映射，key为服务名称，如mysql、redis等
-     */
-    private Map<String, ServerConfig> servers = new HashMap<>();
 
     /**
      * 是否启用MCP客户端
@@ -29,10 +26,20 @@ public class McpProperties {
     private HeartbeatConfig heartbeat = new HeartbeatConfig();
     
     /**
+     * MCP服务配置映射，key为服务名称，如mysql、redis等
+     */
+    private Map<String, ServerConfig> servers = new HashMap<>();
+
+    /**
      * 心跳配置
      */
     @Data
     public static class HeartbeatConfig {
+        /**
+         * 是否启用心跳检查
+         */
+        private boolean enabled = true;
+        
         /**
          * 心跳间隔（毫秒）
          */

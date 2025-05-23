@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import org.xue.agent.model.AgentResponse;
 import org.xue.app.dto.*;
 import org.xue.app.service.ChatService;
-import org.xue.app.service.impl.ChatServiceImpl;
 
 import java.util.List;
 
@@ -19,7 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/chat")
 @CrossOrigin(origins = "*")
-public class ChatController {
+public class ChatController extends BaseController {
     
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
     
@@ -34,19 +33,27 @@ public class ChatController {
     private boolean checkAuthentication(String authHeader) {
         log.info("收到认证请求, header: {}", authHeader);
         
-        // 开发环境中简化认证，任何包含test-token的都通过
-        if (authHeader == null) {
-            log.info("认证头为空，在开发环境中默认允许访问");
-            return true; // 开发环境允许空认证头
-        }
-        
-        if (authHeader.contains("test-token")) {
-            log.info("发现test-token，认证成功");
+        // 宽松认证检查，允许任何有效的认证头通过
+        if (authHeader != null && !authHeader.isEmpty()) {
+            // 允许任何Bearer token通过
+            if (authHeader.startsWith("Bearer ")) {
+                log.info("发现Bearer token，认证成功");
+                return true;
+            }
+            
+            // 兼容旧版本，允许test-token通过
+            if (authHeader.contains("test-token")) {
+                log.info("发现test-token，认证成功");
+                return true;
+            }
+            
+            log.info("发现认证头，开发环境下自动通过: {}", authHeader);
             return true;
         }
         
-        log.warn("认证失败: {}", authHeader);
-        return false;
+        // 开发环境中即使没有认证头也允许访问
+        log.info("认证头为空，在开发环境中默认允许访问");
+        return true;
     }
     
     /**
@@ -74,6 +81,17 @@ public class ChatController {
         log.info("收到创建对话请求: {}, 认证头: {}", createDTO, authHeader);
         ResponseEntity<ConversationDTO> authResult = authenticate(authHeader);
         if (authResult != null) return authResult;
+        
+        // 设置用户ID，必须有登录用户
+        String userId = getCurrentUserId();
+        if (userId != null) {
+            createDTO.setUserId(userId);
+            log.info("自动设置对话所属用户ID: {}", userId);
+        } else {
+            log.error("未登录状态，无法创建对话");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ConversationDTO.builder().title("未登录状态").build());
+        }
         
         ConversationDTO conversation = chatService.createConversation(createDTO);
         log.info("对话创建成功: {}", conversation.getId());
@@ -149,25 +167,41 @@ public class ChatController {
     }
     
     /**
-     * 获取所有对话
+     * 获取对话列表，支持根据来源和用户ID过滤
      */
     @GetMapping("/conversations")
     public ResponseEntity<ConversationListDTO> getConversations(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "source", required = false) String source) {
+            @RequestParam(value = "source", required = false) String source,
+            @RequestParam(value = "userId", required = false) String userId) {
         
-        log.info("收到获取对话请求, 来源: {}, 认证头: {}", source, authHeader);
+        log.info("收到获取对话请求, 来源: {}, 用户ID参数: {}, 认证头: {}", source, userId, authHeader);
         ResponseEntity<ConversationListDTO> authResult = authenticate(authHeader);
         if (authResult != null) return authResult;
         
-        // 根据来源获取对话
+        // 必须使用当前登录用户的ID
+        String currentUserId = getCurrentUserId();
+        if (currentUserId == null) {
+            log.error("未登录状态，无法获取对话列表");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ConversationListDTO());
+        }
+        
+        // 忽略请求中的userId参数，总是使用当前登录用户的ID
+        userId = currentUserId;
+        log.info("使用当前登录用户ID: {}", userId);
+        
+        // 根据来源和用户ID获取对话
         List<ConversationDTO> conversations;
-        if (source != null && !source.isEmpty()) {
-            conversations = chatService.getConversationsBySource(source);
-            log.info("按来源({})获取对话, 对话数量: {}", source, conversations.size());
+        
+        if (source == null || source.isEmpty()) {
+            // 只按用户ID过滤
+            conversations = chatService.getConversationsByUserId(userId);
+            log.info("按用户ID({})获取对话, 对话数量: {}", userId, conversations.size());
         } else {
-            conversations = chatService.getAllConversations();
-            log.info("获取所有对话, 对话数量: {}", conversations.size());
+            // 同时按来源和用户ID过滤
+            conversations = chatService.getConversationsBySourceAndUserId(source, userId);
+            log.info("按来源({})和用户ID({})获取对话, 对话数量: {}", source, userId, conversations.size());
         }
         
         // 构建响应
@@ -192,6 +226,17 @@ public class ChatController {
         if (requestDTO.getMessage() == null || requestDTO.getMessage().trim().isEmpty()) {
             log.warn("发送消息失败: 用户问题为空");
             return ResponseEntity.badRequest().body(AgentResponse.error("用户问题不能为空"));
+        }
+        
+        // 设置用户ID，必须有登录用户
+        String userId = getCurrentUserId();
+        if (userId != null) {
+            requestDTO.setUserId(userId);
+            log.info("自动设置消息所属用户ID: {}", userId);
+        } else {
+            log.error("未登录状态，无法发送消息");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(AgentResponse.error("请先登录后再发送消息"));
         }
         
         AgentResponse response = chatService.sendMessage(requestDTO);

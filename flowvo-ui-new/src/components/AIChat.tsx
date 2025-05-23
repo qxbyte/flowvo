@@ -40,6 +40,7 @@ import { FiSend, FiChevronDown, FiPlusCircle, FiEdit2, FiTrash2, FiMessageSquare
 import ChatMessage from './ChatMessage';
 import TypewriterEffect from './TypewriterEffect';
 import { chatApi } from '../utils/api';
+import { useAuth } from '../hooks/useAuth';
 
 // 定义彩色边框动画
 const rainbowBorderKeyframes = keyframes`
@@ -96,7 +97,8 @@ interface AIChatProps {
   source?: string;
 }
 
-const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => {
+const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' }) => {
+  // 使用source='business'，确保调用的是ChatController而非PixelChatController
   const [messages, setMessages] = useState<Message[]>([]);
   
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -126,6 +128,14 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
   const dragRef = useRef<HTMLDivElement>(null);
   const initialPositionRef = useRef({ x: 0, y: 0 });
   const dragStartPosRef = useRef({ x: 0, y: 0 });
+
+  // 获取用户身份信息 - 提到组件顶部
+  const { userInfo: authUserInfo, isAuthenticated: authIsAuthenticated } = useAuth();
+  
+  // 使用实际的用户认证信息
+  const isAuthenticated = authIsAuthenticated;
+  // 不再使用开发环境备用用户信息，以确保使用真实的用户ID
+  const userInfo = authUserInfo;
 
   // 拖动处理函数
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -218,11 +228,19 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
     try {
       setLoading(true);
       console.log('开始获取对话列表...');
-      const response = await chatApi.getConversations({ source: 'business' });
+      
+      // 获取用户ID
+      const userId = userInfo?.id;
+      console.log('当前用户ID:', userId);
+      
+      // 发起请求，包含用户ID参数
+      const response = await chatApi.getConversations(source, userId);
       console.log('获取对话列表响应:', response);
       
       if (response.data && response.data.items) {
+        // 后端已经根据用户ID过滤，不需要前端再次过滤
         const convs = response.data.items || [];
+        
         console.log('获取到对话列表:', convs);
         setConversations(convs);
         
@@ -239,15 +257,29 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
       } else {
         console.warn('对话列表API返回数据异常:', response);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('获取对话列表失败:', error);
-      toast({
-        title: '获取对话列表失败',
-        description: '请稍后重试',
-        status: 'error',
-        duration: 3000,
-        isClosable: true
-      });
+      // 检查是否是401错误（未授权）
+      if (error.response && error.response.status === 401) {
+        console.log('获取对话列表需要登录');
+        setConversations([]);
+        // 显示友好的登录提示
+        toast({
+          title: '请先登录',
+          description: '需要登录才能获取对话列表',
+          status: 'warning',
+          duration: 3000,
+          isClosable: true
+        });
+      } else {
+        toast({
+          title: '获取对话列表失败',
+          description: '请稍后重试',
+          status: 'error',
+          duration: 3000,
+          isClosable: true
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -280,16 +312,27 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
   const createConversation = async (title: string = '新对话') => {
     try {
       setLoading(true);
-      console.log('创建新对话:', title, '来源: business');
+      console.log('创建新对话:', title, '来源:', source);
       
-      // 在请求前添加授权头到localStorage，确保请求能带上token
-      localStorage.setItem('token', 'test-token');
+          if (!isAuthenticated) {
+      console.log('未登录状态下无法创建对话');
+      toast({
+        title: '请先登录',
+        description: '需要登录才能创建对话',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return; // 阻止继续执行
+    }
       
+      // 确保传递正确的参数给后端API
       const response = await chatApi.createConversation({
-        title: title,
+        title: title || '新对话',
         service: 'default',
         model: 'default',
-        source: 'business'
+        source: source || 'business', // 确保source不为空
+        userId: userInfo?.id || '' // 确保userId不为undefined
       });
       
       console.log('创建对话响应:', response);
@@ -327,6 +370,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
         } else {
           errorMsg = `服务器错误 (${error.response.status})`;
         }
+      } else if (error.message) {
+        errorMsg = error.message;
       }
       
       toast({
@@ -349,8 +394,17 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
       console.log('删除对话:', conversationId);
       setLoading(true);
       
-      // 确保授权头
-      localStorage.setItem('token', 'test-token');
+      if (!isAuthenticated) {
+              console.log('未登录状态下无法删除对话');
+      toast({
+        title: '请先登录',
+        description: '需要登录才能删除对话',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return; // 阻止继续执行
+      }
       
       await chatApi.deleteConversation(conversationId);
       console.log('删除对话成功');
@@ -389,6 +443,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
         } else {
           errorMsg = `服务器错误 (${error.response.status})`;
         }
+      } else if (error.message) {
+        errorMsg = error.message;
       }
       
       toast({
@@ -409,10 +465,18 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
       console.log('重命名对话:', conversationId, newTitle);
       setLoading(true);
       
-      // 确保授权头
-      localStorage.setItem('token', 'test-token');
+      if (!isAuthenticated) {
+              console.log('未登录状态下无法重命名对话');
+      toast({
+        title: '请先登录',
+        description: '需要登录才能重命名对话',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return; // 阻止继续执行
+      }
       
-      // 使用chatApi中的updateConversation方法
       await chatApi.updateConversation(conversationId, { title: newTitle });
       console.log('重命名对话成功');
       
@@ -451,6 +515,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
         } else {
           errorMsg = `服务器错误 (${error.response.status})`;
         }
+      } else if (error.message) {
+        errorMsg = error.message;
       }
       
       toast({
@@ -469,18 +535,37 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
     
+    // 检查用户是否登录，必须登录才能发送消息
+    if (!isAuthenticated) {
+      console.log('用户未登录，无法发送消息');
+      toast({
+        title: '请先登录',
+        description: '需要登录才能使用对话功能',
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+      return; // 阻止后续执行
+    }
+    
+    // 必须从userInfo获取用户ID，确保使用真实的用户ID
+    const userId = userInfo?.id;
+    
     // 如果没有选中的对话，先创建一个
     if (!currentConversation) {
       try {
-        const response = await chatApi.createConversation({
+        console.log('创建新对话，来源:', source, '用户ID:', userId);
+        const newConvResponse = await chatApi.createConversation({
           title: inputValue.length > 20 ? inputValue.substring(0, 20) + '...' : inputValue,
           service: 'default',
           model: 'default',
-          source: 'business'
+          source: source || 'business',  // 确保source有值
+          userId: userId
         });
         
-        if (response.data) {
-          setCurrentConversation(response.data);
+        console.log('创建对话成功:', newConvResponse.data);
+        if (newConvResponse.data) {
+          setCurrentConversation(newConvResponse.data);
         }
       } catch (error) {
         console.error('创建对话失败:', error);
@@ -509,12 +594,14 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
     setIsTyping(true);
     
     try {
-      // 发送消息到后端
+      // 发送消息到后端，包含用户ID
+      console.log('发送消息到对话:', currentConversation?.id || 'default');
       const response = await chatApi.sendMessage({
         message: inputValue,
         conversationId: currentConversation?.id || 'default',
-        timeout: 60000 // 添加超时设置为60秒
+        userId: userId
       });
+      console.log('发送消息成功，响应:', response.data);
       
       setIsTyping(false);
       console.log('收到API响应:', response.data);
@@ -524,8 +611,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
         let content = '';
         
         // 依次检查所有可能包含内容的字段
-        if (response.data.content) {
-          content = response.data.content;
+        if (response.data.assistantReply) {
+          content = response.data.assistantReply;
         } else if (response.data.message) {
           content = response.data.message;
         } else if (typeof response.data === 'string') {
@@ -545,15 +632,15 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
         
         // 如果找到了任何内容，显示它
         if (content && content.trim()) {
-          setMessages(prev => [
-            ...prev,
-            {
-              id: Date.now().toString(),
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
               content: content,
-              sender: 'assistant'
-            }
-          ]);
-        } else {
+            sender: 'assistant'
+          }
+        ]);
+      } else {
           // 实在没有内容才显示后备消息
           handleFallbackReply();
         }
@@ -575,7 +662,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
       if (error.response && error.response.data) {
         const errorData = error.response.data;
         console.log('错误响应数据:', errorData);
-        
+      
         // 依次检查所有可能包含内容的字段
         if (errorData.content) {
           errorMessage = errorData.content;
@@ -599,7 +686,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
       }
       
       setMessages(prev => [
-        ...prev,
+        ...prev, 
         {
           id: Date.now().toString(),
           content: errorMessage,
@@ -611,8 +698,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
   
   // 当API调用失败且没有有效回复时的本地回复
   const handleFallbackReply = () => {
-    setMessages(prev => [
-        ...prev,
+      setMessages(prev => [
+        ...prev, 
         {
           id: Date.now().toString(),
           content: '无法获取回复内容，请重试',
@@ -663,21 +750,21 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
             : `${macScaleOutKeyframes} 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)`,
         }}
       >
-        <Box
-          position="fixed"
-          bottom="100px"
-          right="24px"
+      <Box
+        position="fixed"
+        bottom="100px"
+        right="24px"
           width={{ base: "80%", sm: "400px" }}
           height={{ base: "70vh", sm: "75vh" }}
           maxHeight={{ base: "500px", sm: "650px" }}
           maxWidth="calc(100vw - 48px)"
-          bg={bgColor}
+        bg={bgColor}
           boxShadow="xl"
-          borderRadius="16px"
-          zIndex={998}
-          overflow="hidden"
-          display="flex"
-          flexDirection="column"
+        borderRadius="16px"
+        zIndex={998}
+        overflow="hidden"
+        display="flex"
+        flexDirection="column"
           borderWidth="2px"
           borderColor={isTyping ? "transparent" : borderColor}
           transform={`translate(${position.x}px, ${position.y}px)`}
@@ -707,12 +794,12 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
           )}
           
           {/* 聊天头部 - 可拖动区域 */}
-          <Flex 
+        <Flex 
             p={2} 
-            borderBottomWidth="1px" 
-            borderColor={borderColor} 
-            justify="space-between" 
-            align="center"
+          borderBottomWidth="1px" 
+          borderColor={borderColor} 
+          justify="space-between" 
+          align="center"
             cursor="move"
             ref={dragRef}
             onMouseDown={handleMouseDown}
@@ -728,7 +815,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
               <PopoverTrigger>
                 <Button 
                   rightIcon={loading ? <Spinner size="sm" /> : <FiChevronDown />} 
-                  variant="ghost" 
+                variant="ghost"
                   fontSize="sm" 
                   fontWeight="bold"
                   onClick={(e) => {
@@ -742,7 +829,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                   textOverflow="ellipsis"
                   whiteSpace="nowrap"
                   isLoading={loading}
-                  size="sm"
+                size="sm"
                 >
                   {currentConversation?.title || 'AI对话'}
                 </Button>
@@ -765,7 +852,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                               if (e.key === 'Escape') cancelNewConversation();
                             }}
                             fontSize="sm"
-                          />
+              />
                           <InputRightElement width="4.5rem">
                             <HStack spacing={1}>
                               <IconButton
@@ -785,7 +872,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                             </HStack>
                           </InputRightElement>
                         </InputGroup>
-                      </Flex>
+          </Flex>
                     ) : (
                       <Flex 
                         p={2} 
@@ -793,8 +880,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                         _hover={{ bg: "gray.100" }}
                         align="center"
                         onClick={handleCreateConversation}
-                        borderBottomWidth="1px"
-                        borderColor={borderColor}
+            borderBottomWidth="1px"
+            borderColor={borderColor}
                       >
                         <FiPlusCircle size={15} />
                         <Text ml={2} fontWeight="medium" fontSize="sm">新建对话</Text>
@@ -814,29 +901,29 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                       <Flex direction="column" align="center" justify="center" py={4} px={2} textAlign="center">
                         <Text fontSize="sm" color="gray.500">没有对话记录</Text>
                         <Text fontSize="xs" color="gray.400" mt={1}>点击"新建对话"创建您的第一个对话</Text>
-                      </Flex>
+            </Flex>
                     ) : null}
                     
                     {/* 对话列表 */}
                     {conversations.map(conv => (
-                      <Flex
-                        key={conv.id}
-                        p={2}
+                  <Flex
+                    key={conv.id}
+                    p={2}
                         cursor="pointer"
-                        bg={currentConversation?.id === conv.id ? 'blue.50' : 'transparent'}
+                    bg={currentConversation?.id === conv.id ? 'blue.50' : 'transparent'}
                         _hover={{ bg: currentConversation?.id === conv.id ? 'blue.50' : 'gray.100' }}
                         align="center"
-                        justify="space-between"
+                    justify="space-between"
                         borderBottomWidth="1px"
                         borderColor={borderColor}
-                        onClick={() => {
+                    onClick={() => {
                           if (editingConversationId !== conv.id) {
-                            setCurrentConversation(conv);
-                            fetchMessages(conv.id);
+                      setCurrentConversation(conv);
+                      fetchMessages(conv.id);
                             setIsDropdownOpen(false);
                           }
-                        }}
-                      >
+                    }}
+                  >
                         <Flex align="center" flex={1} overflow="hidden">
                           <FiMessageSquare size={14} style={{ flexShrink: 0 }} />
                           {editingConversationId === conv.id ? (
@@ -865,8 +952,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                                     setEditingConversationId(null);
                                   }
                                 }}
-                                onClick={(e) => e.stopPropagation()}
-                              />
+                        onClick={(e) => e.stopPropagation()}
+                      />
                             </InputGroup>
                           ) : (
                             <Text ml={2} noOfLines={1} flex={1} fontSize="sm">{conv.title}</Text>
@@ -880,8 +967,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                               icon={<FiEdit2 size={12} />}
                               size="xs"
                               variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                                 setEditingConversationId(conv.id);
                                 setTimeout(() => {
                                   editableInputRef.current?.focus();
@@ -895,50 +982,70 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                               icon={<FiTrash2 size={12} />}
                               size="xs"
                               variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
+                          onClick={(e) => {
+                            e.stopPropagation();
                                 setConversationToDelete(conv);
                                 setIsDeleteDialogOpen(true);
-                              }}
+                          }}
                             />
                           </Tooltip>
                         </HStack>
-                      </Flex>
+                  </Flex>
                     ))}
-                  </VStack>
+            </VStack>
                 </PopoverBody>
               </PopoverContent>
             </Popover>
             
             <CloseButton onClick={onClose} size="sm" />
           </Flex>
-          
-          {/* 聊天消息区域 */}
-          <Box 
-            flex="1" 
-            overflowY="auto" 
+        
+        {/* 聊天消息区域 */}
+        <Box 
+          flex="1" 
+          overflowY="auto" 
             p={{ base: 2, sm: 3 }}
-            sx={{
-              '&::-webkit-scrollbar': {
+          sx={{
+            '&::-webkit-scrollbar': {
                 width: '4px',
-                borderRadius: '8px',
-                backgroundColor: 'rgba(0, 0, 0, 0.05)'
-              },
-              '&::-webkit-scrollbar-thumb': {
-                backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                borderRadius: '8px'
-              }
-            }}
-          >
+              borderRadius: '8px',
+              backgroundColor: 'rgba(0, 0, 0, 0.05)'
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0, 0, 0, 0.1)',
+              borderRadius: '8px'
+            }
+          }}
+        >
             <VStack spacing={2} align="stretch">
               {messages.length > 0 ? (
                 messages.map(message => (
-                  <ChatMessage
-                    key={message.id}
-                    content={message.content}
-                    sender={message.sender}
-                  />
+              <ChatMessage
+                key={message.id}
+                content={message.content}
+                sender={message.sender}
+              />
                 ))
+              ) : !isAuthenticated ? (
+                <Flex 
+                  direction="column" 
+                  align="center" 
+                  justify="center" 
+                  h="100%" 
+                  color="gray.500"
+                  pt={8}
+                  gap={2}
+                >
+                  <Text fontSize="sm" fontWeight="medium">您当前未登录，但可以尝试使用AI对话功能</Text>
+                  <Text fontSize="xs" color="gray.400">登录后可以保存您的对话历史</Text>
+                  <Button 
+                    size="sm" 
+                    colorScheme="blue" 
+                    onClick={() => window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname)}
+                  >
+                    去登录
+                  </Button>
+                </Flex>
               ) : (
                 <Flex 
                   direction="column" 
@@ -951,59 +1058,60 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                   <Text fontSize="sm">欢迎使用AI对话，开始输入您的问题吧！</Text>
                 </Flex>
               )}
-              
+            
               {/* 回复加载气泡 */}
-              {isTyping && (
-                <ChatMessage 
+            {isTyping && (
+              <ChatMessage 
                   content={<TypewriterEffect text="..." />} 
-                  sender="assistant" 
-                />
-              )}
-              
-              <div ref={messagesEndRef} />
-            </VStack>
-          </Box>
-          
-          <Divider />
-          
-          {/* 输入区域 */}
+                sender="assistant" 
+              />
+            )}
+            
+            <div ref={messagesEndRef} />
+          </VStack>
+        </Box>
+        
+        <Divider />
+        
+        {/* 输入区域 */}
           <Flex p={{ base: 2, sm: 2 }} borderTopWidth="1px" borderColor={borderColor} align="center">
             <InputGroup size="sm">
-              <Input
-                placeholder="请输入内容..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                variant="filled"
-                fontSize="sm"
-                ref={inputRef}
-                borderRadius="full"
-                pl={3}
-                pr={8}
-                py={3}
-                h="32px"
-                minH="32px"
-                bg={useColorModeValue('gray.100', 'gray.700')}
-                _hover={{
-                  bg: useColorModeValue('gray.200', 'gray.600')
-                }}
-                _focus={{
-                  bg: useColorModeValue('white', 'gray.800'),
-                  borderColor: 'blue.300',
-                  boxShadow: '0 0 0 1px rgba(66, 153, 225, 0.6)'
-                }}
-                sx={{
-                  transition: 'all 0.2s ease-in-out'
-                }}
-              />
+          <Input
+            placeholder={isAuthenticated ? "请输入内容..." : "输入您想问的问题..."}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+            variant="filled"
+            fontSize="sm"
+            ref={inputRef}
+            borderRadius="full"
+            pl={3}
+            pr={8}
+            py={3}
+            h="32px"
+            minH="32px"
+            bg={useColorModeValue('gray.100', 'gray.700')}
+            _hover={{
+              bg: useColorModeValue('gray.200', 'gray.600')
+            }}
+            _focus={{
+              bg: useColorModeValue('white', 'gray.800'),
+              borderColor: 'blue.300',
+              boxShadow: '0 0 0 1px rgba(66, 153, 225, 0.6)'
+            }}
+            isDisabled={false}
+            sx={{
+              transition: 'all 0.2s ease-in-out'
+            }}
+          />
               <InputRightElement width="3rem" h="100%" pr={1}>
-                <IconButton
-                  aria-label="发送消息"
+          <IconButton
+            aria-label="发送消息"
                   icon={<FiSend size={14} />}
-                  onClick={handleSendMessage}
-                  isDisabled={!inputValue.trim()}
-                  colorScheme="blue"
-                  borderRadius="full"
+            onClick={handleSendMessage}
+            isDisabled={!inputValue.trim()}
+            colorScheme="blue"
+            borderRadius="full"
                   size="xs"
                   variant="ghost"
                   color={useColorModeValue('blue.500', 'blue.300')}
@@ -1015,10 +1123,10 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
                 />
               </InputRightElement>
             </InputGroup>
-          </Flex>
+        </Flex>
         </Box>
       </ScaleFade>
-
+      
       {/* 删除对话确认弹窗 */}
       <Modal
         isOpen={isDeleteDialogOpen}
@@ -1036,9 +1144,9 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
           </ModalBody>
           <ModalFooter>
             <Button mr={3} onClick={() => setIsDeleteDialogOpen(false)} size="sm">
-              取消
+                取消
             </Button>
-            <Button 
+            <Button
               bg="red.500" 
               color="white" 
               _hover={{ bg: "red.600" }} 
@@ -1060,4 +1168,4 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'chat' }) => 
   );
 };
 
-export default AIChat; 
+export default AIChat;

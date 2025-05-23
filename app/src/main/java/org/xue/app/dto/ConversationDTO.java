@@ -41,9 +41,19 @@ public class ConversationDTO {
     private String source;
     
     /**
+     * 用户ID
+     */
+    private String userId;
+    
+    /**
      * 创建时间
      */
     private String createdAt;
+    
+    /**
+     * 更新时间
+     */
+    private String updatedAt;
     
     /**
      * 最后一条消息（可能是用户或助手）

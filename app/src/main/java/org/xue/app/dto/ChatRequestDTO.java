@@ -24,6 +24,11 @@ public class ChatRequestDTO {
     private String message;
     
     /**
+     * 用户ID
+     */
+    private String userId;
+    
+    /**
      * 温度参数（可选）
      */
     private Double temperature;

@@ -32,6 +32,7 @@ agent:
 mcp:
   enabled: true
   heartbeat:
+    enabled: true
     interval: 10000 # 心跳检查间隔（毫秒）
   servers:
     mysql:

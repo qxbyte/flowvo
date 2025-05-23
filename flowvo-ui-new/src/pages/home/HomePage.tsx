@@ -80,7 +80,7 @@ const HomePage: React.FC = () => {
             </Text>
             <Button 
               as={Link} 
-              to="/chat" 
+              to="/pixel-chat" 
               colorScheme="blue" 
               size="lg" 
               rightIcon={<Icon as={FiArrowRight} />}
