@@ -9,6 +9,7 @@ import org.xue.app.dto.ConversationCreateDTO;
 import org.xue.app.dto.ConversationDTO;
 import org.xue.app.dto.ConversationUpdateDTO;
 import org.xue.agent.model.AgentResponse;
+import org.xue.agent.client.core.McpClientTemplate;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map; // For potential simple updates if needed, though sticking to DTO
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pixel_chat")
@@ -26,10 +28,12 @@ import java.util.Map; // For potential simple updates if needed, though sticking
 public class PixelChatController extends BaseController {
 
     private final PixelChatService pixelChatService;
+    private final McpClientTemplate mcpClientTemplate;
 
     @Autowired
-    public PixelChatController(PixelChatService pixelChatService) {
+    public PixelChatController(PixelChatService pixelChatService, McpClientTemplate mcpClientTemplate) {
         this.pixelChatService = pixelChatService;
+        this.mcpClientTemplate = mcpClientTemplate;
     }
 
     // --- Endpoint Methods ---
@@ -202,6 +206,39 @@ public class PixelChatController extends BaseController {
         } catch (Exception e) {
             log.error("Error sending message to PixelChat conversation ID {}: {}", requestDTO.getConversationId(), e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to send message: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/agents")
+    public ResponseEntity<?> getAvailableAgents() {
+        log.info("Received request to get available MCP agents");
+
+        try {
+            // 获取MCP服务状态
+            Map<String, Map<String, Object>> serversStatus = mcpClientTemplate.getServersStatus();
+            
+            // 过滤出连接的服务并提取服务名称
+            List<Map<String, Object>> agents = serversStatus.entrySet().stream()
+                    .filter(entry -> {
+                        Map<String, Object> status = entry.getValue();
+                        return Boolean.TRUE.equals(status.get("connected"));
+                    })
+                    .map(entry -> {
+                        Map<String, Object> agent = Map.of(
+                                "name", entry.getKey(),
+                                "displayName", entry.getKey().replace("mcp-", "").toUpperCase(),
+                                "status", "connected"
+                        );
+                        return agent;
+                    })
+                    .collect(Collectors.toList());
+            
+            log.info("Returning {} available agents", agents.size());
+            return ResponseEntity.ok(agents);
+            
+        } catch (Exception e) {
+            log.error("Error fetching available agents: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to fetch agents: " + e.getMessage()));
         }
     }
 }

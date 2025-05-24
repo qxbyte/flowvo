@@ -123,6 +123,12 @@ public class PixelChatServiceImpl implements PixelChatService {
             log.info("Updated model to {} for conversation ID: {}", updateDTO.getModel(), conversationId);
         }
         
+        // 更新服务（如果提供）
+        if (updateDTO.getService() != null && !updateDTO.getService().trim().isEmpty()) {
+            conversation.setService(updateDTO.getService());
+            log.info("Updated service to {} for conversation ID: {}", updateDTO.getService(), conversationId);
+        }
+        
         conversation.setUpdatedAt(LocalDateTime.now());
         Conversation updatedConversation = conversationRepository.save(conversation);
         log.info("PixelChat conversation updated for ID: {}", updatedConversation.getId());
