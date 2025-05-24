@@ -1,6 +1,5 @@
 package org.xue.app.entity;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
@@ -8,15 +7,15 @@ import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
 
 /**
- * 聊天消息实体类
+ * 文件附件实体类
  */
 @Entity
-@Table(name = "chat_messages")
+@Table(name = "file_attachments")
 @Data
-public class ChatMessage {
+public class FileAttachment {
     
     /**
-     * 消息ID - UUID主键
+     * 附件ID - UUID主键
      */
     @Id
     @GeneratedValue(generator = "uuid2")
@@ -25,51 +24,46 @@ public class ChatMessage {
     private String id;
     
     /**
+     * 文件名
+     */
+    @Column(name = "file_name", nullable = false)
+    private String fileName;
+    
+    /**
+     * 文件大小（字节）
+     */
+    @Column(name = "file_size", nullable = false)
+    private Long fileSize;
+    
+    /**
+     * 文件类型（MIME类型）
+     */
+    @Column(name = "file_type", nullable = false)
+    private String fileType;
+    
+    /**
+     * 文件存储路径
+     */
+    @Column(name = "file_path", nullable = false)
+    private String filePath;
+    
+    /**
+     * 文件访问URL
+     */
+    @Column(name = "file_url")
+    private String fileUrl;
+    
+    /**
      * 关联的对话ID
      */
-    @Column(name = "conversation_id", nullable = false)
+    @Column(name = "conversation_id")
     private String conversationId;
     
     /**
-     * 消息角色：user、assistant、system、tool
+     * 上传用户ID
      */
-    @Column(name = "role", nullable = false)
-    private String role;
-    
-    /**
-     * 消息内容
-     */
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
-    private String content;
-
-
-    // 新增字段：用于 assistant 消息保存 tool_calls
-    @Column(name = "tool_calls", columnDefinition = "JSON")
-    private String tool_calls;
-    
-    /**
-     * 工具调用ID（如果有）
-     */
-    @Column(name = "tool_call_id")
-    private String tool_call_id;
-    
-    /**
-     * 工具名称（如果有）
-     */
-    @Column(name = "tool_name")
-    private String toolName;
-    
-    /**
-     * 消息序号
-     */
-    @Column(name = "sequence")
-    private Integer sequence;
-    
-    /**
-     * 附件信息（JSON格式存储）
-     */
-    @Column(name = "attachments", columnDefinition = "JSON")
-    private String attachments;
+    @Column(name = "user_id", nullable = false)
+    private String userId;
     
     /**
      * 创建时间

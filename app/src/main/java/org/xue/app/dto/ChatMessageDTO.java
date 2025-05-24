@@ -54,6 +54,11 @@ public class ChatMessageDTO {
     private Integer sequence;
     
     /**
+     * 附件信息
+     */
+    private String attachments;
+    
+    /**
      * 创建时间
      */
     private String createdAt;
