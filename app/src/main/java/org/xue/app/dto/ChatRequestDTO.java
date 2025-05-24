@@ -32,4 +32,9 @@ public class ChatRequestDTO {
      * 温度参数（可选）
      */
     private Double temperature;
+    
+    /**
+     * 附件信息
+     */
+    private String attachments;
 } 

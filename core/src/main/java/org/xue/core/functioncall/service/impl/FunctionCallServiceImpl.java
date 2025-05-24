@@ -19,6 +19,7 @@ import org.xue.core.functioncall.repository.CallMessageRepository;
 import org.xue.core.functioncall.service.FunctionCallService;
 import org.xue.core.functioncall.util.FunctionDefinitionRegistry;
 import org.xue.core.functioncall.util.ModelRequestBuilder;
+import org.xue.core.config.PromptsService;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -56,6 +57,8 @@ public class FunctionCallServiceImpl implements FunctionCallService {
 
     private final ChatService chatService;
     
+    private final PromptsService promptsService;
+    
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 多轮对话消息上下文（可替换为Redis）
@@ -80,7 +83,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         }
         
         // 添加用户输入
-        addMessage(new ChatMessage("system", "你是一个助手，如果需要调用函数，请使用 function_call 返回 JSON。"));
+        addMessage(new ChatMessage("system", promptsService.getFunctionCallSystemPrompt()));
         addMessage(new ChatMessage("user", question));
 
         // 构建请求 JSON
@@ -298,7 +301,7 @@ public class FunctionCallServiceImpl implements FunctionCallService {
         this.messageHistory.clear();
         
         // 添加系统消息和用户输入
-        addMessage(new ChatMessage("system", "你是一个助手，如果需要调用函数，请使用 function_call 返回 JSON。"));
+        addMessage(new ChatMessage("system", promptsService.getFunctionCallSystemPrompt()));
         addMessage(new ChatMessage("user", question));
 
         // 构建流式响应

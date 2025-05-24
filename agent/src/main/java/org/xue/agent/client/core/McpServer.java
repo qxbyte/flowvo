@@ -246,6 +246,8 @@ public class McpServer {
      * 判断服务是否已连接
      */
     public boolean isConnected() {
+
+        sendHeartbeat();
         // 如果超过心跳间隔两倍的时间没有成功心跳，则认为连接已断开
         long heartbeatInterval = config.getRetry().getInterval();
         boolean heartbeatTimeout = System.currentTimeMillis() - lastHeartbeatTime > heartbeatInterval * 2;

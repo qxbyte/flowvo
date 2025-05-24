@@ -166,6 +166,31 @@ export interface Message {
   content: string;
   createdAt: string; // Assuming ISO string date
   userId?: string;
+  attachments?: MessageAttachment[] | string; // 可以是数组或JSON字符串
+}
+
+// 新增：消息附件类型
+export interface MessageAttachment {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  filePath?: string;
+  fileUrl?: string;
+  fileContent?: string; // 文本内容
+  base64Content?: string; // base64内容（用于图片）
+}
+
+// 新增：文件上传响应类型
+export interface FileUploadResponse {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  filePath: string;
+  fileUrl?: string;
+  success: boolean;
+  error?: string;
 }
 
 export interface ConversationCreatePayload {
@@ -196,6 +221,7 @@ export interface ChatMessageSendPayload {
     conversationId: string;
     message: string;
     userId?: string; // userId is often part of ChatRequestDTO
+    attachments?: string; // 修改为字符串类型，用于传递JSON格式的附件信息
 }
 
 export const pixelChatApi = {
@@ -233,6 +259,109 @@ export const pixelChatApi = {
   getAvailableAgents: (): Promise<AxiosResponse<Agent[]>> => {
     return api.get('/pixel_chat/agents');
   },
+
+  // 新增：文件上传API
+  uploadFile: (file: File, conversationId?: string): Promise<AxiosResponse<FileUploadResponse>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (conversationId) {
+      formData.append('conversationId', conversationId);
+    }
+    
+    return api.post('/pixel_chat/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // 新增：批量上传文件API
+  uploadFiles: (files: File[], conversationId?: string): Promise<AxiosResponse<FileUploadResponse[]>> => {
+    const formData = new FormData();
+    files.forEach((file, index) => {
+      formData.append(`files`, file);
+    });
+    if (conversationId) {
+      formData.append('conversationId', conversationId);
+    }
+    
+    return api.post('/pixel_chat/upload/batch', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // 图像识别 - 独立接口
+  recognizeImage: (imageFile: File, request?: VisionRequest): Promise<AxiosResponse<VisionResponse>> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    if (request?.conversationId) {
+      formData.append('conversationId', request.conversationId);
+    }
+    if (request?.message) {
+      formData.append('message', request.message);
+    }
+    if (request?.model) {
+      formData.append('model', request.model);
+    }
+    
+    return api.post('/vision/recognize', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // 图像识别 - 集成到聊天中
+  recognizeImageInChat: (imageFile: File, request?: VisionRequest): Promise<AxiosResponse<VisionChatResponse>> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    if (request?.conversationId) {
+      formData.append('conversationId', request.conversationId);
+    }
+    if (request?.message) {
+      formData.append('message', request.message);
+    }
+    if (request?.model) {
+      formData.append('model', request.model);
+    }
+    
+    return api.post('/pixel_chat/vision/recognize', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // 检查图像文件支持性
+  checkImageSupport: (imageFile: File): Promise<AxiosResponse<any>> => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    
+    return api.post('/vision/check', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  // 获取支持的图像格式
+  getSupportedImageFormats: (): Promise<AxiosResponse<any>> => {
+    return api.get('/vision/formats');
+  },
+
+  // 获取可用的AI模型列表
+  getAvailableModels: (): Promise<AxiosResponse<AIModel[]>> => {
+    return api.get('/pixel_chat/models');
+  },
+
+  // 获取支持Vision的模型列表
+  getVisionSupportedModels: (): Promise<AxiosResponse<AIModel[]>> => {
+    return api.get('/pixel_chat/models/vision');
+  },
 };
 
 // --- Chat API (for AIChat component) ---
@@ -265,5 +394,49 @@ export const chatApi = {
     return api.post('/chat/send', data);
   },
 };
+
+// 图像识别相关接口
+export interface VisionRequest {
+    conversationId?: string;
+    message?: string;
+    model?: string;
+}
+
+export interface VisionResponse {
+    content: string;
+    model: string;
+    imageInfo: {
+        fileName: string;
+        mimeType: string;
+        fileSize: number;
+        width?: number;
+        height?: number;
+    };
+    success: boolean;
+    error?: string;
+}
+
+export interface VisionChatResponse {
+    assistantReply: string;
+    model: string;
+    imageInfo: {
+        fileName: string;
+        mimeType: string;
+        fileSize: number;
+        width?: number;
+        height?: number;
+    };
+    success: boolean;
+    error?: string;
+}
+
+// AI模型接口
+export interface AIModel {
+    id: string;
+    name: string;
+    description: string;
+    provider: string;
+    visionSupported: boolean;
+}
 
 export default api;

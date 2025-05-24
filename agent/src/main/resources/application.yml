@@ -28,6 +28,21 @@ agent:
     key: ${OPENAI_API_KEY:your_api_key_here}
     timeout: 60000
 
+# 提示词配置 - 将所有写死的提示词提取到这里，方便修改和管理
+prompts:
+  # 函数调用相关提示词
+  function-call:
+    system: "你是一个助手，如果需要调用函数，请使用 function_call 返回 JSON。"
+    decision: "你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复\"是\"；如果不需要，请只回复\"否\"。不要提供任何解释或额外信息。"
+    selection: "你是一个助手，请根据用户问题选择并返回需要调用的函数。请直接返回function_call字段的JSON格式，**不要**返回多余解释。"
+    decision-simple: "你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复\"Y\"；如果不需要，请只回复\"N\"。不要提供任何解释或额外信息。"
+  
+  # 聊天相关提示词
+  chat:
+    default: "你是一个友善、专业的AI助手，请根据用户的问题提供准确、有用的回答。"
+    knowledge-base: "【以下是相关资料，可参考作答】\n{context}\n【用户提问】\n{question}"
+    error-fallback: "抱歉，我在处理您的请求时遇到了一些问题。请稍后再试，或者重新描述您的问题。"
+
 # MCP客户端配置
 mcp:
   enabled: true

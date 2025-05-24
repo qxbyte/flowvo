@@ -3,23 +3,45 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { pixelChatApi, type Conversation, type ConversationCreatePayload, type Message, type ChatMessageSendPayload, type Agent } from '../../utils/api';
+import type { AIModel } from '../../utils/api';
+import PixelAnimatedSendButton from '../../components/PixelAnimatedSendButton';
+import PixelAttachButton from '../../components/PixelAttachButton';
+import PixelRobot from '../../components/PixelRobot';
 
-// 模型选项 - 按服务商分组
-const AI_MODELS = {
-  openai: [
-    { id: 'gpt-4o-mini', name: 'GPT-4o Mini', description: 'Fast and efficient' },
-    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', description: 'Balanced performance' },
-    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', description: 'Most capable' }
+// 文件附件类型定义
+interface FileAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;
+  content?: string; // 文本内容（用于文档类文件）
+  base64?: string; // base64内容（用于图片）
+}
+
+// 支持的文件类型
+const SUPPORTED_FILE_TYPES = {
+  images: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/bmp'],
+  documents: ['text/plain', 'text/markdown', 'application/pdf', 'text/csv'],
+  code: [
+    'text/javascript', 'text/typescript', 'text/css', 'text/html', 'application/json', 'text/xml',
+    'text/x-java-source', 'text/x-python', 'text/x-c', 'text/x-c++', 'text/x-csharp',
+    'text/x-php', 'text/x-ruby', 'text/x-go', 'text/x-rust', 'text/x-swift',
+    'text/x-kotlin', 'text/x-scala', 'text/x-shell', 'text/x-sql', 'text/x-yaml',
+    'application/x-typescript', 'application/x-vue', 'application/x-react'
   ],
-  deepseek: [
-    { id: 'deepseek-chat', name: 'DeepSeek Chat', description: 'DeepSeek AI model' }
+  office: [
+    'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
+    'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
   ]
 };
 
-// 获取所有模型的扁平列表
-const ALL_MODELS = [
-  ...AI_MODELS.openai,
-  ...AI_MODELS.deepseek
+const ALL_SUPPORTED_TYPES = [
+  ...SUPPORTED_FILE_TYPES.images,
+  ...SUPPORTED_FILE_TYPES.documents,
+  ...SUPPORTED_FILE_TYPES.code,
+  ...SUPPORTED_FILE_TYPES.office
 ];
 
 // 复制代码块组件
@@ -110,14 +132,228 @@ interface InlineCodeProps {
 const InlineCode: React.FC<InlineCodeProps> = ({ children }) => {
   return (
     <code style={{
-      backgroundColor: '#333',
-      padding: '2px 4px',
-      borderRadius: '3px',
-      fontFamily: 'Courier New, monospace',
-      wordBreak: 'break-all'
+      backgroundColor: "#333",
+      padding: "2px 4px",
+      borderRadius: "3px",
+      fontFamily: "Courier New, monospace",
+      wordBreak: "break-all"
     }}>
       {children}
     </code>
+  );
+};
+
+// 文件处理工具函数
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const getFileIcon = (type: string): React.ReactNode => {
+  if (SUPPORTED_FILE_TYPES.images.includes(type)) {
+    return (
+      <div style={{ width: "16px", height: "16px", position: "relative" }}>
+        {/* 像素风格图片图标 */}
+        <div style={{ position: "absolute", width: "14px", height: "10px", backgroundColor: "#666", border: "1px solid #333", top: "2px", left: "1px" }} />
+        <div style={{ position: "absolute", width: "4px", height: "4px", backgroundColor: "#ff0", border: "1px solid #cc0", top: "4px", left: "3px" }} />
+        <div style={{ position: "absolute", width: "2px", height: "2px", backgroundColor: "#0f0", top: "6px", left: "8px" }} />
+        <div style={{ position: "absolute", width: "2px", height: "1px", backgroundColor: "#f00", top: "8px", right: "3px" }} />
+      </div>
+    );
+  }
+  if (SUPPORTED_FILE_TYPES.documents.includes(type)) {
+    return (
+      <div style={{ width: "16px", height: "16px", position: "relative" }}>
+        {/* 像素风格文档图标 */}
+        <div style={{ position: "absolute", width: "10px", height: "14px", backgroundColor: "#fff", border: "1px solid #333", top: "1px", left: "3px" }} />
+        <div style={{ position: "absolute", width: "6px", height: "1px", backgroundColor: "#333", top: "4px", left: "5px" }} />
+        <div style={{ position: "absolute", width: "6px", height: "1px", backgroundColor: "#333", top: "6px", left: "5px" }} />
+        <div style={{ position: "absolute", width: "4px", height: "1px", backgroundColor: "#333", top: "8px", left: "5px" }} />
+        <div style={{ position: "absolute", width: "3px", height: "3px", backgroundColor: "#333", top: "1px", right: "3px" }} />
+      </div>
+    );
+  }
+  if (SUPPORTED_FILE_TYPES.code.includes(type)) {
+    return (
+      <div style={{ width: "16px", height: "16px", position: "relative" }}>
+        {/* 像素风格代码图标 */}
+        <div style={{ position: "absolute", width: "14px", height: "12px", backgroundColor: "#000", border: "1px solid #0f0", top: "2px", left: "1px" }} />
+        <div style={{ position: "absolute", width: "2px", height: "1px", backgroundColor: "#0f0", top: "4px", left: "3px" }} />
+        <div style={{ position: "absolute", width: "4px", height: "1px", backgroundColor: "#0f0", top: "6px", left: "3px" }} />
+        <div style={{ position: "absolute", width: "3px", height: "1px", backgroundColor: "#0f0", top: "8px", left: "3px" }} />
+        <div style={{ position: "absolute", width: "2px", height: "1px", backgroundColor: "#0f0", top: "10px", left: "3px" }} />
+      </div>
+    );
+  }
+  if (SUPPORTED_FILE_TYPES.office.includes(type)) {
+    return (
+      <div style={{ width: "16px", height: "16px", position: "relative" }}>
+        {/* 像素风格Office图标 */}
+        <div style={{ position: "absolute", width: "12px", height: "12px", backgroundColor: "#0a84ff", border: "1px solid #0056b3", top: "2px", left: "2px" }} />
+        <div style={{ position: "absolute", width: "2px", height: "2px", backgroundColor: "#fff", top: "4px", left: "4px" }} />
+        <div style={{ position: "absolute", width: "2px", height: "2px", backgroundColor: "#fff", top: "4px", right: "4px" }} />
+        <div style={{ position: "absolute", width: "6px", height: "1px", backgroundColor: "#fff", top: "8px", left: "5px" }} />
+        <div style={{ position: "absolute", width: "4px", height: "1px", backgroundColor: "#fff", top: "10px", left: "6px" }} />
+      </div>
+    );
+  }
+  return (
+    <div style={{ width: "16px", height: "16px", position: "relative" }}>
+      {/* 默认文件图标 */}
+      <div style={{ position: "absolute", width: "10px", height: "12px", backgroundColor: "#ccc", border: "1px solid #666", top: "2px", left: "3px" }} />
+      <div style={{ position: "absolute", width: "2px", height: "2px", backgroundColor: "#666", top: "2px", right: "3px" }} />
+      <div style={{ position: "absolute", width: "6px", height: "1px", backgroundColor: "#666", top: "6px", left: "5px" }} />
+      <div style={{ position: "absolute", width: "4px", height: "1px", backgroundColor: "#666", top: "8px", left: "5px" }} />
+    </div>
+  );
+};
+
+const isImageFile = (type: string): boolean => {
+  return SUPPORTED_FILE_TYPES.images.includes(type);
+};
+
+// 新增：检测文本是否包含乱码
+const hasGibberish = (text: string): boolean => {
+  if (!text || text.length === 0) return false;
+  
+  // 检测连续的非ASCII字符比例
+  const nonAsciiChars = text.match(/[^\x00-\x7F]/g) || [];
+  const nonAsciiRatio = nonAsciiChars.length / text.length;
+  
+  // 检测控制字符
+  const controlChars = text.match(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g) || [];
+  const controlCharRatio = controlChars.length / text.length;
+  
+  // 如果控制字符比例过高，认为是乱码
+  if (controlCharRatio > 0.1) return true;
+  
+  // 检测是否包含大量重复的特殊字符
+  const specialCharsPattern = /[\uFFFD\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g;
+  const specialChars = text.match(specialCharsPattern) || [];
+  if (specialChars.length > text.length * 0.05) return true;
+  
+  return false;
+};
+
+// 新增：获取文件的文本编码
+const detectFileType = (fileName: string): 'text' | 'office' | 'image' | 'binary' => {
+  const ext = fileName.toLowerCase().split('.').pop() || '';
+  
+  if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'].includes(ext)) {
+    return 'image';
+  }
+  
+  if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'pdf'].includes(ext)) {
+    return 'office';
+  }
+  
+  if (['txt', 'md', 'js', 'ts', 'jsx', 'tsx', 'vue', 'py', 'java', 'cpp', 'c', 'h', 'cs', 
+       'php', 'rb', 'go', 'rs', 'swift', 'kt', 'scala', 'sh', 'sql', 'yml', 'yaml', 
+       'json', 'xml', 'css', 'html', 'csv'].includes(ext)) {
+    return 'text';
+  }
+  
+  return 'binary';
+};
+
+// 消息附件展示组件
+const MessageAttachments: React.FC<{ attachments: any[] | string }> = ({ attachments }) => {
+  // 处理attachments参数，支持字符串和数组格式
+  let attachmentArray: any[] = [];
+  
+  if (typeof attachments === 'string') {
+    try {
+      attachmentArray = JSON.parse(attachments);
+    } catch (error) {
+      console.error('Failed to parse attachments JSON:', error);
+      return null;
+    }
+  } else if (Array.isArray(attachments)) {
+    attachmentArray = attachments;
+  }
+  
+  // 增强检查：确保attachmentArray是数组且不为空
+  if (!attachmentArray || !Array.isArray(attachmentArray) || attachmentArray.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: "8px" }}>
+      {attachmentArray.map((attachment) => (
+        <div
+          key={attachment.id}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px",
+            marginBottom: "4px",
+            backgroundColor: "rgba(255, 255, 255, 0.05)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "4px"
+          }}
+        >
+          <div style={{ flexShrink: 0 }}>
+            {getFileIcon(attachment.fileType)}
+          </div>
+          
+          {isImageFile(attachment.fileType) && attachment.base64Content ? (
+            <div style={{ position: "relative" }}>
+              <img
+                src={attachment.base64Content}
+                alt={attachment.fileName}
+                style={{
+                  maxWidth: "150px",
+                  maxHeight: "150px",
+                  borderRadius: "4px",
+                  cursor: "pointer"
+                }}
+                onClick={() => {
+                  // 点击图片放大查看
+                  const modal = document.createElement('div');
+                  modal.style.cssText = `
+                    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.8); display: flex; align-items: center;
+                    justify-content: center; z-index: 10000; cursor: pointer;
+                  `;
+                  const img = document.createElement('img');
+                  img.src = attachment.base64Content;
+                  img.style.cssText = 'max-width: 90%; max-height: 90%; border-radius: 8px;';
+                  modal.appendChild(img);
+                  modal.onclick = () => document.body.removeChild(modal);
+                  document.body.appendChild(modal);
+                }}
+              />
+              <div style={{
+                fontSize: "10px",
+                color: "#999",
+                marginTop: "2px"
+              }}>
+                {attachment.fileName}
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: "12px",
+                fontWeight: "bold",
+                marginBottom: "2px"
+              }}>
+                {attachment.fileName}
+              </div>
+              <div style={{
+                fontSize: "10px",
+                color: "#999"
+              }}>
+                {formatFileSize(attachment.fileSize)}
+              </div>
+              {/* 移除文档内容预览显示 */}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -125,16 +361,29 @@ const InlineCode: React.FC<InlineCodeProps> = ({ children }) => {
 interface TypewriterTextProps {
   text: string;
   speed?: number;
+  shouldStop?: boolean;
   onComplete?: () => void;
   onUpdate?: () => void;
 }
 
-const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 50, onComplete, onUpdate }) => {
+const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 50, shouldStop = false, onComplete, onUpdate }) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
-    if (currentIndex < text.length) {
+    // 如果收到停止信号，立即显示完整内容
+    if (shouldStop && !isCompleted) {
+      setDisplayText(text);
+      setCurrentIndex(text.length);
+      setIsCompleted(true);
+      if (onComplete) {
+        onComplete();
+      }
+      return;
+    }
+
+    if (currentIndex < text.length && !isCompleted) {
       const timeout = setTimeout(() => {
         setDisplayText(prev => prev + text[currentIndex]);
         setCurrentIndex(prev => prev + 1);
@@ -143,10 +392,13 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 50, onCom
         }
       }, speed);
       return () => clearTimeout(timeout);
-    } else if (onComplete) {
-      onComplete();
+    } else if (currentIndex >= text.length && !isCompleted) {
+      setIsCompleted(true);
+      if (onComplete) {
+        onComplete();
+      }
     }
-  }, [currentIndex, text, speed, onComplete, onUpdate]);
+  }, [currentIndex, text, speed, shouldStop, isCompleted, onComplete, onUpdate]);
 
   return (
     <div className="markdown-content">
@@ -365,6 +617,8 @@ const PixelChatPage: React.FC = () => {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [shouldStopSending, setShouldStopSending] = useState(false);
+  const [shouldStopTyping, setShouldStopTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -392,8 +646,17 @@ const PixelChatPage: React.FC = () => {
   const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
   const [isLoadingAgents, setIsLoadingAgents] = useState(false);
   
+  // 动态模型相关状态
+  const [availableModels, setAvailableModels] = useState<AIModel[]>([]);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  
   // 新增：侧边栏收起状态
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // 文件上传相关状态
+  const [uploadedFiles, setUploadedFiles] = useState<FileAttachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   
   // 像素风格提示框状态
   const [pixelToast, setPixelToast] = useState<{
@@ -408,6 +671,7 @@ const PixelChatPage: React.FC = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // 显示像素风格提示
   const showPixelToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
@@ -417,6 +681,136 @@ const PixelChatPage: React.FC = () => {
   // 关闭像素风格提示
   const hidePixelToast = () => {
     setPixelToast(prev => ({ ...prev, isVisible: false }));
+  };
+
+  // 自动focus输入框
+  const focusInput = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // 停止发送消息
+  const handleStopSending = useCallback(() => {
+    if (isSendingMessage) {
+      // 如果正在发送，停止发送
+      setShouldStopSending(true);
+      setIsSendingMessage(false);
+      showPixelToast("消息发送已停止", "warning");
+    } else if (typingMessageId) {
+      // 如果正在打字，停止打字机效果并立即显示完整内容
+      setShouldStopTyping(true);
+      showPixelToast("已显示完整回复", "info");
+    }
+  }, [isSendingMessage, typingMessageId]);
+
+  // 读取文件内容
+  const readFileContent = async (file: File): Promise<{ content?: string; base64?: string }> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      const fileType = detectFileType(file.name);
+      
+      if (isImageFile(file.type)) {
+        reader.onload = (e) => {
+          resolve({ base64: e.target?.result as string });
+        };
+        reader.readAsDataURL(file);
+      } else if (fileType === 'office') {
+        // Office文档需要同时读取base64内容供后端解析
+        const reader2 = new FileReader();
+        reader2.onload = (e) => {
+          resolve({ 
+            content: `[${file.name}] - Office文档，已上传到后端进行解析。文件大小：${formatFileSize(file.size)}`,
+            base64: e.target?.result as string
+          });
+        };
+        reader2.readAsDataURL(file);
+      } else {
+        // 对于大文件（>1MB），不读取内容，避免内存问题
+        const isLargeFile = file.size > 1024 * 1024; // 1MB
+        
+        if (isLargeFile) {
+          // 大文件不读取内容，只保留文件基本信息
+          resolve({ 
+            content: `[${file.name}] - 文件较大 (${formatFileSize(file.size)})，已上传但未读取内容以避免性能问题。` 
+          });
+        } else {
+          reader.onload = (e) => {
+            try {
+              const content = e.target?.result as string;
+              
+              // 检测乱码
+              if (hasGibberish(content)) {
+                console.warn(`File ${file.name} contains potential gibberish/binary content`);
+                resolve({ 
+                  content: `[${file.name}] - 文件内容包含乱码或二进制数据，无法正常读取。建议使用其他格式或检查文件编码。` 
+                });
+              } else {
+                resolve({ content });
+              }
+            } catch (error) {
+              console.error(`Error processing file ${file.name}:`, error);
+              resolve({ 
+                content: `[${file.name}] - 文件读取出错，可能格式不支持或文件损坏。` 
+              });
+            }
+          };
+          
+          reader.onerror = () => {
+            console.error(`Error reading file ${file.name}`);
+            resolve({ 
+              content: `[${file.name}] - 文件读取失败。` 
+            });
+          };
+          
+          reader.readAsText(file, 'UTF-8');
+        }
+      }
+    });
+  };
+
+  // 处理文件上传
+  const handleFileUpload = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    
+    for (const file of fileArray) {
+      // 扩展支持的文件扩展名检查
+      const supportedExtensions = /\.(txt|md|js|ts|jsx|tsx|vue|py|java|cpp|c|h|cs|php|rb|go|rs|swift|kt|scala|sh|sql|yml|yaml|json|xml|css|html|csv|docx|doc|xlsx|xls|pptx|ppt|pdf)$/i;
+      
+      if (!ALL_SUPPORTED_TYPES.includes(file.type) && !supportedExtensions.test(file.name)) {
+        showPixelToast(`Unsupported file type: ${file.name}`, "warning");
+        continue;
+      }
+
+      if (file.size > 50 * 1024 * 1024) { // 50MB limit
+        showPixelToast(`File too large: ${file.name} (max 50MB)`, "warning");
+        continue;
+      }
+
+      try {
+        const { content, base64 } = await readFileContent(file);
+        
+        const attachment: FileAttachment = {
+          id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type || 'application/octet-stream',
+          content,
+          base64
+        };
+
+        setUploadedFiles(prev => [...prev, attachment]);
+        showPixelToast(`File uploaded: ${file.name}`, "success");
+      } catch (error) {
+        console.error('Error reading file:', error);
+        showPixelToast(`Error reading file: ${file.name}`, "error");
+      }
+    }
+  };
+
+  // 移除文件
+  const removeFile = (fileId: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
   // 改进的滚动函数
@@ -482,10 +876,70 @@ const PixelChatPage: React.FC = () => {
     }
   }, []);
 
+  const fetchAvailableModels = useCallback(async () => {
+    setIsLoadingModels(true);
+    try {
+      const response = await pixelChatApi.getAvailableModels();
+      setAvailableModels(response.data || []);
+    } catch (err) {
+      console.error("Error fetching available models:", err);
+      showPixelToast("Could not fetch available models.", "error");
+    } finally {
+      setIsLoadingModels(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchConversations();
     fetchAvailableAgents();
-  }, [fetchConversations, fetchAvailableAgents]);
+    fetchAvailableModels(); // 添加获取模型列表
+    // 页面初始化时自动focus输入框
+    setTimeout(() => {
+      focusInput();
+    }, 500);
+  }, [fetchConversations, fetchAvailableAgents, fetchAvailableModels, focusInput]);
+
+  // 添加拖拽和粘贴事件监听
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      if (!e.relatedTarget) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDrop = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      
+      if (e.dataTransfer?.files) {
+        handleFileUpload(e.dataTransfer.files);
+      }
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      if (e.clipboardData?.files && e.clipboardData.files.length > 0) {
+        handleFileUpload(e.clipboardData.files);
+      }
+    };
+
+    document.addEventListener('dragover', handleDragOver);
+    document.addEventListener('dragleave', handleDragLeave);
+    document.addEventListener('drop', handleDrop);
+    document.addEventListener('paste', handlePaste);
+
+    return () => {
+      document.removeEventListener('dragover', handleDragOver);
+      document.removeEventListener('dragleave', handleDragLeave);
+      document.removeEventListener('drop', handleDrop);
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [handleFileUpload]);
 
   const handleSelectConversation = useCallback(async (id: string) => {
     if (editingConversationId) return;
@@ -511,6 +965,7 @@ const PixelChatPage: React.FC = () => {
       // 消息加载完成后滚动到底部
       setTimeout(() => {
         scrollToBottom();
+        focusInput(); // 自动focus输入框
       }, 300);
     } catch (err) {
       console.error(`Error fetching messages for conversation ${id}:`, err);
@@ -519,7 +974,7 @@ const PixelChatPage: React.FC = () => {
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [editingConversationId, conversations, scrollToBottom]);
+  }, [editingConversationId, conversations, scrollToBottom, focusInput]);
 
   const handleCreateConversation = async () => {
     // 创建临时对话，不保存到数据库
@@ -530,6 +985,10 @@ const PixelChatPage: React.FC = () => {
     setSelectedModel('deepseek-chat'); // 重置为默认模型
     setSelectedAgent('default'); // 重置为默认Agent
     showPixelToast("New chat ready! Select a model and agent, then send your first message.", "success");
+    // 自动focus输入框
+    setTimeout(() => {
+      focusInput();
+    }, 100);
   };
 
   // 更新对话模型
@@ -554,7 +1013,7 @@ const PixelChatPage: React.FC = () => {
         c.id === selectedConversationId ? { ...c, model: newModel } : c
       ));
       
-      showPixelToast(`Model updated to ${ALL_MODELS.find(m => m.id === newModel)?.name}`, "success");
+      showPixelToast(`Model updated to ${availableModels.find(m => m.id === newModel)?.name || newModel}`, "success");
     } catch (err) {
       console.error("Error updating model:", err);
       showPixelToast("Could not update model.", "error");
@@ -668,34 +1127,56 @@ const PixelChatPage: React.FC = () => {
   };
 
   const handleSendMessage = async (messageText: string) => {
-    if (!selectedConversationId || messageText.trim() === '') {
-      showPixelToast("No conversation selected or message is empty.", "warning");
+    if (messageText.trim() === '' && uploadedFiles.length === 0) {
+      showPixelToast("Message is empty.", "warning");
       return;
+    }
+
+    // 重置停止状态
+    setShouldStopSending(false);
+
+    // 检查图片+非Vision模型的情况
+    const hasImages = uploadedFiles.some(file => isImageFile(file.type));
+    if (hasImages) {
+      const currentModel = availableModels.find(m => m.id === selectedModel);
+      if (!currentModel) {
+        showPixelToast("当前模型未找到，请重新选择模型", "warning");
+        return;
+      }
+      if (!currentModel.visionSupported) {
+        showPixelToast(`模型 "${currentModel.name}" 不支持图像识别功能，请选择支持Vision的模型（如GPT-4o Mini）`, "warning");
+        return;
+      }
+    }
+
+    // 如果没有选择对话，先创建一个临时对话
+    let currentConversationId = selectedConversationId;
+    let isNewChat = isNewConversation;
+    
+    if (!currentConversationId) {
+      // 创建临时对话ID
+      const tempId = `temp-${Date.now()}`;
+      currentConversationId = tempId;
+      isNewChat = true;
+      
+      // 更新状态
+      setSelectedConversationId(tempId);
+      setMessages([]);
+      setIsNewConversation(true);
+      setSelectedModel('deepseek-chat'); // 重置为默认模型
+      setSelectedAgent('default'); // 重置为默认Agent
     }
 
     setIsSendingMessage(true);
     setError(null);
 
     const tempMessageId = `temp-${Date.now()}`;
-    const userMessage: Message = {
-      id: tempMessageId,
-      conversationId: selectedConversationId,
-      role: 'user',
-      content: messageText,
-      createdAt: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, userMessage]);
-
-    // 发送用户消息后，滚动到最新对话组
-    setTimeout(() => {
-      scrollToBottom();
-    }, 200);
-
+    
     try {
-      let actualConversationId = selectedConversationId;
+      let actualConversationId = currentConversationId;
 
       // 如果是新对话，先创建对话
-      if (isNewConversation) {
+      if (isNewChat) {
         const createPayload: ConversationCreatePayload = {
           title: `New Chat ${new Date().toLocaleTimeString()}`,
           service: selectedAgent, // 使用选择的Agent
@@ -709,15 +1190,129 @@ const PixelChatPage: React.FC = () => {
         setSelectedConversationId(actualConversationId);
         setIsNewConversation(false);
         setConversations(prev => [createResponse.data, ...prev]);
-        
-        // 更新用户消息的 conversationId
-        userMessage.conversationId = actualConversationId;
       }
 
-    const payload: ChatMessageSendPayload = {
+      // 准备上传文件并获取附件信息
+      let attachments: any[] = [];
+
+      if (uploadedFiles.length > 0) {
+        // 转换为MessageAttachment格式（使用临时ID）
+        attachments = uploadedFiles.map((file, index) => ({
+          id: `temp-${Date.now()}-${index}`,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+          filePath: '', // 临时为空
+          fileUrl: '', // 临时为空
+          fileContent: file.content,
+          base64Content: file.base64
+        }));
+
+        // 检查是否有图片需要识别
+        const imageFiles = uploadedFiles.filter(file => isImageFile(file.type));
+        if (imageFiles.length > 0) {
+          // 如果有图片，使用图像识别API
+          try {
+            // 创建File对象（从base64转换）
+            const firstImageFile = imageFiles[0];
+            if (firstImageFile.base64) {
+              const base64Data = firstImageFile.base64.split(',')[1];
+              const byteCharacters = atob(base64Data);
+              const byteNumbers = new Array(byteCharacters.length);
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+              }
+              const byteArray = new Uint8Array(byteNumbers);
+              const imageBlob = new Blob([byteArray], { type: firstImageFile.type });
+              const imageFileForAPI = new File([imageBlob], firstImageFile.name, { type: firstImageFile.type });
+
+              // 调用图像识别API
+              const visionResponse = await pixelChatApi.recognizeImageInChat(imageFileForAPI, {
+                conversationId: actualConversationId,
+                message: messageText || "请分析这张图片的内容。",
+                model: selectedModel
+              });
+
+              if (visionResponse.data.success) {
+                // 创建用户消息（用于界面显示）- 不包含文档内容
+                const userMessage: Message = {
+                  id: tempMessageId,
+                  conversationId: actualConversationId,
+                  role: 'user',
+                  content: messageText, // 只显示用户输入的文本
+                  createdAt: new Date().toISOString(),
+                  attachments: attachments.length > 0 ? attachments.map(att => ({
+                    ...att,
+                    fileContent: undefined // 从界面显示的附件中移除文档内容
+                  })) : undefined
+                };
+                
+                // 直接显示AI的回复，不需要再调用send API
+                const assistantMessageId = `assistant-${Date.now()}`;
+                const assistantMessage: Message = {
+                  id: assistantMessageId,
+                  conversationId: actualConversationId,
+                  role: 'assistant',
+                  content: visionResponse.data.assistantReply,
+                  createdAt: new Date().toISOString(),
+                };
+                
+                setMessages(prev => [...prev, userMessage, assistantMessage]);
+                setTypingMessageId(assistantMessageId); // 启动打字机效果
+                
+                // 发送成功后清空上传的文件
+                setUploadedFiles([]);
+                
+                // AI回复开始后，滚动到最新对话组
+                setTimeout(() => {
+                  scrollToBottom();
+                }, 300);
+                
+                return; // 直接返回，不继续执行普通发送逻辑
+              } else {
+                showPixelToast("图像识别失败: " + visionResponse.data.error, "error");
+                // 继续执行普通发送逻辑
+              }
+            }
+          } catch (visionError) {
+            console.error("图像识别错误:", visionError);
+            showPixelToast("图像识别服务异常", "error");
+            // 继续执行普通发送逻辑
+          }
+        }
+      }
+
+      // 创建用户消息（用于界面显示）- 不包含文档内容
+      const userMessage: Message = {
+        id: tempMessageId,
         conversationId: actualConversationId,
-      message: messageText,
-    };
+        role: 'user',
+        content: messageText, // 只显示用户输入的文本
+        createdAt: new Date().toISOString(),
+        attachments: attachments.length > 0 ? attachments.map(att => ({
+          ...att,
+          fileContent: undefined // 从界面显示的附件中移除文档内容
+        })) : undefined
+      };
+      setMessages(prev => [...prev, userMessage]);
+
+      // 发送用户消息后，滚动到最新对话组
+      setTimeout(() => {
+        scrollToBottom();
+      }, 200);
+
+      // 发送消息到AI，只发送用户原始输入和附件信息
+      const payload: ChatMessageSendPayload = {
+        conversationId: actualConversationId,
+        message: messageText, // 只发送用户原始输入，不拼接文档描述
+        attachments: attachments.length > 0 ? JSON.stringify(attachments) : undefined
+      };
+
+      // 检查是否应该停止发送
+      if (shouldStopSending) {
+        setMessages(prev => prev.filter(m => m.id !== tempMessageId));
+        return;
+      }
 
       const response = await pixelChatApi.sendPixelMessage(payload);
       const assistantReply = response.data.assistantReply;
@@ -742,6 +1337,10 @@ const PixelChatPage: React.FC = () => {
       } else {
         console.warn("No assistant reply received.");
       }
+
+      // 发送成功后清空上传的文件
+      setUploadedFiles([]);
+      
     } catch (err) {
       console.error("Error sending message:", err);
       setError("Failed to send message.");
@@ -749,6 +1348,10 @@ const PixelChatPage: React.FC = () => {
       setMessages(prev => prev.filter(m => m.id !== tempMessageId));
     } finally {
       setIsSendingMessage(false);
+      // 发送完成后自动focus输入框
+      setTimeout(() => {
+        focusInput();
+      }, 200);
     }
   };
 
@@ -785,6 +1388,66 @@ const PixelChatPage: React.FC = () => {
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString();
+  };
+
+  // 新增：日期分组功能
+  const getDateGroup = (dateString: string) => {
+    const messageDate = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // 重置时间为一天的开始，用于比较日期
+    const resetTime = (date: Date) => {
+      const newDate = new Date(date);
+      newDate.setHours(0, 0, 0, 0);
+      return newDate;
+    };
+
+    const msgDate = resetTime(messageDate);
+    const todayDate = resetTime(today);
+    const yesterdayDate = resetTime(yesterday);
+    const sevenDaysAgoDate = resetTime(sevenDaysAgo);
+
+    if (msgDate.getTime() === todayDate.getTime()) {
+      return '今天';
+    } else if (msgDate.getTime() === yesterdayDate.getTime()) {
+      return '昨天';
+    } else if (msgDate >= sevenDaysAgoDate) {
+      return '7天内';
+    } else {
+      return '更早';
+    }
+  };
+
+  // 新增：按日期分组对话
+  const groupConversationsByDate = (conversations: Conversation[]) => {
+    const groups: { [key: string]: Conversation[] } = {};
+    
+    conversations.forEach(conv => {
+      const group = getDateGroup(conv.createdAt);
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(conv);
+    });
+
+    // 按预定义顺序返回分组
+    const orderedGroups: { label: string; conversations: Conversation[] }[] = [];
+    const groupOrder = ['今天', '昨天', '7天内', '更早'];
+    
+    groupOrder.forEach(groupLabel => {
+      if (groups[groupLabel] && groups[groupLabel].length > 0) {
+        orderedGroups.push({
+          label: groupLabel,
+          conversations: groups[groupLabel]
+        });
+      }
+    });
+
+    return orderedGroups;
   };
 
   return (
@@ -906,21 +1569,40 @@ const PixelChatPage: React.FC = () => {
                 No chats yet
               </div>
             ) : (
-              conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  style={{
-                    padding: "8px",
-                    margin: "4px 0",
-                    backgroundColor: selectedConversationId === conv.id ? "#330066" : "transparent",
-                    border: selectedConversationId === conv.id ? "2px solid #9933ff" : "2px solid transparent",
-                    color: selectedConversationId === conv.id ? "#cc99ff" : "#00ff00",
-                    fontSize: "12px",
+              groupConversationsByDate(conversations).map((group, index) => (
+                <div key={index}>
+                  <div style={{
+                    padding: "6px 12px",
+                    backgroundColor: "rgba(0, 255, 0, 0.1)",
+                    color: "#00ff00",
+                    fontFamily: "monospace",
+                    fontWeight: "bold",
+                    fontSize: "11px",
+                    borderBottom: "1px solid rgba(0, 255, 0, 0.3)",
+                    margin: "8px 0 4px 0",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px"
+                  }}>
+                    {group.label}
+                  </div>
+                  {group.conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className="conversation-item"
+                      style={{
+                        padding: "8px",
+                        margin: "4px 0",
+                        backgroundColor: selectedConversationId === conv.id ? "#330066" : "transparent",
+                        border: selectedConversationId === conv.id ? "2px solid #9933ff" : "2px solid transparent",
+                        color: selectedConversationId === conv.id ? "#cc99ff" : "#00ff00",
+                        fontSize: "12px",
                         borderRadius: "0",
                         outline: "none",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px"
+                        gap: "8px",
+                        cursor: "pointer",
+                        transition: "border-color 0.2s ease"
                       }}
                     >
                       {editingConversationId === conv.id ? (
@@ -1002,6 +1684,8 @@ const PixelChatPage: React.FC = () => {
                           </button>
                         </div>
                       )}
+                    </div>
+                  ))}
                 </div>
               ))
             )}
@@ -1198,11 +1882,14 @@ const PixelChatPage: React.FC = () => {
                             <TypewriterText 
                               text={message.content} 
                               speed={30}
+                              shouldStop={shouldStopTyping}
                               onComplete={() => {
                                 setTypingMessageId(null);
-                                // 打字机效果完成后，滚动到底部
+                                setShouldStopTyping(false);
+                                // 打字机效果完成后，滚动到底部并focus输入框
                                 setTimeout(() => {
                                   scrollToBottom();
+                                  focusInput();
                                 }, 100);
                               }}
                               onUpdate={scrollFollow}
@@ -1241,6 +1928,10 @@ const PixelChatPage: React.FC = () => {
                             )
                           )}
                         </div>
+                        {/* 显示附件 */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <MessageAttachments attachments={message.attachments} />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1291,8 +1982,129 @@ const PixelChatPage: React.FC = () => {
               borderTop: "2px solid #0099ff",
               padding: "16px",
               backgroundColor: "#000",
-              flexShrink: 0
+              flexShrink: 0,
+              position: "relative"
             }}>
+              {/* 拖拽上传提示 */}
+              {isDragging && isInputFocused && (
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: "rgba(0, 255, 0, 0.1)",
+                  border: "3px dashed #00ff00",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 1000,
+                  fontSize: "18px",
+                  color: "#00ff00",
+                  fontFamily: "monospace",
+                  fontWeight: "bold"
+                }}>
+                  Drop files here to upload
+                </div>
+              )}
+
+              {/* 已上传文件显示 */}
+              {uploadedFiles.length > 0 && (
+                <div style={{
+                  marginBottom: "12px",
+                  padding: "8px",
+                  border: "2px solid #9933ff",
+                  backgroundColor: "#1a001a"
+                }}>
+                  <div style={{
+                    fontSize: "12px",
+                    color: "#9933ff",
+                    marginBottom: "8px",
+                    fontFamily: "monospace",
+                    fontWeight: "bold"
+                  }}>
+                    Uploaded Files ({uploadedFiles.length}):
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {uploadedFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="uploaded-file"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          padding: "4px 8px",
+                          backgroundColor: "#2d002d",
+                          border: "1px solid #6600cc",
+                          fontSize: "11px",
+                          fontFamily: "monospace",
+                          color: "#cc99ff",
+                          position: "relative"
+                        }}
+                        title={`${file.name} (${formatFileSize(file.size)})`}
+                      >
+                        <div style={{ flexShrink: 0 }}>
+                          {getFileIcon(file.type)}
+                        </div>
+                        <span style={{ 
+                          maxWidth: "100px", 
+                          overflow: "hidden", 
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}>
+                          {file.name}
+                        </span>
+                        <span style={{ color: "#999", fontSize: "10px" }}>
+                          ({formatFileSize(file.size)})
+                        </span>
+                        <button
+                          onClick={() => removeFile(file.id)}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#ff6666",
+                            cursor: "pointer",
+                            fontSize: "12px",
+                            marginLeft: "4px"
+                          }}
+                          title="Remove file"
+                        >
+                          ×
+                        </button>
+                        
+                        {/* 图片预览悬浮框 */}
+                        {isImageFile(file.type) && file.base64 && (
+                          <div style={{
+                            position: "absolute",
+                            bottom: "100%",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            zIndex: 1001,
+                            opacity: 0,
+                            pointerEvents: "none",
+                            transition: "opacity 0.3s ease"
+                          }}
+                          className="image-preview-tooltip"
+                          >
+                            <img
+                              src={file.base64}
+                              alt={file.name}
+                              style={{
+                                maxWidth: "200px",
+                                maxHeight: "200px",
+                                border: "2px solid #9933ff",
+                                backgroundColor: "#000"
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={{
                 display: "flex",
                 justifyContent: "center",
@@ -1301,11 +2113,14 @@ const PixelChatPage: React.FC = () => {
                 <div style={{ display: "flex", gap: "8px", maxWidth: "800px", width: "100%" }}>
                   <div style={{ flex: 1, position: "relative" }}>
                     <textarea
+                      ref={inputRef}
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder={selectedConversationId ? "Type your message... (Enter to send)" : "Select a chat first"}
-                      disabled={!selectedConversationId || isSendingMessage}
+                      onFocus={() => setIsInputFocused(true)}
+                      onBlur={() => setIsInputFocused(false)}
+                      placeholder="Type your message... (Enter to send)"
+                      disabled={isSendingMessage}
                       style={{
                         width: "100%",
                         backgroundColor: "#000",
@@ -1331,35 +2146,31 @@ const PixelChatPage: React.FC = () => {
                       {inputText.length}/500
                     </div>
                   </div>
-                  <button
-                    onClick={handleInputSend}
-                    disabled={!selectedConversationId || inputText.trim() === "" || isSendingMessage}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: (!selectedConversationId || inputText.trim() === "" || isSendingMessage) ? "#666" : "#ff0099",
-                      color: (!selectedConversationId || inputText.trim() === "" || isSendingMessage) ? "#333" : "#fff",
-                      border: "2px solid " + ((!selectedConversationId || inputText.trim() === "" || isSendingMessage) ? "#666" : "#ff0099"),
-                      fontFamily: "monospace",
-                      fontWeight: "bold",
-                      cursor: (!selectedConversationId || inputText.trim() === "" || isSendingMessage) ? "not-allowed" : "pointer",
-                      minWidth: "80px",
-                      borderRadius: "0",
-                      outline: "none"
-                    }}
-                  >
-                    {isSendingMessage ? "..." : "SEND"}
-                  </button>
+                  <PixelAnimatedSendButton
+                    isSending={isSendingMessage || !!typingMessageId}
+                    isDisabled={(inputText.trim() === "" && uploadedFiles.length === 0)}
+                    onSend={handleInputSend}
+                    onStop={handleStopSending}
+                  />
                 </div>
               </div>
 
-              {/* Model 选择按钮 - 随时可用 */}
+              {/* 按钮区域 - 包含上传按钮、Model和Agent选择 */}
               <div style={{
                 display: "flex",
                 justifyContent: "center",
                 marginBottom: "8px"
               }}>
                 <div style={{ maxWidth: "800px", width: "100%", position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "flex-start" }}>
+                    {/* 上传按钮 */}
+                    <PixelAttachButton
+                      onFileSelect={handleFileUpload}
+                      acceptedTypes={ALL_SUPPORTED_TYPES.join(',') + ',.txt,.md,.js,.ts,.jsx,.tsx,.vue,.py,.java,.cpp,.c,.h,.cs,.php,.rb,.go,.rs,.swift,.kt,.scala,.sh,.sql,.yml,.yaml,.json,.xml,.css,.html,.csv,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf'}
+                      title="上传文件或图片 (支持拖拽和粘贴)"
+                    />
+
+                    {/* Model选择按钮 */}
                     <button
                       onClick={() => {
                         setShowModelSelector(!showModelSelector);
@@ -1381,9 +2192,10 @@ const PixelChatPage: React.FC = () => {
                         maxWidth: "180px"
                       }}
                     >
-                      {isUpdatingModel ? "Updating..." : `Model: ${ALL_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}`}
+                      {isUpdatingModel ? "Updating..." : `Model: ${availableModels.find(m => m.id === selectedModel)?.name || selectedModel}`}
                     </button>
 
+                    {/* Agent选择按钮 */}
                     <button
                       onClick={() => {
                         setShowAgentSelector(!showAgentSelector);
@@ -1394,15 +2206,16 @@ const PixelChatPage: React.FC = () => {
                         padding: "6px 12px",
                         backgroundColor: isLoadingAgents ? "#333" : "#ff6600",
                         color: isLoadingAgents ? "#666" : "#fff",
-                        border: "2px solid " + (isLoadingAgents ? "#555" : "#ff6600"),
+                        border: "2px solid " + (isLoadingAgents ? "#333" : "#cc4400"),
                         fontFamily: "monospace",
                         fontSize: "12px",
                         fontWeight: "bold",
                         cursor: isLoadingAgents ? "not-allowed" : "pointer",
                         borderRadius: "0",
                         outline: "none",
-                        minWidth: "120px",
-                        maxWidth: "140px"
+                        minWidth: "180px",
+                        maxWidth: "220px",
+                        whiteSpace: "nowrap"
                       }}
                     >
                       {isLoadingAgents ? "Loading..." : `Agent: ${availableAgents.find(a => a.name === selectedAgent)?.displayName || selectedAgent.toUpperCase()}`}
@@ -1413,71 +2226,79 @@ const PixelChatPage: React.FC = () => {
                       <div style={{
                         position: "absolute",
                         bottom: "50px",
-                        left: "0",
+                        left: "56px",
                         backgroundColor: "#000",
                         border: "2px solid #00ff00",
                         zIndex: 100,
-                        width: "260px"
+                        width: "220px"
                       }}>
                         {/* OpenAI模型 */}
-                        <div style={{
-                          backgroundColor: "#666",
-                          color: "#fff",
-                          padding: "8px 16px",
-                          fontFamily: "monospace",
-                          fontSize: "12px",
-                          fontWeight: "bold"
-                        }}>
-                          OpenAI Models
-                        </div>
-                        {AI_MODELS.openai.map((model) => (
-                          <div
-                            key={model.id}
-                            onClick={() => handleUpdateModel(model.id)}
-                            style={{
+                        {availableModels.filter(model => model.provider === 'openai').length > 0 && (
+                          <>
+                            <div style={{
+                              backgroundColor: "#666",
+                              color: "#fff",
                               padding: "8px 16px",
-                              backgroundColor: selectedModel === model.id ? "#cc9900" : "transparent",
-                              color: selectedModel === model.id ? "#000" : "#00ff00",
                               fontFamily: "monospace",
                               fontSize: "12px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #333"
-                            }}
-                          >
-                            <div style={{ fontWeight: "bold" }}>{model.name}</div>
-                            <div style={{ fontSize: "10px", opacity: 0.8 }}>{model.description}</div>
-                          </div>
-                        ))}
+                              fontWeight: "bold"
+                            }}>
+                              OpenAI Models
+                            </div>
+                            {availableModels.filter(model => model.provider === 'openai').map((model) => (
+                              <div
+                                key={model.id}
+                                onClick={() => handleUpdateModel(model.id)}
+                                style={{
+                                  padding: "8px 16px",
+                                  backgroundColor: selectedModel === model.id ? "#cc9900" : "transparent",
+                                  color: selectedModel === model.id ? "#000" : "#00ff00",
+                                  fontFamily: "monospace",
+                                  fontSize: "12px",
+                                  cursor: "pointer",
+                                  borderBottom: "1px solid #333"
+                                }}
+                              >
+                                <div style={{ fontWeight: "bold" }}>{model.name}</div>
+                                <div style={{ fontSize: "10px", opacity: 0.8 }}>{model.description}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
                         
                         {/* DeepSeek模型 */}
-                        <div style={{
-                          backgroundColor: "#666",
-                          color: "#fff",
-                          padding: "8px 16px",
-                          fontFamily: "monospace",
-                          fontSize: "12px",
-                          fontWeight: "bold"
-                        }}>
-                          DeepSeek Models
-                        </div>
-                        {AI_MODELS.deepseek.map((model) => (
-                          <div
-                            key={model.id}
-                            onClick={() => handleUpdateModel(model.id)}
-                            style={{
+                        {availableModels.filter(model => model.provider === 'deepseek').length > 0 && (
+                          <>
+                            <div style={{
+                              backgroundColor: "#666",
+                              color: "#fff",
                               padding: "8px 16px",
-                              backgroundColor: selectedModel === model.id ? "#cc9900" : "transparent",
-                              color: selectedModel === model.id ? "#000" : "#00ff00",
                               fontFamily: "monospace",
                               fontSize: "12px",
-                              cursor: "pointer",
-                              borderBottom: "1px solid #333"
-                            }}
-                          >
-                            <div style={{ fontWeight: "bold" }}>{model.name}</div>
-                            <div style={{ fontSize: "10px", opacity: 0.8 }}>{model.description}</div>
-                          </div>
-                        ))}
+                              fontWeight: "bold"
+                            }}>
+                              DeepSeek Models
+                            </div>
+                            {availableModels.filter(model => model.provider === 'deepseek').map((model) => (
+                              <div
+                                key={model.id}
+                                onClick={() => handleUpdateModel(model.id)}
+                                style={{
+                                  padding: "8px 16px",
+                                  backgroundColor: selectedModel === model.id ? "#cc9900" : "transparent",
+                                  color: selectedModel === model.id ? "#000" : "#00ff00",
+                                  fontFamily: "monospace",
+                                  fontSize: "12px",
+                                  cursor: "pointer",
+                                  borderBottom: "1px solid #333"
+                                }}
+                              >
+                                <div style={{ fontWeight: "bold" }}>{model.name}</div>
+                                <div style={{ fontSize: "10px", opacity: 0.8 }}>{model.description}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
                     )}
 
@@ -1486,11 +2307,11 @@ const PixelChatPage: React.FC = () => {
                       <div style={{
                         position: "absolute",
                         bottom: "50px",
-                        left: "210px",
+                        left: "242px",
                         backgroundColor: "#000",
-                        border: "2px solid #ff6600",
+                        border: "2px solid #cc4400",
                         zIndex: 100,
-                        width: "230px"
+                        width: "210px"
                       }}>
                         {/* 默认选项 */}
                         <div
@@ -1556,7 +2377,7 @@ const PixelChatPage: React.FC = () => {
                 justifyContent: "space-between"
               }}>
                 <span>
-                  Status: {selectedConversationId ? (isNewConversation ? `Ready (${selectedModel} + ${availableAgents.find(a => a.name === selectedAgent)?.displayName || selectedAgent.toUpperCase()})` : "Connected") : "No chat selected"}
+                  Status: {selectedConversationId ? (isNewConversation ? `Ready (${selectedModel} + ${availableAgents.find(a => a.name === selectedAgent)?.displayName || selectedAgent.toUpperCase()})` : "Connected") : `Ready to chat (${selectedModel} + ${availableAgents.find(a => a.name === selectedAgent)?.displayName || selectedAgent.toUpperCase()})`}
                 </span>
                 <span>Conversations: {conversations.length}</span>
               </div>
@@ -1581,6 +2402,9 @@ const PixelChatPage: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
+
+      {/* 像素风格随机走动机器人 */}
+      <PixelRobot />
 
       <style>{`
         @keyframes pulse {
@@ -1631,7 +2455,12 @@ const PixelChatPage: React.FC = () => {
         
         /* Markdown样式 - 优化代码块显示 */
         .markdown-content {
-          line-height: 1.6;
+          line-height: 1.2;
+        }
+        
+        .markdown-content p {
+          margin: 1px 0;
+          line-height: 1.2;
         }
         
         .markdown-content code {
@@ -1646,9 +2475,9 @@ const PixelChatPage: React.FC = () => {
           background-color: #222;
           border: 1px solid #444;
           border-radius: 4px;
-          padding: 12px;
+          padding: 6px;
           overflow-x: auto;
-          margin: 8px 0;
+          margin: 2px 0;
           max-width: 100%;
         }
         
@@ -1660,19 +2489,37 @@ const PixelChatPage: React.FC = () => {
         }
         
         .markdown-content ul, .markdown-content ol {
-          margin: 8px 0;
-          padding-left: 20px;
+          margin: 2px 0;
+          padding-left: 16px;
+        }
+        
+        .markdown-content li {
+          margin: 0;
+          line-height: 1.2;
         }
         
         .markdown-content h1, .markdown-content h2, .markdown-content h3 {
-          margin: 12px 0 6px 0;
+          margin: 3px 0 1px 0;
           font-weight: bold;
+          line-height: 1.1;
+        }
+        
+        .markdown-content h1 {
+          font-size: 1.2em;
+        }
+        
+        .markdown-content h2 {
+          font-size: 1.1em;
+        }
+        
+        .markdown-content h3 {
+          font-size: 1.05em;
         }
         
         .markdown-content blockquote {
           border-left: 4px solid #00ff00;
-          margin: 8px 0;
-          padding-left: 12px;
+          margin: 2px 0;
+          padding-left: 6px;
           font-style: italic;
         }
         
@@ -1685,6 +2532,20 @@ const PixelChatPage: React.FC = () => {
         /* 确保页面不会有意外的滚动 */
         html, body {
           overflow: hidden;
+        }
+        
+        /* 图片预览悬浮效果 */
+        .uploaded-file:hover .image-preview-tooltip {
+          opacity: 1 !important;
+        }
+        
+        /* 对话记录悬浮效果 */
+        .conversation-item:hover {
+          border-color: rgba(0, 255, 0, 0.5) !important;
+        }
+        
+        .conversation-item:hover:not(.selected) {
+          background-color: rgba(0, 255, 0, 0.05) !important;
         }
       `}</style>
     </>
