@@ -6,7 +6,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan(basePackages = {"org.xue.app", "org.xue.agent", "org.xue.core"})
+@ComponentScan(basePackages = {"org.xue.app", "org.xue.agent"})
 @EnableDiscoveryClient(autoRegister = false)  // 禁止自动注册到服务发现
 public class AppApplication {
 

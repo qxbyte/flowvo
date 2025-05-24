@@ -149,12 +149,13 @@ public class ConnectionManager {
             if (retry.isEnabled()) {
                 try {
                     boolean success = server.sendHeartbeat();
-                    logger.debug("❤️ MCP服务 [{}] 心跳成功 🟢 | 时间戳: {} | 时间: {}",
-                        name,
-                        System.currentTimeMillis(),
-                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
-                    );
-                    if (success && !server.isConnected()) {
+                    if(success && server.isConnected()){
+                        logger.debug("❤️ MCP服务 [{}] 心跳成功 🟢 | 时间戳: {} | 时间: {}",
+                            name,
+                            System.currentTimeMillis(),
+                            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
+                        );
+                    }else if (success && !server.isConnected()) {
                         logger.info("✅ MCP服务 {} 已恢复连接", name);
                     } else if (!success && server.isConnected()) {
                         logger.warn("🚫 MCP服务 {} 连接已断开", name);

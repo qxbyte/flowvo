@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Flex, Box, Text, useToast } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { pixelChatApi, type Conversation, type ConversationCreatePayload, type Message, type ChatMessageSendPayload, type AgentResponse } from '../../utils/api';
+import { pixelChatApi, type Conversation, type ConversationCreatePayload, type Message, type ChatMessageSendPayload, type Agent } from '../../utils/api';
 
 // 模型选项 - 按服务商分组
 const AI_MODELS = {
@@ -23,14 +22,114 @@ const ALL_MODELS = [
   ...AI_MODELS.deepseek
 ];
 
+// 复制代码块组件
+interface CodeBlockProps {
+  children: string;
+  className?: string;
+}
+
+const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(children);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy code:', err);
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative', margin: '8px 0' }}>
+      <pre style={{
+        backgroundColor: '#222',
+        border: '1px solid #444',
+        borderRadius: '4px',
+        padding: '12px',
+        overflow: 'auto',
+        maxWidth: '100%',
+        fontFamily: 'Courier New, monospace'
+      }}>
+        <code className={className} style={{
+          background: 'none',
+          padding: 0,
+          wordBreak: 'normal',
+          whiteSpace: 'pre'
+        }}>
+          {children}
+        </code>
+      </pre>
+      <button
+        onClick={copyToClipboard}
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          width: '24px',
+          height: '24px',
+          backgroundColor: copied ? '#00aa00' : '#333',
+          border: '1px solid ' + (copied ? '#00ff00' : '#555'),
+          color: copied ? '#fff' : '#ccc',
+          borderRadius: '3px',
+          cursor: 'pointer',
+          fontFamily: 'monospace',
+          fontSize: '10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s ease',
+          zIndex: 1
+        }}
+        onMouseEnter={(e) => {
+          if (!copied) {
+            e.currentTarget.style.backgroundColor = '#444';
+            e.currentTarget.style.borderColor = '#777';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!copied) {
+            e.currentTarget.style.backgroundColor = '#333';
+            e.currentTarget.style.borderColor = '#555';
+          }
+        }}
+        title={copied ? '已复制!' : '复制代码'}
+      >
+        {copied ? '✓' : '📋'}
+      </button>
+    </div>
+  );
+};
+
+// 内联代码组件
+interface InlineCodeProps {
+  children: string;
+}
+
+const InlineCode: React.FC<InlineCodeProps> = ({ children }) => {
+  return (
+    <code style={{
+      backgroundColor: '#333',
+      padding: '2px 4px',
+      borderRadius: '3px',
+      fontFamily: 'Courier New, monospace',
+      wordBreak: 'break-all'
+    }}>
+      {children}
+    </code>
+  );
+};
+
 // 打字机效果组件
 interface TypewriterTextProps {
   text: string;
   speed?: number;
   onComplete?: () => void;
+  onUpdate?: () => void;
 }
 
-const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 50, onComplete }) => {
+const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 50, onComplete, onUpdate }) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -39,16 +138,41 @@ const TypewriterText: React.FC<TypewriterTextProps> = ({ text, speed = 50, onCom
       const timeout = setTimeout(() => {
         setDisplayText(prev => prev + text[currentIndex]);
         setCurrentIndex(prev => prev + 1);
+        if (onUpdate) {
+          onUpdate();
+        }
       }, speed);
       return () => clearTimeout(timeout);
     } else if (onComplete) {
       onComplete();
     }
-  }, [currentIndex, text, speed, onComplete]);
+  }, [currentIndex, text, speed, onComplete, onUpdate]);
 
   return (
     <div className="markdown-content">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      <ReactMarkdown 
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code: (props: any) => {
+            const { inline, className, children } = props;
+            const match = /language-(\w+)/.exec(className || '');
+            const codeContent = String(children).replace(/\n$/, '');
+            
+            return !inline && match ? (
+              <CodeBlock className={className}>
+                {codeContent}
+              </CodeBlock>
+            ) : (
+              <InlineCode>
+                {codeContent}
+              </InlineCode>
+            );
+          },
+          pre: (props: any) => {
+            return <>{props.children}</>;
+          }
+        }}
+      >
         {displayText}
       </ReactMarkdown>
     </div>
@@ -262,6 +386,15 @@ const PixelChatPage: React.FC = () => {
   const [isUpdatingModel, setIsUpdatingModel] = useState(false);
   const [typingMessageId, setTypingMessageId] = useState<string | null>(null);
   
+  // Agent选择相关状态
+  const [selectedAgent, setSelectedAgent] = useState<string>('default');
+  const [showAgentSelector, setShowAgentSelector] = useState(false);
+  const [availableAgents, setAvailableAgents] = useState<Agent[]>([]);
+  const [isLoadingAgents, setIsLoadingAgents] = useState(false);
+  
+  // 新增：侧边栏收起状态
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
   // 像素风格提示框状态
   const [pixelToast, setPixelToast] = useState<{
     message: string;
@@ -273,8 +406,8 @@ const PixelChatPage: React.FC = () => {
     isVisible: false
   });
   
-  const toast = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // 显示像素风格提示
   const showPixelToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
@@ -286,13 +419,40 @@ const PixelChatPage: React.FC = () => {
     setPixelToast(prev => ({ ...prev, isVisible: false }));
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  // 改进的滚动函数
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  // 实时滚动跟随函数（用于打字机效果）
+  const scrollFollow = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "auto" });
+    }
+  }, []);
 
   useEffect(() => {
+    // 简化滚动逻辑：大多数情况下都滚动到底部
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role === 'assistant' && typingMessageId === lastMessage.id) {
+        // 打字机效果中，不在这里滚动，由onUpdate处理
+        return;
+      } else {
+        // 所有其他情况都滚动到底部，增加延迟确保DOM渲染完成
+        setTimeout(() => {
     scrollToBottom();
-  }, [messages]);
+        }, 300);
+      }
+    }
+  }, [messages, scrollToBottom, typingMessageId]);
+
+  // 新增：切换侧边栏状态
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
+  };
 
   const fetchConversations = useCallback(async () => {
     setIsLoadingConversations(true);
@@ -309,9 +469,23 @@ const PixelChatPage: React.FC = () => {
     }
   }, []);
 
+  const fetchAvailableAgents = useCallback(async () => {
+    setIsLoadingAgents(true);
+    try {
+      const response = await pixelChatApi.getAvailableAgents();
+      setAvailableAgents(response.data || []);
+    } catch (err) {
+      console.error("Error fetching available agents:", err);
+      showPixelToast("Could not fetch available agents.", "error");
+    } finally {
+      setIsLoadingAgents(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchConversations();
-  }, [fetchConversations]);
+    fetchAvailableAgents();
+  }, [fetchConversations, fetchAvailableAgents]);
 
   const handleSelectConversation = useCallback(async (id: string) => {
     if (editingConversationId) return;
@@ -330,6 +504,14 @@ const PixelChatPage: React.FC = () => {
       if (conversation && conversation.model) {
         setSelectedModel(conversation.model);
       }
+      if (conversation && conversation.service) {
+        setSelectedAgent(conversation.service);
+      }
+      
+      // 消息加载完成后滚动到底部
+      setTimeout(() => {
+        scrollToBottom();
+      }, 300);
     } catch (err) {
       console.error(`Error fetching messages for conversation ${id}:`, err);
       setError(`Failed to load messages for conversation ${id}.`);
@@ -337,7 +519,7 @@ const PixelChatPage: React.FC = () => {
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [editingConversationId, conversations]);
+  }, [editingConversationId, conversations, scrollToBottom]);
 
   const handleCreateConversation = async () => {
     // 创建临时对话，不保存到数据库
@@ -346,7 +528,8 @@ const PixelChatPage: React.FC = () => {
     setMessages([]);
     setIsNewConversation(true);
     setSelectedModel('deepseek-chat'); // 重置为默认模型
-    showPixelToast("New chat ready! Select a model and send your first message.", "success");
+    setSelectedAgent('default'); // 重置为默认Agent
+    showPixelToast("New chat ready! Select a model and agent, then send your first message.", "success");
   };
 
   // 更新对话模型
@@ -377,6 +560,35 @@ const PixelChatPage: React.FC = () => {
       showPixelToast("Could not update model.", "error");
     } finally {
       setIsUpdatingModel(false);
+    }
+  };
+
+  // 更新对话Agent
+  const handleUpdateAgent = async (newAgent: string) => {
+    setSelectedAgent(newAgent);
+    setShowAgentSelector(false);
+    
+    // 如果是新对话，只更新本地状态
+    if (!selectedConversationId || isNewConversation) {
+      return;
+    }
+
+    try {
+      // 调用API更新对话服务
+      await pixelChatApi.updatePixelConversationTitle(selectedConversationId, { 
+        service: newAgent
+      });
+      
+      // 更新本地状态
+      setConversations(prev => prev.map(c => 
+        c.id === selectedConversationId ? { ...c, service: newAgent } : c
+      ));
+      
+      const agentDisplayName = availableAgents.find(a => a.name === newAgent)?.displayName || newAgent;
+      showPixelToast(`Agent updated to ${agentDisplayName}`, "success");
+    } catch (err) {
+      console.error("Error updating agent:", err);
+      showPixelToast("Could not update agent.", "error");
     }
   };
 
@@ -474,6 +686,11 @@ const PixelChatPage: React.FC = () => {
     };
     setMessages(prev => [...prev, userMessage]);
 
+    // 发送用户消息后，滚动到最新对话组
+    setTimeout(() => {
+      scrollToBottom();
+    }, 200);
+
     try {
       let actualConversationId = selectedConversationId;
 
@@ -481,7 +698,7 @@ const PixelChatPage: React.FC = () => {
       if (isNewConversation) {
         const createPayload: ConversationCreatePayload = {
           title: `New Chat ${new Date().toLocaleTimeString()}`,
-          service: 'default',
+          service: selectedAgent, // 使用选择的Agent
           model: selectedModel, // 使用选择的模型
           source: 'chat',
         };
@@ -497,10 +714,10 @@ const PixelChatPage: React.FC = () => {
         userMessage.conversationId = actualConversationId;
       }
 
-      const payload: ChatMessageSendPayload = {
+    const payload: ChatMessageSendPayload = {
         conversationId: actualConversationId,
-        message: messageText,
-      };
+      message: messageText,
+    };
 
       const response = await pixelChatApi.sendPixelMessage(payload);
       const assistantReply = response.data.assistantReply;
@@ -517,6 +734,11 @@ const PixelChatPage: React.FC = () => {
         setMessages(prev => prev.map(m => m.id === tempMessageId ? userMessage : m));
         setMessages(prev => [...prev, assistantMessage]);
         setTypingMessageId(assistantMessageId); // 启动打字机效果
+        
+        // AI回复开始后，再次滚动到最新对话组
+        setTimeout(() => {
+          scrollToBottom();
+        }, 300);
       } else {
         console.warn("No assistant reply received.");
       }
@@ -581,15 +803,58 @@ const PixelChatPage: React.FC = () => {
       }}>
         {/* 侧边栏 */}
         <div style={{
-          width: "300px",
+          width: isSidebarCollapsed ? "60px" : "300px",
           height: "100%",
           backgroundColor: "#000",
           border: "4px solid #00ff00",
           borderRight: "2px solid #00ff00",
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden"
+          overflow: "hidden",
+          transition: "width 0.3s ease-in-out",
+          position: "relative"
         }}>
+          {/* 收起/展开按钮 */}
+          <button
+            onClick={toggleSidebar}
+            style={{
+              position: "absolute",
+              top: "50%",
+              right: "-15px",
+              transform: "translateY(-50%)",
+              width: "30px",
+              height: "60px",
+              backgroundColor: "#87CEEB",
+              border: "2px solid #4682B4",
+              borderRadius: "0 8px 8px 0",
+              cursor: "pointer",
+              zIndex: 1001,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "16px",
+              color: "#000",
+              fontWeight: "bold",
+              transition: "all 0.3s ease-in-out",
+              boxShadow: "2px 0 8px rgba(135, 206, 235, 0.3)"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#B0E0E6";
+              e.currentTarget.style.transform = "translateY(-50%) scale(1.1)";
+              e.currentTarget.style.boxShadow = "2px 0 12px rgba(135, 206, 235, 0.5)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#87CEEB";
+              e.currentTarget.style.transform = "translateY(-50%) scale(1)";
+              e.currentTarget.style.boxShadow = "2px 0 8px rgba(135, 206, 235, 0.3)";
+            }}
+            title={isSidebarCollapsed ? "展开侧边栏" : "收起侧边栏"}
+          >
+            {isSidebarCollapsed ? "▶" : "◀"}
+          </button>
+
+          {!isSidebarCollapsed && (
+            <>
           {/* 侧边栏标题 */}
           <div style={{
             backgroundColor: "#00ff00",
@@ -597,14 +862,14 @@ const PixelChatPage: React.FC = () => {
             padding: "12px",
             fontWeight: "bold",
             fontSize: "14px",
-            borderBottom: "2px solid #00ff00",
-            flexShrink: 0
+                borderBottom: "2px solid #00ff00",
+                flexShrink: 0
           }}>
             PIXEL CHATS
           </div>
 
           {/* 新建对话按钮 */}
-          <div style={{ padding: "12px", flexShrink: 0 }}>
+              <div style={{ padding: "12px", flexShrink: 0 }}>
             <button
               onClick={handleCreateConversation}
               disabled={isCreatingConversation}
@@ -625,13 +890,13 @@ const PixelChatPage: React.FC = () => {
             </button>
           </div>
 
-          {/* 对话列表 - 可滚动区域 */}
-          <div style={{ 
-            flex: 1, 
-            overflowY: "auto", 
-            padding: "0 12px",
-            minHeight: 0
-          }}>
+              {/* 对话列表 - 可滚动区域 */}
+              <div style={{ 
+                flex: 1, 
+                overflowY: "auto", 
+                padding: "0 12px",
+                minHeight: 0
+              }}>
             {isLoadingConversations ? (
               <div style={{ color: "#00ff00", textAlign: "center", padding: "20px" }}>
                 LOADING CHATS...
@@ -651,117 +916,180 @@ const PixelChatPage: React.FC = () => {
                     border: selectedConversationId === conv.id ? "2px solid #9933ff" : "2px solid transparent",
                     color: selectedConversationId === conv.id ? "#cc99ff" : "#00ff00",
                     fontSize: "12px",
-                    borderRadius: "0",
-                    outline: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px"
-                  }}
-                >
-                  {editingConversationId === conv.id ? (
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      onChange={(e) => setEditingTitle(e.target.value)}
-                      onKeyPress={handleRenameKeyPress}
-                      onBlur={handleSaveRename}
-                      autoFocus
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#000",
-                        border: "1px solid #00ff00",
-                        color: "#00ff00",
-                        fontFamily: "monospace",
-                        fontSize: "12px",
-                        padding: "4px",
                         borderRadius: "0",
-                        outline: "none"
-                      }}
-                    />
-                  ) : (
-                    <div
-                      onClick={() => handleSelectConversation(conv.id)}
-                      style={{
-                        flex: 1,
-                        cursor: "pointer",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
+                        outline: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px"
                       }}
                     >
-                      {conv.title}
-                    </div>
-                  )}
-                  
-                  {editingConversationId !== conv.id && (
-                    <div style={{ display: "flex", gap: "4px" }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartRename(conv.id, conv.title);
-                        }}
-                        style={{
-                          padding: "2px 6px",
-                          backgroundColor: "#ffcc00",
-                          color: "#000",
-                          border: "1px solid #ffcc00",
-                          fontFamily: "monospace",
-                          fontSize: "10px",
-                          cursor: "pointer",
-                          borderRadius: "0",
-                          outline: "none"
-                        }}
-                        title="重命名"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStartDelete(conv.id, conv.title);
-                        }}
-                        style={{
-                          padding: "2px 6px",
-                          backgroundColor: "#ff3333",
-                          color: "#fff",
-                          border: "1px solid #ff3333",
-                          fontFamily: "monospace",
-                          fontSize: "10px",
-                          cursor: "pointer",
-                          borderRadius: "0",
-                          outline: "none"
-                        }}
-                        title="删除"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
+                      {editingConversationId === conv.id ? (
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyPress={handleRenameKeyPress}
+                          onBlur={handleSaveRename}
+                          autoFocus
+                          style={{
+                            flex: 1,
+                            backgroundColor: "#000",
+                            border: "1px solid #00ff00",
+                            color: "#00ff00",
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                            padding: "4px",
+                            borderRadius: "0",
+                            outline: "none"
+                          }}
+                        />
+                      ) : (
+                        <div
+                          onClick={() => handleSelectConversation(conv.id)}
+                          style={{
+                            flex: 1,
+                            cursor: "pointer",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                          }}
+                        >
+                          {conv.title}
+                        </div>
+                      )}
+                      
+                      {editingConversationId !== conv.id && (
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartRename(conv.id, conv.title);
+                            }}
+                            style={{
+                              padding: "2px 6px",
+                              backgroundColor: "#ffcc00",
+                              color: "#000",
+                              border: "1px solid #ffcc00",
+                              fontFamily: "monospace",
+                              fontSize: "10px",
+                              cursor: "pointer",
+                    borderRadius: "0",
+                    outline: "none"
+                  }}
+                            title="重命名"
+                          >
+                            ED
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartDelete(conv.id, conv.title);
+                            }}
+                            style={{
+                              padding: "2px 6px",
+                              backgroundColor: "#ff3333",
+                              color: "#fff",
+                              border: "1px solid #ff3333",
+                              fontFamily: "monospace",
+                              fontSize: "10px",
+                              cursor: "pointer",
+                              borderRadius: "0",
+                              outline: "none"
+                            }}
+                            title="删除"
+                          >
+                            DEL
+                          </button>
+                        </div>
+                      )}
                 </div>
               ))
             )}
           </div>
 
-          {/* 返回主页按钮 */}
-          <div style={{ padding: "12px", borderTop: "2px solid #333", flexShrink: 0 }}>
-            <button
-              onClick={handleGoHome}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                backgroundColor: "#0066ff",
-                color: "#fff",
-                border: "2px solid #0099ff",
-                fontFamily: "monospace",
-                fontWeight: "bold",
-                cursor: "pointer",
-                borderRadius: "0",
-                outline: "none"
-              }}
-            >
-              ← BACK TO HOME
-            </button>
-          </div>
+              {/* 返回主页按钮 */}
+              <div style={{ padding: "12px", borderTop: "2px solid #333", flexShrink: 0 }}>
+                <button
+                  onClick={handleGoHome}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    backgroundColor: "#0066ff",
+                    color: "#fff",
+                    border: "2px solid #0099ff",
+                    fontFamily: "monospace",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    borderRadius: "0",
+                    outline: "none"
+                  }}
+                >
+                  ← BACK TO HOME
+                </button>
+              </div>
+            </>
+          )}
+
+          {isSidebarCollapsed && (
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "12px 8px",
+              gap: "16px",
+              height: "100%"
+            }}>
+              {/* 收起状态下的图标按钮 */}
+              <button
+                onClick={handleCreateConversation}
+                disabled={isCreatingConversation}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  backgroundColor: isCreatingConversation ? "#666" : "#ff6600",
+                  color: "#000",
+                  border: "2px solid " + (isCreatingConversation ? "#666" : "#ff6600"),
+                  fontFamily: "monospace",
+                  fontWeight: "bold",
+                  cursor: isCreatingConversation ? "not-allowed" : "pointer",
+                  borderRadius: "0",
+                  outline: "none",
+                  fontSize: "20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+                title="新建对话"
+              >
+                +
+              </button>
+              
+              <button
+                onClick={handleGoHome}
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  backgroundColor: "#0066ff",
+                  color: "#fff",
+                  border: "2px solid #0099ff",
+                  fontFamily: "monospace",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  borderRadius: "0",
+                  outline: "none",
+                  fontSize: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "absolute",
+                  bottom: "12px"
+                }}
+                title="返回主页"
+              >
+                ←
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 主聊天区域 */}
@@ -815,7 +1143,7 @@ const PixelChatPage: React.FC = () => {
               flex: 1,
               overflowY: "auto",
               overflowX: "hidden",
-              padding: "16px 80px",
+              padding: "16px 450px",
               backgroundColor: "#000",
               color: "#00ff00",
               fontSize: "14px",
@@ -834,7 +1162,10 @@ const PixelChatPage: React.FC = () => {
                   {isNewConversation ? "Select a model and start the conversation!" : "No messages yet. Start the conversation!"}
                 </div>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                <div 
+                  ref={messagesContainerRef}
+                  style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+                >
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -856,7 +1187,7 @@ const PixelChatPage: React.FC = () => {
                         }}
                       >
                         <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
-                          [{message.role.toUpperCase()}] {formatTime(message.createdAt)}
+                          {formatTime(message.createdAt)}
                         </div>
                         <div style={{ 
                           wordBreak: "break-word",
@@ -867,13 +1198,42 @@ const PixelChatPage: React.FC = () => {
                             <TypewriterText 
                               text={message.content} 
                               speed={30}
-                              onComplete={() => setTypingMessageId(null)}
+                              onComplete={() => {
+                                setTypingMessageId(null);
+                                // 打字机效果完成后，滚动到底部
+                                setTimeout(() => {
+                                  scrollToBottom();
+                                }, 100);
+                              }}
+                              onUpdate={scrollFollow}
                             />
                           ) : (
                             message.role === 'assistant' ? (
                               <div className="markdown-content">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                  {message.content}
+                                <ReactMarkdown 
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    code: (props: any) => {
+                                      const { inline, className, children } = props;
+                                      const match = /language-(\w+)/.exec(className || '');
+                                      const codeContent = String(children).replace(/\n$/, '');
+                                      
+                                      return !inline && match ? (
+                                        <CodeBlock className={className}>
+                                          {codeContent}
+                                        </CodeBlock>
+                                      ) : (
+                                        <InlineCode>
+                                          {codeContent}
+                                        </InlineCode>
+                                      );
+                                    },
+                                    pre: (props: any) => {
+                                      return <>{props.children}</>;
+                                    }
+                                  }}
+                                >
+                          {message.content}
                                 </ReactMarkdown>
                               </div>
                             ) : (
@@ -896,7 +1256,7 @@ const PixelChatPage: React.FC = () => {
                         minWidth: "200px"
                       }}>
                         <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
-                          [ASSISTANT] Thinking...
+                          Thinking...
                         </div>
                         <div style={{ display: "flex", gap: "4px" }}>
                           <div style={{
@@ -921,14 +1281,14 @@ const PixelChatPage: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  <div ref={messagesEndRef} />
+                  <div ref={messagesEndRef} style={{ height: "1px" }} />
                 </div>
               )}
             </div>
 
             {/* 输入区域 */}
             <div style={{
-              borderTop: "2px solid #00ff00",
+              borderTop: "2px solid #0099ff",
               padding: "16px",
               backgroundColor: "#000",
               flexShrink: 0
@@ -999,9 +1359,12 @@ const PixelChatPage: React.FC = () => {
                 marginBottom: "8px"
               }}>
                 <div style={{ maxWidth: "800px", width: "100%", position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
                     <button
-                      onClick={() => setShowModelSelector(!showModelSelector)}
+                      onClick={() => {
+                        setShowModelSelector(!showModelSelector);
+                        setShowAgentSelector(false); // 关闭Agent选择器
+                      }}
                       disabled={isUpdatingModel}
                       style={{
                         padding: "6px 12px",
@@ -1013,10 +1376,36 @@ const PixelChatPage: React.FC = () => {
                         fontWeight: "bold",
                         cursor: isUpdatingModel ? "not-allowed" : "pointer",
                         borderRadius: "0",
-                        outline: "none"
+                        outline: "none",
+                        minWidth: "160px",
+                        maxWidth: "180px"
                       }}
                     >
                       {isUpdatingModel ? "Updating..." : `Model: ${ALL_MODELS.find(m => m.id === selectedModel)?.name || selectedModel}`}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowAgentSelector(!showAgentSelector);
+                        setShowModelSelector(false); // 关闭模型选择器
+                      }}
+                      disabled={isLoadingAgents}
+                      style={{
+                        padding: "6px 12px",
+                        backgroundColor: isLoadingAgents ? "#333" : "#ff6600",
+                        color: isLoadingAgents ? "#666" : "#fff",
+                        border: "2px solid " + (isLoadingAgents ? "#555" : "#ff6600"),
+                        fontFamily: "monospace",
+                        fontSize: "12px",
+                        fontWeight: "bold",
+                        cursor: isLoadingAgents ? "not-allowed" : "pointer",
+                        borderRadius: "0",
+                        outline: "none",
+                        minWidth: "120px",
+                        maxWidth: "140px"
+                      }}
+                    >
+                      {isLoadingAgents ? "Loading..." : `Agent: ${availableAgents.find(a => a.name === selectedAgent)?.displayName || selectedAgent.toUpperCase()}`}
                     </button>
                     
                     {/* 模型选择下拉菜单 */}
@@ -1028,7 +1417,7 @@ const PixelChatPage: React.FC = () => {
                         backgroundColor: "#000",
                         border: "2px solid #00ff00",
                         zIndex: 100,
-                        minWidth: "300px"
+                        width: "260px"
                       }}>
                         {/* OpenAI模型 */}
                         <div style={{
@@ -1091,6 +1480,70 @@ const PixelChatPage: React.FC = () => {
                         ))}
                       </div>
                     )}
+
+                    {/* Agent选择下拉菜单 */}
+                    {showAgentSelector && (
+                      <div style={{
+                        position: "absolute",
+                        bottom: "50px",
+                        left: "210px",
+                        backgroundColor: "#000",
+                        border: "2px solid #ff6600",
+                        zIndex: 100,
+                        width: "230px"
+                      }}>
+                        {/* 默认选项 */}
+                        <div
+                          onClick={() => handleUpdateAgent('default')}
+                          style={{
+                            padding: "8px 16px",
+                            backgroundColor: selectedAgent === 'default' ? "#cc6600" : "transparent",
+                            color: selectedAgent === 'default' ? "#fff" : "#ff6600",
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #333"
+                          }}
+                        >
+                          <div style={{ fontWeight: "bold" }}>DEFAULT</div>
+                          <div style={{ fontSize: "10px", opacity: 0.8 }}>Standard AI Assistant</div>
+                        </div>
+
+                        {/* MCP服务 */}
+                        {availableAgents.length > 0 && (
+                          <>
+                            <div style={{
+                              backgroundColor: "#666",
+                              color: "#fff",
+                              padding: "8px 16px",
+                              fontFamily: "monospace",
+                              fontSize: "12px",
+                              fontWeight: "bold"
+                            }}>
+                              MCP Agents
+                            </div>
+                            {availableAgents.map((agent) => (
+                              <div
+                                key={agent.name}
+                                onClick={() => handleUpdateAgent(agent.name)}
+                                style={{
+                                  padding: "8px 16px",
+                                  backgroundColor: selectedAgent === agent.name ? "#cc6600" : "transparent",
+                                  color: selectedAgent === agent.name ? "#fff" : "#ff6600",
+                                  fontFamily: "monospace",
+                                  fontSize: "12px",
+                                  cursor: "pointer",
+                                  borderBottom: "1px solid #333"
+                                }}
+                              >
+                                <div style={{ fontWeight: "bold" }}>{agent.displayName}</div>
+                                <div style={{ fontSize: "10px", opacity: 0.8 }}>MCP Service: {agent.name}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1103,7 +1556,7 @@ const PixelChatPage: React.FC = () => {
                 justifyContent: "space-between"
               }}>
                 <span>
-                  Status: {selectedConversationId ? (isNewConversation ? `Ready (${selectedModel})` : "Connected") : "No chat selected"}
+                  Status: {selectedConversationId ? (isNewConversation ? `Ready (${selectedModel} + ${availableAgents.find(a => a.name === selectedAgent)?.displayName || selectedAgent.toUpperCase()})` : "Connected") : "No chat selected"}
                 </span>
                 <span>Conversations: {conversations.length}</span>
               </div>

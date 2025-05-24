@@ -178,6 +178,12 @@ export interface ConversationCreatePayload {
   source?: string;
 }
 
+export interface Agent {
+  name: string;
+  displayName: string;
+  status: string;
+}
+
 export interface AgentResponse {
   assistantReply: string; // Based on backend AgentResponse.getAssistantReply()
   // Optional fields as per original instructions
@@ -205,7 +211,7 @@ export const pixelChatApi = {
     return api.get(`/pixel_chat/conversations/${id}`);
   },
 
-  updatePixelConversationTitle: (id: string, data: { title?: string; model?: string }): Promise<AxiosResponse<Conversation>> => {
+  updatePixelConversationTitle: (id: string, data: { title?: string; model?: string; service?: string }): Promise<AxiosResponse<Conversation>> => {
     return api.put(`/pixel_chat/conversations/${id}/title`, data);
   },
 
@@ -222,6 +228,10 @@ export const pixelChatApi = {
     // The prompt for this function specified `data: { conversationId: string; message: string }`
     // I've created ChatMessageSendPayload to include userId as well, as it's typically needed.
     return api.post('/pixel_chat/send', data);
+  },
+
+  getAvailableAgents: (): Promise<AxiosResponse<Agent[]>> => {
+    return api.get('/pixel_chat/agents');
   },
 };
 

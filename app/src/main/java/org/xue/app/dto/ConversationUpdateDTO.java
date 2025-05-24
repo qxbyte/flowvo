@@ -22,4 +22,9 @@ public class ConversationUpdateDTO {
      * 模型名称
      */
     private String model;
+    
+    /**
+     * 服务名称
+     */
+    private String service;
 } 
