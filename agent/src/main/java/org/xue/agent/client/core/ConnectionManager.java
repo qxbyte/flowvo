@@ -4,8 +4,9 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.env.Environment;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 负责管理所有MCP服务连接，执行心跳检查和重连
  */
 @Component
+@ConditionalOnProperty(prefix = "mcp", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class ConnectionManager {
     private static final Logger logger = LoggerFactory.getLogger(ConnectionManager.class);
 
@@ -75,17 +77,15 @@ public class ConnectionManager {
     }
 
     /**
-     * 配置REST模板
-     */
-    private void configureRestTemplate() {
-        // 可以在这里设置REST模板的超时等配置
-    }
-
-    /**
      * 初始化连接
      */
     @PostConstruct
     public void init() {
+        if (!mcpProperties.isEnabled()) {
+            logger.info("MCP客户端已禁用，跳过初始化");
+            return;
+        }
+        
         logger.info("初始化MCP服务连接...");
         
         // 遍历配置中的所有服务
@@ -133,11 +133,14 @@ public class ConnectionManager {
     }
 
     /**
-     * 定时心跳检查
-     * 默认每10秒检查一次
+     * 心跳检查方法
+     * 由HeartbeatScheduler调用，不再使用@Scheduled注解
      */
-    @Scheduled(fixedDelayString = "${mcp.heartbeat.interval:10000}")
     public void heartbeatCheck() {
+        if (!mcpProperties.isEnabled()) {
+            return;
+        }
+        
         serverMap.forEach((name, server) -> {
             McpProperties.ServerConfig config = server.getConfig();
             McpProperties.RetryConfig retry = config.getRetry();
@@ -146,12 +149,13 @@ public class ConnectionManager {
             if (retry.isEnabled()) {
                 try {
                     boolean success = server.sendHeartbeat();
-                    logger.info("❤️ MCP服务 [{}] 心跳成功 🟢 | 时间戳: {} | 时间: {}",
-                        name,
-                        System.currentTimeMillis(),
-                        LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
-                    );
-                    if (success && !server.isConnected()) {
+                    if(success && server.isConnected()){
+                        logger.debug("❤️ MCP服务 [{}] 心跳成功 🟢 | 时间戳: {} | 时间: {}",
+                            name,
+                            System.currentTimeMillis(),
+                            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"))
+                        );
+                    }else if (success && !server.isConnected()) {
                         logger.info("✅ MCP服务 {} 已恢复连接", name);
                     } else if (!success && server.isConnected()) {
                         logger.warn("🚫 MCP服务 {} 连接已断开", name);

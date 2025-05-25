@@ -39,4 +39,9 @@ public class ConversationCreateDTO {
      * 初始消息
      */
     private String initialMessage;
+    
+    /**
+     * 用户ID
+     */
+    private String userId;
 } 

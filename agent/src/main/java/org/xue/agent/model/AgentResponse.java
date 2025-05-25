@@ -32,6 +32,11 @@ public class AgentResponse {
     private String content;
     
     /**
+     * 助手回复内容
+     */
+    private String assistantReply;
+    
+    /**
      * 交互次数
      */
     private int interactions;
@@ -47,12 +52,22 @@ public class AgentResponse {
     private List<ToolCall> toolCalls;
     
     /**
+     * 获取助手回复内容
+     * 如果assistantReply字段为空，则返回content字段的值
+     */
+    public String getAssistantReply() {
+        return (assistantReply != null && !assistantReply.isEmpty()) ? 
+                assistantReply : content;
+    }
+    
+    /**
      * 创建成功响应
      */
     public static AgentResponse success(String content, int interactions, int totalTokens) {
         return AgentResponse.builder()
                 .status("success")
                 .content(content)
+                .assistantReply(content)
                 .message(content)
                 .interactions(interactions)
                 .totalTokens(totalTokens)
@@ -67,6 +82,7 @@ public class AgentResponse {
                 .status("warning")
                 .message(message)
                 .content(message)
+                .assistantReply(message)
                 .interactions(interactions)
                 .totalTokens(totalTokens)
                 .build();
@@ -80,6 +96,7 @@ public class AgentResponse {
                 .status("error")
                 .message(message)
                 .content(message)
+                .assistantReply(message)
                 .build();
     }
 } 

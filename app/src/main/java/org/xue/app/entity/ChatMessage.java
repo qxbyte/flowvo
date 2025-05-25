@@ -42,6 +42,7 @@ public class ChatMessage {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+
     // 新增字段：用于 assistant 消息保存 tool_calls
     @Column(name = "tool_calls", columnDefinition = "JSON")
     private String tool_calls;
@@ -63,6 +64,12 @@ public class ChatMessage {
      */
     @Column(name = "sequence")
     private Integer sequence;
+    
+    /**
+     * 附件信息（JSON格式存储）
+     */
+    @Column(name = "attachments", columnDefinition = "JSON")
+    private String attachments;
     
     /**
      * 创建时间

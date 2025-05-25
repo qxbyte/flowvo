@@ -88,6 +88,24 @@ _技术特点_
 - **多服务支持**：集成不同的对话服务（RPC、API、搜索等）
 - **长时间处理**：支持大模型长时间思考，超时时间延长至60秒
 
+#### PixelChatPage功能
+专门为PixelChat页面设计的对话功能，具有以下特点：
+
+- **用户认证**：所有操作都需要用户登录，确保数据安全
+- **权限控制**：用户只能访问和操作自己的对话
+- **直接AI调用**：使用OpenAI客户端直接调用大模型，不依赖MCP工具
+- **对话隔离**：PixelChat对话与其他对话分离存储（source="chat"）
+- **完整CRUD**：支持创建、读取、更新、删除对话的完整操作
+
+_API端点_
+- `POST /api/pixel_chat/conversations` - 创建对话
+- `GET /api/pixel_chat/conversations` - 获取用户对话列表
+- `GET /api/pixel_chat/conversations/{id}` - 获取对话详情
+- `PUT /api/pixel_chat/conversations/{id}/title` - 重命名对话
+- `DELETE /api/pixel_chat/conversations/{id}` - 删除对话
+- `GET /api/pixel_chat/conversations/{id}/messages` - 获取对话消息
+- `POST /api/pixel_chat/send` - 发送消息并获取AI回复
+
 _技术特点_
 - 集成Agent服务进行AI交互
 - 实现实时消息发送和接收
@@ -176,6 +194,73 @@ npm config set registry https://registry.npmmirror.com
 4. 创建Pull Request
 
 ## 更新日志
+
+### 2024年12月最新更新
+
+#### 后台文档解析功能 【新增功能】
+- **文档解析器架构**：
+  - 创建了可扩展的文档解析器接口`DocumentParser`
+  - 实现了多种文档解析器：PDF、Word、Excel、PowerPoint、文本文档
+  - 通过`DocumentParserService`统一管理所有解析器
+
+- **支持的文档格式**：
+  - **PDF文档**：使用Apache PDFBox解析，提取文本内容
+  - **Word文档**：支持.doc和.docx格式，使用Apache POI解析
+  - **Excel表格**：支持.xls和.xlsx格式，转换为结构化JSON数据
+  - **PowerPoint演示**：支持.ppt和.pptx格式，按幻灯片提取文本
+  - **文本文档**：支持TXT、CSV、JSON、XML、Markdown等格式
+
+- **智能内容处理**：
+  - **Excel特殊处理**：将表格数据转换为JSON格式，便于AI分析数据关系
+  - **大文档优化**：限制解析内容长度，避免内存溢出
+  - **多工作表支持**：Excel文档支持多个工作表解析
+  - **幻灯片分组**：PowerPoint文档按幻灯片组织内容结构
+
+- **技术架构**：
+  - 添加Apache POI依赖处理Office文档
+  - 添加PDFBox依赖处理PDF文件
+  - 实现base64内容解析，支持前端上传的文件
+  - 集成到PixelChat服务，文档内容直接传递给AI模型
+
+- **前后端协作**：
+  - 前端上传Office文档时同时发送base64内容
+  - 后端智能识别文档类型并选择合适的解析器
+  - UI中不显示解析后的文档内容，保持界面简洁
+  - 解析后的内容完整传递给AI进行分析
+
+#### 文件处理和UI优化
+- **简化文档附件显示**：
+  - 移除消息气泡中的文档内容预览，只显示文件名和大小
+  - 保持图片文件的预览功能
+  - 界面更整洁，用户体验更好
+  - **彻底移除用户发送消息中的文档内容显示**
+
+- **解决大文件内存问题**：
+  - 优化文件处理逻辑，对于大文件（>1MB）或Office文件不在前端读取内容
+  - 提高文件大小限制从10MB到50MB
+  - 添加Spring Boot文件上传配置，支持更大文件
+  - 智能处理不同类型文件，避免内存溢出
+
+- **优化Markdown显示样式**：
+  - 调整行间距从1.4到1.2，内容更紧凑
+  - 减少段落、列表、标题的间距
+  - 优化代码块显示，提升阅读体验
+  - **大幅度减少各元素间距**：段落间距1px，列表项间距0px，标题间距3px
+
+- **侧边栏日期分组 【新功能】**：
+  - 对话记录按日期智能分组：今天、昨天、7天内、更早
+  - 分组标题采用像素风格设计，与整体UI保持一致
+  - 提升历史对话的导航和查找体验
+
+- **文件上传全面优化 【新功能】**：
+  - **拖拽交互优化**：拖拽提示只在输入框获得焦点时显示
+  - **扩展文件类型支持**：支持几乎所有常见代码文件（java, vue, py, js, ts, jsx, tsx, cpp, cs, php, rb, go, rs, swift, kt, scala, sh, sql, yml, yaml等）
+  - **智能乱码检测**：自动检测文本乱码，避免无效内容存储
+  - **Office文档优化**：智能识别Office文档，避免发送二进制给AI，提供合理处理建议
+  - **编码优化**：使用UTF-8编码读取文本，减少乱码概率
+
+- **提示词配置化**：
+  - 将所有写死在代码中的AI提示词提取到配置文件中
 
 ### 2023年6月最新更新
 - **UI改进**：

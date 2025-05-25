@@ -1,0 +1,14 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF0080" />
+      <stop offset="50%" stop-color="#7928CA" />
+      <stop offset="100%" stop-color="#4299E1" />
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="80" fill="none" stroke="url(#gradient)" stroke-width="8" />
+  <path d="M60,100 C60,70 140,70 140,100 C140,130 60,130 60,100 Z" fill="none" stroke="url(#gradient)" stroke-width="6" />
+  <circle cx="70" cy="90" r="10" fill="url(#gradient)" />
+  <circle cx="130" cy="90" r="10" fill="url(#gradient)" />
+  <text x="100" y="160" text-anchor="middle" font-family="Arial" font-weight="bold" font-size="24" fill="url(#gradient)">FlowVo</text>
+</svg> 
