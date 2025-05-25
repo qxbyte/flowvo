@@ -7,6 +7,8 @@ import type { AIModel } from '../../utils/api';
 import PixelAnimatedSendButton from '../../components/PixelAnimatedSendButton';
 import PixelAttachButton from '../../components/PixelAttachButton';
 import PixelRobot from '../../components/PixelRobot';
+import PixelDecorationSquares from '../../components/PixelDecorationSquares';
+import PixelRobotToggle from '../../components/PixelRobotToggle';
 
 // 文件附件类型定义
 interface FileAttachment {
@@ -669,6 +671,14 @@ const PixelChatPage: React.FC = () => {
     isVisible: false
   });
   
+  // 马里奥机器人开关状态
+  const [isMarioEnabled, setIsMarioEnabled] = useState(true);
+  
+  // 滚动相关状态
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -813,19 +823,82 @@ const PixelChatPage: React.FC = () => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
-  // 改进的滚动函数
-  const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, []);
-
   // 实时滚动跟随函数（用于打字机效果）
   const scrollFollow = useCallback(() => {
-    if (messagesEndRef.current) {
+    // 只有在用户没有手动滚动且当前在底部附近时才自动滚动
+    if (messagesEndRef.current && !isUserScrolling && isAtBottom) {
       messagesEndRef.current.scrollIntoView({ behavior: "auto" });
     }
-  }, []);
+  }, [isUserScrolling, isAtBottom]);
+
+  // 检查是否在底部
+  const checkIfAtBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const threshold = 50; // 减小阈值，更精确地检测底部
+      const atBottom = scrollHeight - scrollTop - clientHeight < threshold;
+      setIsAtBottom(atBottom);
+      setShowScrollToBottom(!atBottom && messages.length > 0);
+    }
+  }, [messages.length]);
+
+  // 滚动到底部
+  const scrollToBottomSmooth = useCallback(() => {
+    if (messagesEndRef.current) {
+      setIsUserScrolling(false);
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      setTimeout(() => {
+        checkIfAtBottom(); // 滚动完成后重新检查状态
+      }, 600);
+    }
+  }, [checkIfAtBottom]);
+
+  // 将指定消息滚动到页面顶端
+  const scrollMessageToTop = useCallback((messageId: string) => {
+    setTimeout(() => {
+      const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+      if (messageElement && messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        const messageRect = messageElement.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        
+        // 计算需要滚动的距离，使消息出现在容器顶部
+        const scrollOffset = messageRect.top - containerRect.top + container.scrollTop;
+        
+        container.scrollTo({
+          top: scrollOffset,
+          behavior: "smooth"
+        });
+        
+        setIsUserScrolling(false); // 重置用户滚动状态
+        // 延迟检查状态，确保DOM已更新
+        setTimeout(() => {
+          checkIfAtBottom();
+        }, 100);
+      }
+    }, 100);
+  }, [checkIfAtBottom]);
+
+  // 处理滚动事件
+  const handleScroll = useCallback(() => {
+    checkIfAtBottom();
+    
+    // 检测用户是否手动滚动
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isScrolledUp = scrollHeight - scrollTop - clientHeight > 50;
+      
+      // 如果用户向上滚动了，标记为用户滚动
+      if (isScrolledUp && !isUserScrolling) {
+        setIsUserScrolling(true);
+      }
+      
+      // 如果用户滚动到底部附近，重置用户滚动状态
+      if (!isScrolledUp && isUserScrolling) {
+        setIsUserScrolling(false);
+      }
+    }
+  }, [checkIfAtBottom, isUserScrolling]);
 
   useEffect(() => {
     // 简化滚动逻辑：大多数情况下都滚动到底部
@@ -837,11 +910,39 @@ const PixelChatPage: React.FC = () => {
       } else {
         // 所有其他情况都滚动到底部，增加延迟确保DOM渲染完成
         setTimeout(() => {
-    scrollToBottom();
+          if (!isUserScrolling) {
+            scrollToBottomSmooth();
+          }
         }, 300);
       }
     }
-  }, [messages, scrollToBottom, typingMessageId]);
+  }, [messages, scrollToBottomSmooth, typingMessageId, isUserScrolling]);
+
+  // 监听滚动容器变化
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      // 初始检查是否在底部
+      checkIfAtBottom();
+      
+      // 添加滚动监听
+      container.addEventListener('scroll', handleScroll, { passive: true });
+      
+      return () => {
+        container.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [checkIfAtBottom, handleScroll]);
+
+  // 监听消息变化，确保向下箭头按钮状态正确
+  useEffect(() => {
+    // 延迟检查，确保DOM已更新
+    const timer = setTimeout(() => {
+      checkIfAtBottom();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [messages, checkIfAtBottom]);
 
   // 新增：切换侧边栏状态
   const toggleSidebar = () => {
@@ -964,7 +1065,7 @@ const PixelChatPage: React.FC = () => {
       
       // 消息加载完成后滚动到底部
       setTimeout(() => {
-        scrollToBottom();
+        scrollToBottomSmooth();
         focusInput(); // 自动focus输入框
       }, 300);
     } catch (err) {
@@ -974,7 +1075,7 @@ const PixelChatPage: React.FC = () => {
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [editingConversationId, conversations, scrollToBottom, focusInput]);
+  }, [editingConversationId, conversations, scrollToBottomSmooth, focusInput]);
 
   const handleCreateConversation = async () => {
     // 创建临时对话，不保存到数据库
@@ -1211,6 +1312,23 @@ const PixelChatPage: React.FC = () => {
         // 检查是否有图片需要识别
         const imageFiles = uploadedFiles.filter(file => isImageFile(file.type));
         if (imageFiles.length > 0) {
+          // 先创建并显示用户消息
+          const userMessage: Message = {
+            id: tempMessageId,
+            conversationId: actualConversationId,
+            role: 'user',
+            content: messageText, // 只显示用户输入的文本
+            createdAt: new Date().toISOString(),
+            attachments: attachments.length > 0 ? attachments.map(att => ({
+              ...att,
+              fileContent: undefined // 从界面显示的附件中移除文档内容
+            })) : undefined
+          };
+          setMessages(prev => [...prev, userMessage]);
+          
+          // 发送用户消息后，将新消息滚动到页面顶端
+          scrollToNewMessage(tempMessageId);
+          
           // 如果有图片，使用图像识别API
           try {
             // 创建File对象（从base64转换）
@@ -1234,19 +1352,6 @@ const PixelChatPage: React.FC = () => {
               });
 
               if (visionResponse.data.success) {
-                // 创建用户消息（用于界面显示）- 不包含文档内容
-                const userMessage: Message = {
-                  id: tempMessageId,
-                  conversationId: actualConversationId,
-                  role: 'user',
-                  content: messageText, // 只显示用户输入的文本
-                  createdAt: new Date().toISOString(),
-                  attachments: attachments.length > 0 ? attachments.map(att => ({
-                    ...att,
-                    fileContent: undefined // 从界面显示的附件中移除文档内容
-                  })) : undefined
-                };
-                
                 // 直接显示AI的回复，不需要再调用send API
                 const assistantMessageId = `assistant-${Date.now()}`;
                 const assistantMessage: Message = {
@@ -1257,16 +1362,11 @@ const PixelChatPage: React.FC = () => {
                   createdAt: new Date().toISOString(),
                 };
                 
-                setMessages(prev => [...prev, userMessage, assistantMessage]);
+                setMessages(prev => [...prev, assistantMessage]);
                 setTypingMessageId(assistantMessageId); // 启动打字机效果
                 
                 // 发送成功后清空上传的文件
                 setUploadedFiles([]);
-                
-                // AI回复开始后，滚动到最新对话组
-                setTimeout(() => {
-                  scrollToBottom();
-                }, 300);
                 
                 return; // 直接返回，不继续执行普通发送逻辑
               } else {
@@ -1296,10 +1396,8 @@ const PixelChatPage: React.FC = () => {
       };
       setMessages(prev => [...prev, userMessage]);
 
-      // 发送用户消息后，滚动到最新对话组
-      setTimeout(() => {
-        scrollToBottom();
-      }, 200);
+      // 发送消息后滚动一个页面高度显示新消息
+      scrollToNewMessage(tempMessageId);
 
       // 发送消息到AI，只发送用户原始输入和附件信息
       const payload: ChatMessageSendPayload = {
@@ -1330,16 +1428,12 @@ const PixelChatPage: React.FC = () => {
         setMessages(prev => [...prev, assistantMessage]);
         setTypingMessageId(assistantMessageId); // 启动打字机效果
         
-        // AI回复开始后，再次滚动到最新对话组
-        setTimeout(() => {
-          scrollToBottom();
-        }, 300);
+        // 发送成功后清空上传的文件
+        setUploadedFiles([]);
+        
       } else {
         console.warn("No assistant reply received.");
       }
-
-      // 发送成功后清空上传的文件
-      setUploadedFiles([]);
       
     } catch (err) {
       console.error("Error sending message:", err);
@@ -1449,6 +1543,60 @@ const PixelChatPage: React.FC = () => {
 
     return orderedGroups;
   };
+
+  // 发送消息后滚动一个页面高度，将新消息显示在顶部
+  const scrollToNewMessage = useCallback((messageId?: string) => {
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        const container = messagesContainerRef.current;
+        
+        // 如果提供了messageId，使用它；否则查找最后一条消息
+        let targetMessageId = messageId;
+        if (!targetMessageId && messages.length > 0) {
+          const lastMessage = messages[messages.length - 1];
+          targetMessageId = lastMessage.id;
+        }
+        
+        if (targetMessageId) {
+          const messageElement = document.querySelector(`[data-message-id="${targetMessageId}"]`);
+          
+          if (messageElement) {
+            // 将新消息滚动到容器顶部
+            const messageRect = messageElement.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+            
+            // 计算需要滚动的距离，使新消息出现在容器顶部
+            const scrollOffset = messageRect.top - containerRect.top + container.scrollTop;
+            
+            container.scrollTo({
+              top: scrollOffset,
+              behavior: "smooth"
+            });
+            
+            setIsUserScrolling(false); // 重置用户滚动状态
+            // 延迟检查状态，确保DOM已更新
+            setTimeout(() => {
+              checkIfAtBottom();
+            }, 300);
+            return;
+          }
+        }
+        
+        // 如果找不到消息元素，则滚动一个页面高度
+        const containerHeight = container.clientHeight;
+        container.scrollBy({
+          top: containerHeight,
+          behavior: "smooth"
+        });
+        
+        setIsUserScrolling(false); // 重置用户滚动状态
+        // 延迟检查状态，确保DOM已更新
+        setTimeout(() => {
+          checkIfAtBottom();
+        }, 300);
+      }
+    }, 200); // 增加延迟时间确保DOM更新
+  }, [checkIfAtBottom, messages]);
 
   return (
     <>
@@ -1823,156 +1971,220 @@ const PixelChatPage: React.FC = () => {
             </div>
 
             {/* 消息区域 - 可滚动区域 */}
-            <div style={{
-              flex: 1,
-              overflowY: "auto",
-              overflowX: "hidden",
-              padding: "16px 450px",
-              backgroundColor: "#000",
-              color: "#00ff00",
-              fontSize: "14px",
-              minHeight: 0
-            }}>
-              {isLoadingMessages ? (
-                <div style={{ textAlign: "center", padding: "40px" }}>
-                  LOADING MESSAGES...
-                </div>
-              ) : !selectedConversationId ? (
-                <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
-                  Select a chat to start messaging
-                </div>
-              ) : messages.length === 0 ? (
-                <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
-                  {isNewConversation ? "Select a model and start the conversation!" : "No messages yet. Start the conversation!"}
-                </div>
-              ) : (
-                <div 
-                  ref={messagesContainerRef}
-                  style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-                >
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      style={{
-                        display: "flex",
-                        justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
-                      }}
-                    >
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                overflowX: "hidden",
+                padding: "16px 10%",
+                backgroundColor: "#000",
+                color: "#00ff00",
+                fontSize: "14px",
+                minHeight: 0,
+                display: "flex",
+                justifyContent: "center",
+                position: "relative"
+              }}>
+              <div style={{
+                width: "100%",
+                maxWidth: "1000px",
+                minWidth: "300px"
+              }}>
+                {isLoadingMessages ? (
+                  <div style={{ textAlign: "center", padding: "40px" }}>
+                    LOADING MESSAGES...
+                  </div>
+                ) : !selectedConversationId ? (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+                    Select a chat to start messaging
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+                    {isNewConversation ? "Select a model and start the conversation!" : "No messages yet. Start the conversation!"}
+                  </div>
+                ) : (
+                  <div 
+                    style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+                  >
+                    {messages.map((message) => (
                       <div
+                        key={message.id}
+                        data-message-id={message.id}
                         style={{
-                          maxWidth: "80%",
-                          minWidth: "200px",
-                          padding: "12px 16px",
-                          border: "2px solid " + (message.role === 'user' ? '#0066ff' : '#00cc66'),
-                          backgroundColor: message.role === 'user' ? '#001166' : '#003d20',
-                          color: message.role === 'user' ? '#88aaff' : '#66ff99',
-                          wordWrap: "break-word",
-                          overflowWrap: "break-word"
+                          display: "flex",
+                          justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
                         }}
                       >
-                        <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
-                          {formatTime(message.createdAt)}
-                        </div>
-                        <div style={{ 
-                          wordBreak: "break-word",
-                          whiteSpace: "pre-wrap",
-                          lineHeight: "1.4"
-                        }}>
-                          {message.role === 'assistant' && typingMessageId === message.id ? (
-                            <TypewriterText 
-                              text={message.content} 
-                              speed={30}
-                              shouldStop={shouldStopTyping}
-                              onComplete={() => {
-                                setTypingMessageId(null);
-                                setShouldStopTyping(false);
-                                // 打字机效果完成后，滚动到底部并focus输入框
-                                setTimeout(() => {
-                                  scrollToBottom();
-                                  focusInput();
-                                }, 100);
-                              }}
-                              onUpdate={scrollFollow}
-                            />
-                          ) : (
-                            message.role === 'assistant' ? (
-                              <div className="markdown-content">
-                                <ReactMarkdown 
-                                  remarkPlugins={[remarkGfm]}
-                                  components={{
-                                    code: (props: any) => {
-                                      const { inline, className, children } = props;
-                                      const match = /language-(\w+)/.exec(className || '');
-                                      const codeContent = String(children).replace(/\n$/, '');
-                                      
-                                      return !inline && match ? (
-                                        <CodeBlock className={className}>
-                                          {codeContent}
-                                        </CodeBlock>
-                                      ) : (
-                                        <InlineCode>
-                                          {codeContent}
-                                        </InlineCode>
-                                      );
-                                    },
-                                    pre: (props: any) => {
-                                      return <>{props.children}</>;
-                                    }
-                                  }}
-                                >
-                          {message.content}
-                                </ReactMarkdown>
-                              </div>
+                        <div
+                          style={{
+                            maxWidth: "75%",
+                            minWidth: "200px",
+                            padding: "12px 16px",
+                            border: "2px solid " + (message.role === 'user' ? '#0066ff' : '#00cc66'),
+                            backgroundColor: message.role === 'user' ? '#001166' : '#003d20',
+                            color: message.role === 'user' ? '#88aaff' : '#66ff99',
+                            wordWrap: "break-word",
+                            overflowWrap: "break-word"
+                          }}
+                        >
+                          <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
+                            {formatTime(message.createdAt)}
+                          </div>
+                          <div style={{ 
+                            wordBreak: "break-word",
+                            whiteSpace: "pre-wrap",
+                            lineHeight: "1.4"
+                          }}>
+                            {message.role === 'assistant' && typingMessageId === message.id ? (
+                              <TypewriterText 
+                                text={message.content} 
+                                speed={30}
+                                shouldStop={shouldStopTyping}
+                                onComplete={() => {
+                                  setTypingMessageId(null);
+                                  setShouldStopTyping(false);
+                                  setIsUserScrolling(false);
+                                  // 打字机效果完成后，滚动到底部并focus输入框
+                                  setTimeout(() => {
+                                    scrollToBottomSmooth();
+                                    focusInput();
+                                  }, 100);
+                                }}
+                                onUpdate={() => {
+                                  // 在打字机效果期间，只有当用户没有手动滚动且在底部时才自动滚动
+                                  // 这样用户可以自由向上滚动查看历史消息
+                                  scrollFollow();
+                                }}
+                              />
                             ) : (
-                              message.content
-                            )
+                              message.role === 'assistant' ? (
+                                <div className="markdown-content">
+                                  <ReactMarkdown 
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                      code: (props: any) => {
+                                        const { inline, className, children } = props;
+                                        const match = /language-(\w+)/.exec(className || '');
+                                        const codeContent = String(children).replace(/\n$/, '');
+                                        
+                                        return !inline && match ? (
+                                          <CodeBlock className={className}>
+                                            {codeContent}
+                                          </CodeBlock>
+                                        ) : (
+                                          <InlineCode>
+                                            {codeContent}
+                                          </InlineCode>
+                                        );
+                                      },
+                                      pre: (props: any) => {
+                                        return <>{props.children}</>;
+                                      }
+                                    }}
+                                  >
+                          {message.content}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : (
+                                message.content
+                              )
+                            )}
+                          </div>
+                          {/* 显示附件 */}
+                          {message.attachments && message.attachments.length > 0 && (
+                            <MessageAttachments attachments={message.attachments} />
                           )}
                         </div>
-                        {/* 显示附件 */}
-                        {message.attachments && message.attachments.length > 0 && (
-                          <MessageAttachments attachments={message.attachments} />
-                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
-                  {isSendingMessage && (
-                    <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                      <div style={{
-                        backgroundColor: "#003d20",
-                        border: "2px solid #00cc66",
-                        color: "#66ff99",
-                        padding: "12px 16px",
-                        maxWidth: "80%",
-                        minWidth: "200px"
-                      }}>
-                        <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
-                          Thinking...
-                        </div>
-                        <div style={{ display: "flex", gap: "4px" }}>
-                          <div style={{
-                            width: "8px",
-                            height: "8px",
-                            backgroundColor: "#00cc66",
-                            animation: "pulse 1.4s infinite ease-in-out"
-                          }}></div>
-                          <div style={{
-                            width: "8px",
-                            height: "8px",
-                            backgroundColor: "#00cc66",
-                            animation: "pulse 1.4s infinite ease-in-out 0.2s"
-                          }}></div>
-                          <div style={{
-                            width: "8px",
-                            height: "8px",
-                            backgroundColor: "#00cc66",
-                            animation: "pulse 1.4s infinite ease-in-out 0.4s"
-                          }}></div>
+                    {isSendingMessage && (
+                      <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                        <div style={{
+                          backgroundColor: "#003d20",
+                          border: "2px solid #00cc66",
+                          color: "#66ff99",
+                          padding: "12px 16px",
+                          maxWidth: "75%",
+                          minWidth: "200px"
+                        }}>
+                          <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
+                            Thinking...
+                          </div>
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            <div style={{
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: "#00cc66",
+                              animation: "pulse 1.4s infinite ease-in-out"
+                            }}></div>
+                            <div style={{
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: "#00cc66",
+                              animation: "pulse 1.4s infinite ease-in-out 0.2s"
+                            }}></div>
+                            <div style={{
+                              width: "8px",
+                              height: "8px",
+                              backgroundColor: "#00cc66",
+                              animation: "pulse 1.4s infinite ease-in-out 0.4s"
+                            }}></div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
-                  <div ref={messagesEndRef} style={{ height: "1px" }} />
+                    )}
+                    <div ref={messagesEndRef} style={{ height: "1px" }} />
+                  </div>
+                )}
+              </div>
+              
+              {/* 向下滚动按钮 - 移动到输入区域上方 */}
+              {false && showScrollToBottom && (
+                <div style={{
+                  position: "relative",
+                  height: "0",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  paddingRight: "20px",
+                  zIndex: 100
+                }}>
+                  <button
+                    onClick={scrollToBottomSmooth}
+                    style={{
+                      position: "relative",
+                      top: "-50px",
+                      width: "40px",
+                      height: "40px",
+                      backgroundColor: "#0066ff",
+                      border: "2px solid #0099ff",
+                      color: "#fff",
+                      cursor: "pointer",
+                      borderRadius: "0",
+                      outline: "none",
+                      fontFamily: "monospace",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(0, 102, 255, 0.3)",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#0088ff";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#0066ff";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                    title="滚动到底部"
+                  >
+                    ↓
+                  </button>
                 </div>
               )}
             </div>
@@ -1980,11 +2192,54 @@ const PixelChatPage: React.FC = () => {
             {/* 输入区域 */}
             <div style={{
               borderTop: "2px solid #0099ff",
-              padding: "16px",
+              padding: "12px 16px",
               backgroundColor: "#000",
               flexShrink: 0,
               position: "relative"
             }}>
+              {/* 向下滚动按钮 - 放在输入区域内部 */}
+              {/* {showScrollToBottom && (
+                <div style={{
+                  position: "absolute",
+                  top: "-50px",
+                  right: "20px",
+                  zIndex: 100
+                }}>
+                  <button
+                    onClick={scrollToBottomSmooth}
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      backgroundColor: "#0066ff",
+                      border: "2px solid #0099ff",
+                      color: "#fff",
+                      cursor: "pointer",
+                      borderRadius: "0",
+                      outline: "none",
+                      fontFamily: "monospace",
+                      fontSize: "16px",
+                      fontWeight: "bold",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 8px rgba(0, 102, 255, 0.3)",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#0088ff";
+                      e.currentTarget.style.transform = "scale(1.1)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#0066ff";
+                      e.currentTarget.style.transform = "scale(1)";
+                    }}
+                    title="滚动到底部"
+                  >
+                    ↓
+                  </button>
+                </div>
+              )} */}
+
               {/* 拖拽上传提示 */}
               {isDragging && isInputFocused && (
                 <div style={{
@@ -2011,96 +2266,107 @@ const PixelChatPage: React.FC = () => {
               {/* 已上传文件显示 */}
               {uploadedFiles.length > 0 && (
                 <div style={{
-                  marginBottom: "12px",
-                  padding: "8px",
-                  border: "2px solid #9933ff",
-                  backgroundColor: "#1a001a"
+                  display: "flex",
+                  justifyContent: "center",
+                  marginBottom: "4px"
                 }}>
-                  <div style={{
-                    fontSize: "12px",
-                    color: "#9933ff",
-                    marginBottom: "8px",
-                    fontFamily: "monospace",
-                    fontWeight: "bold"
-                  }}>
-                    Uploaded Files ({uploadedFiles.length}):
-                  </div>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                    {uploadedFiles.map((file) => (
-                      <div
-                        key={file.id}
-                        className="uploaded-file"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "6px",
-                          padding: "4px 8px",
-                          backgroundColor: "#2d002d",
-                          border: "1px solid #6600cc",
-                          fontSize: "11px",
-                          fontFamily: "monospace",
-                          color: "#cc99ff",
-                          position: "relative"
-                        }}
-                        title={`${file.name} (${formatFileSize(file.size)})`}
-                      >
-                        <div style={{ flexShrink: 0 }}>
-                          {getFileIcon(file.type)}
-                        </div>
-                        <span style={{ 
-                          maxWidth: "100px", 
-                          overflow: "hidden", 
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap"
+                  <div style={{ display: "flex", gap: "8px", maxWidth: "800px", width: "100%", position: "relative" }}>
+                    <div style={{ flex: 1, position: "relative" }}>
+                      <div style={{
+                        padding: "6px",
+                        border: "2px solid #9933ff",
+                        backgroundColor: "#1a001a",
+                        marginBottom: "4px"
+                      }}>
+                        <div style={{
+                          display: "flex", 
+                          flexWrap: "wrap", 
+                          gap: "6px"
                         }}>
-                          {file.name}
-                        </span>
-                        <span style={{ color: "#999", fontSize: "10px" }}>
-                          ({formatFileSize(file.size)})
-                        </span>
-                        <button
-                          onClick={() => removeFile(file.id)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#ff6666",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            marginLeft: "4px"
-                          }}
-                          title="Remove file"
-                        >
-                          ×
-                        </button>
-                        
-                        {/* 图片预览悬浮框 */}
-                        {isImageFile(file.type) && file.base64 && (
-                          <div style={{
-                            position: "absolute",
-                            bottom: "100%",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            zIndex: 1001,
-                            opacity: 0,
-                            pointerEvents: "none",
-                            transition: "opacity 0.3s ease"
-                          }}
-                          className="image-preview-tooltip"
-                          >
-                            <img
-                              src={file.base64}
-                              alt={file.name}
+                          {uploadedFiles.map((file) => (
+                            <div
+                              key={file.id}
+                              className="uploaded-file"
                               style={{
-                                maxWidth: "200px",
-                                maxHeight: "200px",
-                                border: "2px solid #9933ff",
-                                backgroundColor: "#000"
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "3px 6px",
+                                backgroundColor: "#2d002d",
+                                border: "1px solid #6600cc",
+                                fontSize: "10px",
+                                fontFamily: "monospace",
+                                color: "#cc99ff",
+                                position: "relative",
+                                height: "20px"
                               }}
-                            />
-                          </div>
-                        )}
+                              title={`${file.name} (${formatFileSize(file.size)})`}
+                            >
+                              <div style={{ flexShrink: 0, transform: "scale(0.8)" }}>
+                                {getFileIcon(file.type)}
+                              </div>
+                              <span style={{ 
+                                maxWidth: "80px", 
+                                overflow: "hidden", 
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                fontSize: "10px"
+                              }}>
+                                {file.name}
+                              </span>
+                              <span style={{ color: "#999", fontSize: "10px" }}>
+                                ({formatFileSize(file.size)})
+                              </span>
+                              <button
+                                onClick={() => removeFile(file.id)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  color: "#ff6666",
+                                  cursor: "pointer",
+                                  fontSize: "10px",
+                                  marginLeft: "2px",
+                                  padding: "0",
+                                  lineHeight: "1"
+                                }}
+                                title="Remove file"
+                              >
+                                ×
+                              </button>
+                              
+                              {/* 图片预览悬浮框 */}
+                              {isImageFile(file.type) && file.base64 && (
+                                <div style={{
+                                  position: "absolute",
+                                  bottom: "100%",
+                                  left: "50%",
+                                  transform: "translateX(-50%)",
+                                  zIndex: 1001,
+                                  opacity: 0,
+                                  pointerEvents: "none",
+                                  transition: "opacity 0.3s ease"
+                                }}
+                                className="image-preview-tooltip"
+                                >
+                                  <img
+                                    src={file.base64}
+                                    alt={file.name}
+                                    style={{
+                                      maxWidth: "200px",
+                                      maxHeight: "200px",
+                                      border: "2px solid #9933ff",
+                                      backgroundColor: "#000"
+                                    }}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    </div>
+                    {/* 占位符，保持与发送按钮相同的空间 */}
+                    <div style={{ width: "60px" }}></div>
                   </div>
                 </div>
               )}
@@ -2108,10 +2374,10 @@ const PixelChatPage: React.FC = () => {
               <div style={{
                 display: "flex",
                 justifyContent: "center",
-                marginBottom: "8px"
+                marginBottom: "4px"
               }}>
-                <div style={{ display: "flex", gap: "8px", maxWidth: "800px", width: "100%" }}>
-                  <div style={{ flex: 1, position: "relative" }}>
+                <div style={{ display: "flex", gap: "8px", maxWidth: "800px", width: "100%", position: "relative" }}>
+                  <div style={{ flex: 1, position: "relative", zIndex: 2 }}>
                     <textarea
                       ref={inputRef}
                       value={inputText}
@@ -2146,12 +2412,14 @@ const PixelChatPage: React.FC = () => {
                       {inputText.length}/500
                     </div>
                   </div>
-                  <PixelAnimatedSendButton
-                    isSending={isSendingMessage || !!typingMessageId}
-                    isDisabled={(inputText.trim() === "" && uploadedFiles.length === 0)}
-                    onSend={handleInputSend}
-                    onStop={handleStopSending}
-                  />
+                  <div style={{ position: "relative", zIndex: 2 }}>
+                    <PixelAnimatedSendButton
+                      isSending={isSendingMessage || !!typingMessageId}
+                      isDisabled={(inputText.trim() === "" && uploadedFiles.length === 0)}
+                      onSend={handleInputSend}
+                      onStop={handleStopSending}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -2162,7 +2430,7 @@ const PixelChatPage: React.FC = () => {
                 marginBottom: "8px"
               }}>
                 <div style={{ maxWidth: "800px", width: "100%", position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "flex-start" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "flex-start", position: "relative", zIndex: 2 }}>
                     {/* 上传按钮 */}
                     <PixelAttachButton
                       onFileSelect={handleFileUpload}
@@ -2403,8 +2671,59 @@ const PixelChatPage: React.FC = () => {
         onCancel={handleCancelDelete}
       />
 
-      {/* 像素风格随机走动机器人 */}
-      <PixelRobot />
+      {/* 马里奥机器人开关 */}
+      <PixelRobotToggle
+        isEnabled={isMarioEnabled}
+        onToggle={setIsMarioEnabled}
+      />
+
+      {/* 像素风格随机走动机器人 - 根据开关状态显示 */}
+      {isMarioEnabled && <PixelRobot />}
+
+      {/* 悬浮的向下箭头按钮 */}
+      {showScrollToBottom && (
+        <div style={{
+          position: "fixed",
+          bottom: "120px",
+          right: "30px",
+          zIndex: 1002
+        }}>
+          <button
+            onClick={scrollToBottomSmooth}
+            style={{
+              width: "50px",
+              height: "50px",
+              backgroundColor: "#0066ff",
+              border: "3px solid #0099ff",
+              color: "#fff",
+              cursor: "pointer",
+              borderRadius: "0",
+              outline: "none",
+              fontFamily: "monospace",
+              fontSize: "20px",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(0, 102, 255, 0.4)",
+              transition: "all 0.3s ease"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#0088ff";
+              e.currentTarget.style.transform = "scale(1.1)";
+              e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 102, 255, 0.6)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#0066ff";
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 102, 255, 0.4)";
+            }}
+            title="滚动到底部"
+          >
+            ↓
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes pulse {
