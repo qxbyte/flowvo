@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.xue.agent.model.AgentResponse;
+import org.xue.app.agents.model.AgentResponse;
 import org.xue.app.dto.*;
 import org.xue.app.service.ChatService;
 
