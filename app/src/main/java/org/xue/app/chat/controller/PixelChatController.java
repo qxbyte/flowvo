@@ -14,8 +14,8 @@ import org.xue.app.chat.service.VisionService;
 import org.xue.app.chat.service.ModelConfigService;
 import org.xue.app.chat.dto.VisionRequestDTO;
 import org.xue.app.chat.dto.VisionResponseDTO;
-import org.xue.app.agents.model.AgentResponse;
-import org.xue.app.agents.client.core.McpClientTemplate;
+import org.xue.app.agent.model.AgentResponse;
+import org.xue.app.agent.client.core.McpClientTemplate;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
