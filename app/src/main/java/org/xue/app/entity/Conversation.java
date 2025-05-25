@@ -50,6 +50,12 @@ public class Conversation {
     private String source;
     
     /**
+     * 用户ID
+     */
+    @Column(name = "user_id")
+    private String userId;
+    
+    /**
      * 创建时间
      */
     @Column(name = "created_at", nullable = false)

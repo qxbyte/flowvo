@@ -17,14 +17,15 @@ import org.xue.core.chat.service.ChatService;
 import org.xue.core.service.UserService;
 import org.xue.core.milvus.service.ChunkMilvusService;
 import reactor.core.publisher.Flux;
+import org.xue.core.config.PromptsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -42,7 +43,8 @@ public class ChatController {
     private final ChunkMilvusService milvusService;
 
     private final MilvusFeign milvusFeign;
-
+    
+    private final PromptsService promptsService;
 
     // 获取当前登录用户
     private User getCurrentUser() {
@@ -172,7 +174,10 @@ public class ChatController {
             }
             promptBuilder.append("【用户提问】\n").append(message);
     
-            String finalPromptText = promptBuilder.toString();
+            String finalPromptText = promptsService.getChatKnowledgeBasePrompt(
+                String.join("\n", retrievedChunks), 
+                message
+            );
     
             // 创建 StringBuilder 来收集完整的 AI 响应
             StringBuilder fullResponse = new StringBuilder();
