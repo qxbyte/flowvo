@@ -1,4 +1,4 @@
-[embed_tools_server.py](../python/embed_tools_server.py)
+[embed_tools_server.py](../../python/embed_tools_server.py)
 
 
 # 引入langchain切分模型

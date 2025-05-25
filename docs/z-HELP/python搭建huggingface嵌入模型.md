@@ -28,7 +28,7 @@ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple fastapi uvicorn sentence
 建议新建一个目录：
 mkdir embedding_service && cd embedding_service
 
-[embed_server.py](../python/embed_server.py)
+[embed_server.py](../../python/embed_server.py)
 新建 embed_server.py，内容如下：
 from fastapi import FastAPI
 from pydantic import BaseModel
