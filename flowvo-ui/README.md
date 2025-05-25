@@ -37,14 +37,14 @@ server: {
   port: 5173,
   proxy: {
     '/api': {
-      target: 'http://localhost:8084',
+      target: 'http://localhost:8080',
       changeOrigin: true,
     }
   }
 }
 ```
 
-2. 确保后端服务运行在正确的端口上（默认8084）
+2. 确保后端服务运行在正确的端口上（默认8080）
 
 ## 主要功能
 

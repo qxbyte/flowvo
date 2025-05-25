@@ -18,10 +18,10 @@ npm install
 
 # 检查后端API连接
 echo "检查后端API连接..."
-curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/api/orders?page=1
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/orders?page=1
 
 if [ $? -ne 0 ]; then
-  echo "警告: 后端API服务似乎未启动，请确保后端服务已运行在端口8084"
+  echo "警告: 后端API服务似乎未启动，请确保后端服务已运行在端口8080"
   echo "您仍然可以启动前端，但某些功能可能无法正常工作"
   echo "按任意键继续，或按Ctrl+C退出"
   read -n 1

@@ -1,7 +1,7 @@
 package org.xue.app.service;
 
 import org.xue.app.dto.*;
-import org.xue.agent.model.AgentResponse;
+import org.xue.app.agent.model.AgentResponse;
 
 import java.util.List;
 
