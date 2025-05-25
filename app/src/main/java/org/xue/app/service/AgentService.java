@@ -1,7 +1,7 @@
 package org.xue.app.service;
 
-import org.xue.agent.model.AgentRequest;
-import org.xue.agent.model.AgentResponse;
+import org.xue.app.agents.model.AgentRequest;
+import org.xue.app.agents.model.AgentResponse;
 
 /**
  * 应用服务层Agent服务接口
