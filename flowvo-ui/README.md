@@ -33,15 +33,16 @@ npm run dev
 1. 后端API配置在`vite.config.ts`中的代理设置：
 
 ```typescript
-server: {
-  port: 5173,
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8080',
-      changeOrigin: true,
-    }
-  }
-}
+       const server: ServerConfig = {
+     port: 5173,
+     proxy: {
+       '/api': {
+         target: 'http://localhost:8080',
+         changeOrigin: true,
+       },
+     },
+   };
+
 ```
 
 2. 确保后端服务运行在正确的端口上（默认8080）

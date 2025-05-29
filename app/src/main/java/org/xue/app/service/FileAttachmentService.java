@@ -1,5 +1,6 @@
 package org.xue.app.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,10 +21,10 @@ import java.util.UUID;
  */
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FileAttachmentService {
 
-    @Autowired
-    private FileAttachmentRepository fileAttachmentRepository;
+    private final FileAttachmentRepository fileAttachmentRepository;
 
     // 从配置文件读取文件上传路径，默认为 uploads 目录
     @Value("${app.upload.path:uploads}")
