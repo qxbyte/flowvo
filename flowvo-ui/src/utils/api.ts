@@ -102,13 +102,13 @@ export interface RegisterRequest {
   username: string;
   password: string;
   email?: string;
-  name?: string;
+  nickname?: string;
 }
 
 export interface UserInfo {
   id: string;
   username: string;
-  name?: string;
+  nickname?: string;
   email?: string;
   avatar?: string;
   roles?: string[];
@@ -122,6 +122,7 @@ export interface AuthResponse {
   // 兼容旧版API返回格式
   tokenValue?: string;
   username?: string;
+  nickname?: string;
 }
 
 // 认证API
