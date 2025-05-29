@@ -28,13 +28,14 @@ const RegisterPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{
     username?: string;
     password?: string;
     confirmPassword?: string;
+    nickname?: string;
     email?: string;
     name?: string;
   }>({});
@@ -59,6 +60,7 @@ const RegisterPage: React.FC = () => {
     const newErrors: {
       username?: string;
       password?: string;
+      nickname?: string;
       confirmPassword?: string;
       email?: string;
       name?: string;
@@ -79,6 +81,10 @@ const RegisterPage: React.FC = () => {
     if (password !== confirmPassword) {
       newErrors.confirmPassword = '两次密码不一致';
     }
+
+    if (!nickname) {
+      newErrors.nickname = '请输入昵称';
+    }
     
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = '邮箱格式不正确';
@@ -98,7 +104,7 @@ const RegisterPage: React.FC = () => {
         username,
         password,
         email: email || undefined,
-        name: name || undefined
+        nickname: nickname || undefined
       };
       
       const response = await authApi.register(registerData);
@@ -117,7 +123,7 @@ const RegisterPage: React.FC = () => {
         const userInfo = {
           id: '1',
           username: response.data.username || username,
-          name: response.data.username || username,
+          nickname: response.data.nickname || nickname,
           email: email || '',
           roles: ['USER']
         };
@@ -263,13 +269,13 @@ const RegisterPage: React.FC = () => {
               <FormLabel>昵称</FormLabel>
               <Input 
                 placeholder="请输入您的昵称" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)}
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
                 size="lg"
                 focusBorderColor="purple.500"
               />
-              {errors.name && (
-                <FormErrorMessage>{errors.name}</FormErrorMessage>
+              {errors.nickname && (
+                <FormErrorMessage>{errors.nickname}</FormErrorMessage>
               )}
             </FormControl>
             
