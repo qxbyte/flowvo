@@ -222,7 +222,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
               <MenuItem 
                 icon={<FiSettings />} 
                 as={RouterLink} 
-                to="/settings" 
+                to="/user-profile/settings"
                 fontSize="md" 
                 py={2}
                 color={useColorModeValue('gray.700', 'whiteAlpha.900')}
