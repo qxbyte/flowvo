@@ -48,29 +48,29 @@ const SettingsPage: React.FC = () => {
   return (
     <Box p={8} maxWidth="800px" mx="auto">
       <Heading as="h1" size="xl" mb={8} textAlign="center">
-        User Settings
+        用户设置
       </Heading>
 
       <Tabs variant="enclosed-colored" colorScheme="blue">
         <TabList mb="1em">
-          <Tab>Profile</Tab>
-          <Tab>Account Security</Tab>
-          <Tab>Avatar</Tab>
+          <Tab>个人资料</Tab>
+          <Tab>账户安全</Tab>
+          <Tab>头像</Tab>
         </TabList>
         <TabPanels>
           <TabPanel>
             <VStack spacing={6} align="stretch">
               <FormControl id="nickname">
-                <FormLabel>Nickname</FormLabel>
+                <FormLabel>昵称</FormLabel>
                 <Input
                   type="text"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  placeholder="Enter your nickname"
+                  placeholder="输入您的昵称"
                 />
               </FormControl>
               <FormControl id="username">
-                <FormLabel>Username (cannot be changed)</FormLabel>
+                <FormLabel>用户名 (不可更改)</FormLabel>
                 <Input
                   type="text"
                   value={username}
@@ -79,7 +79,7 @@ const SettingsPage: React.FC = () => {
                 />
               </FormControl>
               <Button colorScheme="blue" mt={4}>
-                Save Profile Changes
+                保存个人资料更改
               </Button>
             </VStack>
           </TabPanel>
@@ -87,55 +87,55 @@ const SettingsPage: React.FC = () => {
           <TabPanel>
             <VStack spacing={6} align="stretch">
               <FormControl id="email">
-                <FormLabel>Email Address</FormLabel>
+                <FormLabel>邮箱地址</FormLabel>
                 <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder="输入您的邮箱地址"
                 />
                 <Button size="sm" variant="link" colorScheme="blue" mt={1}>
-                  Change Email
+                  更改邮箱
                 </Button>
               </FormControl>
               
-              <Heading as="h3" size="md" mt={6} mb={3}>Change Password</Heading>
+              <Heading as="h3" size="md" mt={6} mb={3}>更改密码</Heading>
               <FormControl id="current-password">
-                <FormLabel>Current Password</FormLabel>
+                <FormLabel>当前密码</FormLabel>
                 <Input
                   type="password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Enter your current password"
+                  placeholder="输入您的当前密码"
                 />
               </FormControl>
               <FormControl id="new-password">
-                <FormLabel>New Password</FormLabel>
+                <FormLabel>新密码</FormLabel>
                 <Input
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter your new password"
+                  placeholder="输入您的新密码"
                 />
               </FormControl>
               <FormControl id="confirm-new-password">
-                <FormLabel>Confirm New Password</FormLabel>
+                <FormLabel>确认新密码</FormLabel>
                 <Input
                   type="password"
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  placeholder="Confirm your new password"
+                  placeholder="确认您的新密码"
                 />
               </FormControl>
               <Button colorScheme="blue" mt={4}>
-                Change Password
+                更改密码
               </Button>
             </VStack>
           </TabPanel>
           
           <TabPanel>
             <VStack spacing={6} align="center">
-              <Text fontSize="lg" mb={4}>Change Your Avatar</Text>
+              <Text fontSize="lg" mb={4}>更换头像</Text>
               <Avatar size="2xl" name={nickname || username} src={userAvatar} mb={4} />
               <input
                 type="file"
@@ -145,13 +145,13 @@ const SettingsPage: React.FC = () => {
                 style={{ display: 'none' }}
               />
               <Button leftIcon={<FiEdit2 />} colorScheme="teal" onClick={triggerAvatarUpload}>
-                Upload New Avatar
+                上传新头像
               </Button>
               <Text fontSize="sm" color="gray.500" mt={2}>
-                Click to upload a new image.
+                点击上传新图片。
               </Text>
               <Button colorScheme="blue" mt={6}>
-                Save Avatar
+                保存头像
               </Button>
             </VStack>
           </TabPanel>
