@@ -32,7 +32,7 @@
             <template #dropdown>
               <el-dropdown-menu class="custom-dropdown-menu">
                 <el-dropdown-item>个人信息</el-dropdown-item>
-                <el-dropdown-item>设置</el-dropdown-item>
+                <el-dropdown-item @click="goToSettings">设置</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -128,6 +128,10 @@ onUnmounted(() => {
 const switchLanguage = (lang: string) => {
   // 实现语言切换逻辑
   console.log('切换语言到:', lang)
+}
+
+const goToSettings = () => {
+  router.push('/settings')
 }
 
 const handleLogout = () => {
