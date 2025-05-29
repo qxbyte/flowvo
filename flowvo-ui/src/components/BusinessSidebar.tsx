@@ -52,7 +52,7 @@ const BusinessSidebar: React.FC = () => {
   const MobileSidebar = () => (
     <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
       <DrawerOverlay />
-      <DrawerContent bg={bgColor}>
+      <DrawerContent sx={{ bg: bgColor }}>
         <DrawerCloseButton />
         <DrawerHeader borderBottomWidth="1px">业务系统菜单</DrawerHeader>
         <DrawerBody p={0}>
@@ -88,6 +88,7 @@ const BusinessSidebar: React.FC = () => {
               size="md"
               borderRadius="md"
               width="full"
+              color={useColorModeValue('gray.700', 'gray.200')}
               onClick={isMobile ? onClose : undefined}
             >
               {item.title}
@@ -108,6 +109,7 @@ const BusinessSidebar: React.FC = () => {
           size="md"
           borderRadius="md"
           mb={2}
+          color={useColorModeValue('gray.700', 'gray.200')}
         >
           系统设置
         </Button>
@@ -118,6 +120,7 @@ const BusinessSidebar: React.FC = () => {
           width="full"
           size="md"
           borderRadius="md"
+          color={useColorModeValue('gray.700', 'gray.200')}
         >
           帮助中心
         </Button>
@@ -150,7 +153,7 @@ const BusinessSidebar: React.FC = () => {
       <Box
         w={{ base: '0', md: '260px' }}
         h="100%"
-        bg={bgColor}
+        sx={{ bg: bgColor }}
         borderRight="1px"
         borderColor={borderColor}
         position="sticky"
