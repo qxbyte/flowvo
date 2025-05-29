@@ -202,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             <MenuList minWidth="200px">
               <Box px={4} py={3}>
                 <Text fontWeight="bold" fontSize="md">{userInfo?.nickname || userInfo?.username || '用户'}</Text>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
                   {userInfo?.email || ''}
                 </Text>
               </Box>
