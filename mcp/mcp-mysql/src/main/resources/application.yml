@@ -32,7 +32,7 @@ cors:
 logging:
   level:
     root: INFO
-    org.xue.mcpmysql: DEBUG
+    org.xue.mcp_mysql: DEBUG
     org.springframework.jdbc.core: DEBUG
     com.googlecode.jsonrpc4j: DEBUG
     org.springframework.web: DEBUG
