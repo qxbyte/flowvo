@@ -43,7 +43,7 @@ const businessMenuItems = [
 const BusinessSidebar: React.FC = () => {
   const location = useLocation();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const bgColor = '#F9F9F9';
+  const bgColor = useColorModeValue('gray.50', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.200', 'gray.700');
   const activeBgColor = useColorModeValue('gray.300', 'gray.600');
@@ -66,7 +66,7 @@ const BusinessSidebar: React.FC = () => {
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <VStack spacing={0} align="stretch" h={isMobile ? "auto" : "full"}>
       <Box p={4}>
-        <Text fontSize="lg" fontWeight="bold" color="gray.500">业务系统</Text>
+        <Text fontSize="lg" fontWeight="bold" color={useColorModeValue('gray.600', 'gray.200')}>业务系统</Text>
       </Box>
 
       <Divider my={2} />
@@ -136,8 +136,9 @@ const BusinessSidebar: React.FC = () => {
         left={4}
         zIndex={20}
         display={{ base: 'flex', md: 'none' }}
-        bg="gray.700"
-        color="white"
+        bg={useColorModeValue('gray.200', 'gray.700')}
+        color={useColorModeValue('gray.800', 'whiteAlpha.900')}
+        _hover={{ bg: useColorModeValue('gray.300', 'gray.600') }}
         onClick={onOpen}
         borderRadius="full"
       />

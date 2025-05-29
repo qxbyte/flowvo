@@ -201,20 +201,46 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             </MenuButton>
             <MenuList minWidth="200px">
               <Box px={4} py={3}>
-                <Text fontWeight="bold" fontSize="md">{userInfo?.nickname || userInfo?.username || '用户'}</Text>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontWeight="bold" fontSize="md" color={useColorModeValue('gray.800', 'whiteAlpha.900')}>{userInfo?.nickname || userInfo?.username || '用户'}</Text>
+                <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
                   {userInfo?.email || ''}
                 </Text>
               </Box>
               <MenuDivider />
-              <MenuItem icon={<FiUser />} as={RouterLink} to="/profile" fontSize="md" py={2}>
+              <MenuItem 
+                icon={<FiUser />} 
+                as={RouterLink} 
+                to="/profile" 
+                fontSize="md" 
+                py={2}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+              >
                 个人资料
               </MenuItem>
-              <MenuItem icon={<FiSettings />} as={RouterLink} to="/user-profile/settings" fontSize="md" py={2}>
+              <MenuItem 
+                icon={<FiSettings />} 
+                as={RouterLink} 
+                to="/user-profile/settings"
+                fontSize="md" 
+                py={2}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+              >
                 设置
               </MenuItem>
               <MenuDivider />
-              <MenuItem icon={<FiLogOut />} onClick={handleLogout} fontSize="md" py={2}>
+              <MenuItem 
+                icon={<FiLogOut />} 
+                onClick={handleLogout} 
+                fontSize="md" 
+                py={2}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+              >
                 退出登录
               </MenuItem>
             </MenuList>
