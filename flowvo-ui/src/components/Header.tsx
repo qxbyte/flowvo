@@ -171,10 +171,10 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
               ml={4}
               p={2}
             >
-              <Tooltip label={userInfo?.name || '用户信息'}>
+              <Tooltip label={userInfo?.nickname || '用户信息'}>
                 <Avatar 
                   size="md" 
-                  name={userInfo?.name || userInfo?.username || '用户'} 
+                  name={userInfo?.nickname || userInfo?.username || '用户'}
                   src={userInfo?.avatar || '/person.svg'} 
                   bg="transparent"
                   boxShadow="none"
@@ -191,7 +191,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             </MenuButton>
             <MenuList minWidth="200px">
               <Box px={4} py={3}>
-                <Text fontWeight="bold" fontSize="md">{userInfo?.name || userInfo?.username || '用户'}</Text>
+                <Text fontWeight="bold" fontSize="md">{userInfo?.nickname || userInfo?.username || '用户'}</Text>
                 <Text fontSize="sm" color="gray.500">
                   {userInfo?.email || ''}
                 </Text>
