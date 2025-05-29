@@ -17,8 +17,10 @@ import {
   Link,
   Image,
   MenuDivider,
-  useToast
+  useToast,
+  useColorMode
 } from '@chakra-ui/react';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { 
   FiMessageSquare, 
   FiHome, 
@@ -52,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const { colorMode, toggleColorMode } = useColorMode();
   
   const { isAuthenticated, userInfo, logout } = useAuth();
   
@@ -162,9 +165,16 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
         
         {/* 用户头像菜单 */}
         {isAuthenticated ? (
-          <Menu>
-            <MenuButton
-              as={Box}
+          <HStack spacing={4}>
+            <IconButton
+              aria-label="Toggle dark mode"
+              icon={colorMode === 'light' ? <SunIcon /> : <MoonIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+            />
+            <Menu>
+              <MenuButton
+                as={Box}
               cursor="pointer"
               transition="transform 0.3s ease"
               _hover={{ transform: 'scale(1.1)' }}
@@ -208,9 +218,16 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
                 退出登录
               </MenuItem>
             </MenuList>
-          </Menu>
+            </Menu>
+          </HStack>
         ) : (
           <HStack spacing={4}>
+            <IconButton
+              aria-label="Toggle dark mode"
+              icon={colorMode === 'light' ? <SunIcon /> : <MoonIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+            />
             <Button 
               as={RouterLink} 
               to="/login" 
