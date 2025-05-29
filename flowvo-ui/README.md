@@ -1,4 +1,4 @@
-# FlowVO-UI-New
+# FlowVO-UI
 
 这是FlowVO项目的React前端实现，采用Vite、React和ChakraUI构建。
 
