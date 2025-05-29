@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import HomePage from './pages/home/HomePage';
 import DocumentsPage from './pages/documents/DocumentsPage';
 import KnowledgePage from './pages/knowledge/KnowledgePage';
+import SettingsPage from './pages/user-profile/SettingsPage'; // Import SettingsPage
 import BusinessPage from './pages/business/BusinessPage';
 import PixelChatPage from './pages/chat/PixelChatPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -74,6 +75,10 @@ const App: React.FC = () => {
       <Route path="/pixel-chat" element={renderRegularPage(<PixelChatPage />)} />
       <Route path="/documents" element={renderRegularPage(<DocumentsPage />)} />
       <Route path="/knowledge" element={renderRegularPage(<KnowledgePage />)} />
+      <Route 
+        path="/user-profile/settings" 
+        element={renderRegularPage(<SettingsPage />)} 
+      />
       
       {/* 业务系统路由 */}
       <Route path="/business" element={renderBusinessPage(<BusinessPage />)} />

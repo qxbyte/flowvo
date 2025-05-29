@@ -200,7 +200,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
               <MenuItem icon={<FiUser />} as={RouterLink} to="/profile" fontSize="md" py={2}>
                 个人资料
               </MenuItem>
-              <MenuItem icon={<FiSettings />} as={RouterLink} to="/settings" fontSize="md" py={2}>
+              <MenuItem icon={<FiSettings />} as={RouterLink} to="/user-profile/settings" fontSize="md" py={2}>
                 设置
               </MenuItem>
               <MenuDivider />
