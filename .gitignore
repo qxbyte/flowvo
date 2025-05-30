@@ -27,6 +27,7 @@
 /Floreo/.vscode/
 /.cursor/
 
+.env.*
 
 /core/src/main/resources/application.yml
 /app/src/main/resources/application.yml

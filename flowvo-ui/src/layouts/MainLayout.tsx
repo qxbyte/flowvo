@@ -1,10 +1,10 @@
 import React, { type ReactNode, useState, useEffect } from 'react';
-import { 
-  Box, 
-  Flex, 
-  Text, 
-  IconButton, 
-  useColorModeValue, 
+import {
+  Box,
+  Flex,
+  Text,
+  IconButton,
+  useColorModeValue,
   Drawer,
   DrawerContent,
   useDisclosure,
@@ -16,11 +16,11 @@ import {
   Link,
   useBreakpointValue
 } from '@chakra-ui/react';
-import { 
-  FiMenu, 
-  FiMessageSquare, 
-  FiHome, 
-  FiFile, 
+import {
+  FiMenu,
+  FiMessageSquare,
+  FiHome,
+  FiFile,
   FiDatabase,
   FiShoppingCart,
   FiBarChart2,
@@ -42,7 +42,7 @@ const NavItem = ({ icon, children, to, isActive, ...rest }: NavItemProps) => {
   const activeColor = useColorModeValue('blue.500', 'blue.300');
   const activeBg = useColorModeValue('blue.50', 'blue.900');
   const hoverBg = useColorModeValue('gray.100', 'gray.700');
-  
+
   return (
     <Link
       as={RouterLink}
@@ -57,10 +57,11 @@ const NavItem = ({ icon, children, to, isActive, ...rest }: NavItemProps) => {
         borderRadius="lg"
         role="group"
         cursor="pointer"
-        color={isActive ? activeColor : undefined}
+        color={useColorModeValue(isActive ? 'blue.500' : 'gray.700', isActive ? 'blue.300' : 'gray.200')}
         bg={isActive ? activeBg : undefined}
         _hover={{
           bg: hoverBg,
+          color: useColorModeValue(isActive ? 'blue.600' : 'gray.800', isActive ? 'blue.200' : 'gray.100')
         }}
         {...rest}
       >
@@ -68,7 +69,7 @@ const NavItem = ({ icon, children, to, isActive, ...rest }: NavItemProps) => {
           <Icon
             mr="4"
             fontSize="16"
-            color={isActive ? activeColor : 'gray.500'}
+            color={useColorModeValue(isActive ? 'blue.500' : 'gray.700', isActive ? 'blue.300' : 'gray.200')}
             as={icon}
           />
         )}
@@ -84,17 +85,17 @@ interface SidebarProps extends BoxProps {
 
 const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
   const location = useLocation();
-  
+
   const isActive = (path: string) => {
     if (path === '/') {
       return location.pathname === '/';
     }
     return location.pathname.startsWith(path);
   };
-  
+
   return (
     <Box
-      bg="#F9F9F9"
+      bg={useColorModeValue('gray.50', 'gray.800')}
       borderRight="1px"
       borderRightColor={useColorModeValue('gray.200', 'gray.700')}
       w={{ base: 'full', md: '240px' }}
@@ -125,7 +126,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
         </Heading>
         <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
       </Flex>
-      
+
       <Box px={4} py={2}>
         <Text px={3} py={2} fontSize="sm" color="gray.500" fontWeight="bold" mb={2}>
           业务功能
@@ -179,31 +180,31 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = useBreakpointValue({ base: true, md: false });
-  
+
   // 监听窗口大小变化
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  
+
   // 计算内容区域宽度
   const contentWidth = isMobile ? '100%' : `calc(100% - 240px)`;
-  
+
   return (
-    <Box 
-      position="relative" 
-      height="100vh" 
-      width="100%" 
-      p={0} 
-      m={0} 
-      border="none" 
-      boxShadow="none" 
+    <Box
+      position="relative"
+      height="100vh"
+      width="100%"
+      p={0}
+      m={0}
+      border="none"
+      boxShadow="none"
       overflow="hidden"
     >
       <SidebarContent
@@ -222,8 +223,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </DrawerContent>
       </Drawer>
       <MobileNav onOpen={onOpen} />
-      <Box 
-        ml={{ base: 0, md: '240px' }} 
+      <Box
+        ml={{ base: 0, md: '240px' }}
         p={0}
         className="business-content"
         border="none"
@@ -240,19 +241,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       >
         {children}
       </Box>
-      
+
       {/* AI聊天助手 */}
-      <FloatingChatButton 
-        onClick={() => setIsChatOpen(!isChatOpen)} 
-        isOpen={isChatOpen} 
+      <FloatingChatButton
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        isOpen={isChatOpen}
       />
-      <AIChat 
-        isOpen={isChatOpen} 
-        onClose={() => setIsChatOpen(false)} 
+      <AIChat
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
         source="business"
       />
     </Box>
   );
 };
 
-export default MainLayout; 
+export default MainLayout;
