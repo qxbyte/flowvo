@@ -227,7 +227,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
                 fontSize="md" 
                 py={2}
                 color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
                 _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
               >
                 个人资料
@@ -239,7 +239,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
                 fontSize="md" 
                 py={2}
                 color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
                 _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
               >
                 设置
@@ -251,7 +251,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
                 fontSize="md" 
                 py={2}
                 color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
                 _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
               >
                 退出登录
