@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
 import org.xue.app.agent.client.core.McpClientTemplate;
 import org.xue.app.agent.config.AgentProperties;
@@ -279,18 +280,25 @@ public class ChatServiceImpl implements ChatService {
                 
                 // 构建LLM消息列表
                 List<Message> messages = convertChatMessagesToLlmMessages(messageHistory);
-                
+
+                List<Tool> tools = getTools();
                 // 构建LLM请求
                 LlmRequest llmRequest = LlmRequest.builder()
                         .model(agentProperties.getDefaultModel())
                         .messages(messages)
-                        .tools(getTools())
                         .tool_choice("auto")
                         .temperature(requestDTO.getTemperature() != null ? 
                                 requestDTO.getTemperature() : agentProperties.getTemperature())
                         .stream(false)
                         .build();
-                
+                /**
+                 * 携带空的tools，大模型会报错
+                 */
+                if (!CollectionUtils.isEmpty(tools)) {
+                    // 携带tools
+                    llmRequest.setTools(tools);
+                }
+
                 // 记录请求日志
                 log.info("发送请求到LLM:\n模型: {}\n温度: {}\n消息数量: {}", 
                         llmRequest.getModel(), 

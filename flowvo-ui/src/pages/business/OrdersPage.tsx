@@ -144,7 +144,8 @@ const OrdersPage: React.FC = () => {
   
   const cardBg = useColorModeValue('white', 'gray.800');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = '#F7FAFC';
+  const pageBg = useColorModeValue('gray.50', 'gray.900');
+  const searchIconColor = useColorModeValue('gray.300', 'gray.500');
 
   // 使用防抖处理所有筛选条件
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -440,11 +441,11 @@ const OrdersPage: React.FC = () => {
             <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={{ base: 3, md: 4 }} mb={{ base: 4, md: 6 }}>
               <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
                 <Flex align="center">
-                  <Box bg="blue.100" p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiShoppingCart} color="blue.500" />
+                  <Box bg={useColorModeValue('blue.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiShoppingCart} color={useColorModeValue('blue.500', 'blue.300')} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">总订单数</Text>
+                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>总订单数</Text>
                     <Text fontSize="2xl" fontWeight="bold">{totalItems}</Text>
                   </Box>
                 </Flex>
@@ -452,11 +453,11 @@ const OrdersPage: React.FC = () => {
               
               <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
                 <Flex align="center">
-                  <Box bg="green.100" p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiCheck} color="green.500" />
+                  <Box bg={useColorModeValue('green.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiCheck} color={useColorModeValue('green.500', 'green.300')} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">已完成订单</Text>
+                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>已完成订单</Text>
                     <Text fontSize="2xl" fontWeight="bold">
                       {orders.filter(order => order.status === 'completed').length}
                     </Text>
@@ -466,11 +467,11 @@ const OrdersPage: React.FC = () => {
               
               <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
                 <Flex align="center">
-                  <Box bg="orange.100" p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiClock} color="orange.500" />
+                  <Box bg={useColorModeValue('orange.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiClock} color={useColorModeValue('orange.500', 'orange.300')} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">待处理订单</Text>
+                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>待处理订单</Text>
                     <Text fontSize="2xl" fontWeight="bold">
                       {orders.filter(order => order.status === 'pending' || order.status === 'processing').length}
                     </Text>
@@ -480,11 +481,11 @@ const OrdersPage: React.FC = () => {
               
               <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
                 <Flex align="center">
-                  <Box bg="red.100" p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiX} color="red.500" />
+                  <Box bg={useColorModeValue('red.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiX} color={useColorModeValue('red.500', 'red.300')} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color="gray.500">已取消订单</Text>
+                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>已取消订单</Text>
                     <Text fontSize="2xl" fontWeight="bold">
                       {orders.filter(order => order.status === 'canceled').length}
                     </Text>
@@ -502,7 +503,7 @@ const OrdersPage: React.FC = () => {
             >
               <InputGroup maxW={{ base: "100%", md: "300px" }} size="md">
                 <InputLeftElement pointerEvents="none">
-                  <FiSearch color="gray.300" />
+                  <FiSearch color={searchIconColor} />
                 </InputLeftElement>
                 <Input
                   placeholder="搜索订单号或客户名..."
@@ -565,7 +566,7 @@ const OrdersPage: React.FC = () => {
                 </Flex>
               ) : (
                 <Table variant="simple" size={{ base: "sm", md: "md" }}>
-                  <Thead bg="gray.50">
+                  <Thead bg={useColorModeValue('gray.50', 'gray.700')}>
                     <Tr>
                       <Th>订单号</Th>
                       <Th>客户</Th>
@@ -648,7 +649,7 @@ const OrdersPage: React.FC = () => {
                   <option value="20">20</option>
                   <option value="50">50</option>
                 </Select>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
                   显示 {orders.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} 条，共 {totalItems} 条
                 </Text>
               </HStack>
