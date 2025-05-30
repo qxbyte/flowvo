@@ -127,7 +127,13 @@ const BusinessPage: React.FC = () => {
                           >
                             <Icon as={module.icon} boxSize={6} color={module.color} />
                           </Box>
-                          <Heading size="md">{module.title}</Heading>
+                          <Heading 
+                            size="md" 
+                            color={useColorModeValue('gray.700', 'gray.200')}
+                            _hover={{ color: useColorModeValue('gray.700', 'gray.100') }}
+                          >
+                            {module.title}
+                          </Heading>
                         </Flex>
                         
                         <Text color={useColorModeValue('gray.500', 'gray.400')} flex="1" mb={4}>
