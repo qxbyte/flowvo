@@ -24,18 +24,11 @@ import java.util.concurrent.TimeUnit;
 public class OpenAIVisionClient {
     
     // 使用现有的ai.openai配置
-    @Value("${ai.openai.api-key:}")
+    @Value("${vision.ai.api.key:}")
     private String openaiApiKey;
     
-    @Value("${ai.openai.base-url:https://api.openai.com}")
+    @Value("${vision.ai.api.url:https://api.openai.com}")
     private String openaiBaseUrl;
-    
-    // 使用现有的ai.deepseek配置（虽然DeepSeek不支持Vision，但保留接口一致性）
-    @Value("${ai.deepseek.api-key:}")
-    private String deepseekApiKey;
-    
-    @Value("${ai.deepseek.base-url:https://api.deepseek.com}")
-    private String deepseekBaseUrl;
     
     // 代理配置
     @Value("${ai.openai.proxy.enabled:false}")
