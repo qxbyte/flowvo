@@ -121,24 +121,30 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
         
         {/* 中间导航菜单 */}
         <HStack spacing={5} display={{ base: 'none', md: 'flex' }}>
-          {navItems.map((item) => (
-            <Link 
-              key={item.path}
-              as={RouterLink}
-              to={item.path}
-              display="inline-flex"
-              alignItems="center"
-              fontWeight="medium"
-              px={2}
-              py={1}
-              borderRadius="md"
-              color={location.pathname.startsWith(item.path) ? 'blue.500' : 'gray.500'}
-              _hover={{ color: 'blue.400', bg: 'gray.50' }}
-            >
-              <item.icon style={{ marginRight: '0.5rem' }} />
-              {item.name}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            return (
+              <Link 
+                key={item.path}
+                as={RouterLink}
+                to={item.path}
+                display="inline-flex"
+                alignItems="center"
+                fontWeight="medium"
+                px={2}
+                py={1}
+                borderRadius="md"
+                color={useColorModeValue(isActive ? 'blue.500' : 'gray.600', isActive ? 'blue.300' : 'gray.400')}
+                _hover={{
+                  color: useColorModeValue(isActive ? 'blue.600' : 'gray.800', isActive ? 'blue.200' : 'gray.200'),
+                  bg: useColorModeValue('gray.100', 'gray.700')
+                }}
+              >
+                <item.icon style={{ marginRight: '0.5rem' }} />
+                {item.name}
+              </Link>
+            );
+          })}
         </HStack>
         
         {/* 移动端下拉菜单 */}
@@ -154,7 +160,14 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             </MenuButton>
             <MenuList>
               {navItems.map((item) => (
-                <MenuItem key={item.path} as={RouterLink} to={item.path}>
+                <MenuItem 
+                  key={item.path} 
+                  as={RouterLink} 
+                  to={item.path}
+                  bg={location.pathname.startsWith(item.path) ? useColorModeValue('blue.50', 'blue.900') : undefined}
+                  color={location.pathname.startsWith(item.path) ? useColorModeValue('blue.500', 'blue.300') : undefined}
+                  _hover={{ bg: useColorModeValue('gray.100', 'gray.700'), color: useColorModeValue('gray.900', 'gray.50') }}
+                >
                   <item.icon style={{ marginRight: '0.5rem' }} />
                   {item.name}
                 </MenuItem>
