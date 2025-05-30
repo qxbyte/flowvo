@@ -21,7 +21,7 @@ public class UserSettingsServiceImpl implements UserSettingsService {
 
     @Override
     public UserSettingsDTO getUserSettings(String userId) {
-        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<User> userOptional = userRepository.findById(Long.valueOf(userId));
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             UserSettingsDTO dto = new UserSettingsDTO();
@@ -35,7 +35,7 @@ public class UserSettingsServiceImpl implements UserSettingsService {
 
     @Override
     public User updateUserSettings(String userId, UserSettingsDTO userSettingsDTO) {
-        Optional<User> userOptional = userRepository.findById(userId);
+        Optional<User> userOptional = userRepository.findById(Long.valueOf(userId));
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             // Update username if provided and different
