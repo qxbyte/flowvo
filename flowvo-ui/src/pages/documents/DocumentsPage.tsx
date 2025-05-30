@@ -139,7 +139,7 @@ const DocumentsPage: React.FC = () => {
   const ListView = () => (
     <Box overflowX="auto" width="100%">
       <Table variant="simple" width="100%" borderRadius="16px" overflow="hidden">
-        <Thead bg="gray.50">
+        <Thead bg={useColorModeValue('gray.50', 'gray.700')}>
           <Tr>
             <Th>名称</Th>
             <Th>标签</Th>
@@ -240,7 +240,7 @@ const DocumentsPage: React.FC = () => {
             <Text fontWeight="medium" fontSize="sm" noOfLines={1} mb={1}>
               {doc.name}
             </Text>
-            <Text fontSize="xs" color="gray.500" mb={2}>
+            <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')} mb={2}>
               {doc.size} • {doc.lastModified}
             </Text>
             <HStack spacing={1} flexWrap="wrap">
@@ -285,7 +285,7 @@ const DocumentsPage: React.FC = () => {
       minH="100%" 
       display="flex" 
       flexDirection="column" 
-      bg="#F7FAFC"
+      bg={useColorModeValue('gray.50', 'gray.900')}
       overflowX="auto"
       position="relative"
       maxW="100%"
