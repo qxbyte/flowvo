@@ -1,11 +1,14 @@
 server:
-  port: 8084
+  port: 8080
+  servlet:
+    context-path: /
 # http://localhost:8080/sendStream-test
 
 spring:
   application:
     name: app
-
+  profiles:
+    active: dev
   security:
     user:
       name: admin
@@ -15,38 +18,27 @@ spring:
     pathmatch:
       matching-strategy: ANT_PATH_MATCHER
 
-  # ?? Spring Boot/Spring Framework ????????????? Bean ??????????? Bean ??????
+  # 这是 Spring Boot/Spring Framework 的全局开关，用来允许同名的 Bean 被多次定义时，后定义的 Bean 会覆盖前面的
   main:
     allow-bean-definition-overriding: true
 
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 50MB      # 单个文件最大大小
+      max-request-size: 100MB  # 请求最大大小
+      enabled: true
+
   datasource:
-    url: jdbc:mysql://localhost:3306/FlowVo?useSSL=false&characterEncoding=UTF-8&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=true
+    url: jdbc:mysql://localhost:3306/FlowVo?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: Aa111111
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-  ai:
-    openai:
-      api-key: sk-403c64623f57416b8bd93b2a07400380
-      base-url: https://api.deepseek.com
-      chat:
-        options:
-          model: deepseek-chat
-          temperature: 0.8
-          max-tokens: 2048
-      embedding:
-        options:
-          model: deepseek-embedding
-          # max-tokens: 8191         # ?? deepseek embedding API ?????????????
-
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
   jpa:
-    hibernate:
-      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
     show-sql: true
 
   thymeleaf:
@@ -54,102 +46,205 @@ spring:
     suffix: .html
     mode: HTML5
     cache: false
-
-  # Cloud??
+    
+  # Cloud配置
   cloud:
+    compatibility-verifier:
+      enabled: false # 禁用兼容性校验不交验Spring Cloud BOM与Spring Boot 3.5.0的兼容校验（Spring Cloud 2025已经在路上）
     discovery:
-      enabled: false  # ??????
+      enabled: false  # 禁用服务发现
     service-registry:
       auto-registration:
-        enabled: false  # ??????
+        enabled: false  # 禁用自动注册
 
 eureka:
   client:
-    enabled: false                           # ??Eureka???
-    service-url:                             # ??????
+    enabled: false                           # 禁用Eureka客户端
+    service-url:                             # 修正了破折号
       defaultZone: http://localhost:8761/eureka
-    fetch-registry: false                    # ??????
-    register-with-eureka: false              # ??????
+    fetch-registry: false                    # 修正了破折号
+    register-with-eureka: false              # 修正了破折号
   instance:
     instance-id: ${spring.application.name}_${server.port}
     prefer-ip-address: true
-    lease-renewal-interval-in-seconds: 30    # ?????????????
-    lease-expiration-duration-in-seconds: 90 # ??????????????90?
+    lease-renewal-interval-in-seconds: 30    # 服务提供者实例续期时间间隔
+    lease-expiration-duration-in-seconds: 90 # 服务提供者失效的时间，默认为90秒
 
-# JWT??
+# JWT配置
 jwt:
   secret: bTn5CjmhDSqFdBvKWLhPcCmH4n42jKnZeY6LzmNKRnawT2JyX9dM3h5L6qTVczK8
-  expiration: 86400000  # 24?????????
+  expiration: 86400000  # 24小时有效期（毫秒）
 
+# openai的配置，不可以更换为其他模型
 ai:
+  # 网络连接超时设置（秒）
+  connect-timeout: 30
+  read-timeout: 120
+  # 公共聊天配置
+  temperature: 0.7
+  max-tokens: 2048
   openai:
+    # 使用正确的OpenAI API key（注释掉的是真实的OpenAI key）
     api-key:
     base-url: https://api.openai.com
-    # ???????????
-    connect-timeout: 30
-    read-timeout: 120
-    # ????
+    # 代理设置
     proxy:
-      enabled: true  # ??????
+      enabled: true  # 是否启用代理
       host: 127.0.0.1
       port: 7890
     chat:
       options:
-        model: gpt-4-turbo
-        temperature: 0.8
-        max-tokens: 2048
+        model: gpt-4o-mini,gpt-4o,gpt-4-turbo,gpt-3.5-turbo
+  deepseek:
+    api-key:
+    base-url: https://api.deepseek.com
+    # 代理设置
+    proxy:
+      enabled: false  # 是否启用代理
+      host: 127.0.0.1
+      port: 7890
+    chat:
+      options:
+        model: deepseek-chat
 
-
-# Agent??
+# Agent配置
 agent:
   enabled: true
   maxInteractions: 10
   # openai model
 #  defaultModel: gpt-4-turbo
-  # deepseek model??
+  # deepseek model配置
   defaultModel: deepseek-chat
-  systemPrompt: "????????????????????????????function??????????function_call JSON?function API???????????function API???????????????"
+  systemPrompt: "你是一个智能助手，需要得到用户想要的最终回复时才停止调用function，否则你需要持续响应function_call JSON与function API交互。你可以根据现有的function API来分析如何多次调用得出最终结论"
   temperature: 0.7
   llmApi:
     # openai url
 #    url:
 #    key:
-    # deepseek url??
-    url: https://api.deepseek.com/chat/completions
+    # deepseek url配置
+    url:
     key:
     timeout: 60000
 
-# MCP?????
+# MCP客户端配置
 mcp:
   enabled: true
   heartbeat:
-    interval: 10000 # ??????????
+    enabled: true
+    interval: 10000 # 心跳检查间隔（毫秒）
   servers:
     mysql:
-      name: mcp-mysql  # ???????URL??
-      remote: true    # ???????????????
+      name: mcp-mysql  # 服务名称，用于URL拼接
+      remote: true    # 本地模式，使用当前应用端口连接
       host: localhost
       port: 50941
       protocol: http
       retry:
         enabled: true
-        interval: 10000  # ??
+        interval: 10000  # 毫秒
 
+# 文件上传和图像识别配置
+app:
+  upload:
+    path: uploads
+  vision:
+    max-file-size: 10485760  # 10MB
+    supported-types: image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp
+    default-model: gpt-4o-mini
+    connect-timeout: 30
+    read-timeout: 60
+    write-timeout: 60
+
+# 文件上传配置
+file:
+  upload:
+    max-size: 50MB
+    allowed-types: image/jpeg,image/png,image/gif,image/webp,image/bmp,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  document:
+    # 文档解析配置
+    max-content-length: 50000  # 提取的文档内容最大长度（字符数）
+    extract-text: true         # 是否提取文档文本内容
+    support-formats: pdf,doc,docx,xls,xlsx,ppt,pptx
+    # 解析器配置
+    parsers:
+      pdf:
+        enabled: true
+        max-pages: 50           # PDF最大解析页数
+        max-content-length: 50000
+      word:
+        enabled: true
+        max-content-length: 50000
+      excel:
+        enabled: true
+        max-sheets: 10          # Excel最大解析工作表数
+        max-rows: 100          # 每个工作表最大行数
+        max-columns: 20        # 每个工作表最大列数
+        output-format: json    # 输出格式：json
+      powerpoint:
+        enabled: true
+        max-slides: 50         # PowerPoint最大解析幻灯片数
+        max-content-length: 50000
+      text:
+        enabled: true
+        max-lines: 2000        # 文本文件最大行数
+        max-content-length: 50000
+        encoding: UTF-8        # 文本编码
 
 logging:
   level:
     root: INFO
     org.springframework.boot.autoconfigure: WARN
     org.springframework.security: DEBUG
-    org.xue.milvus: DEBUG
+    org.xue.app.milvus: DEBUG
+    org.xue.app.agents: DEBUG
     org.springframework.cloud.netflix.eureka: OFF
 
 proxy:
   host: 127.0.0.1
   port: 7890
 
-# ????/?????
+# 图像识别配置
+vision:
+  max-file-size: 10MB
+  supported-formats: jpeg,png,gif,webp,bmp
+  timeout: 30s
+
+# OpenAI Vision API 配置
+openai:
+  api:
+    key:
+    url: https://api.openai.com
+
+# 文本分割/向量化模型
 local:
   embedding:
     server: http://localhost:8000
+
+# 提示词配置 - 将所有写死的提示词提取到这里，方便修改和管理
+prompts:
+  # PixelChat相关提示词
+  pixel-chat:
+    system: '你是一个友善、有帮助的AI助手。当用户上传文件时，请仔细分析文件内容并提供有用的见解。对于图片文件，请描述你能从文件名和上下文中推断的内容。对于文档文件，请根据提供的文本内容进行分析和回答。'
+    file-assistant: '你是一个专业的文件分析助手。请仔细分析用户提供的文件内容，根据文件类型提供相应的帮助：\n- 对于图片文件：描述图片内容、识别文本、分析场景等\n- 对于文档文件：总结内容、提取关键信息、回答相关问题\n- 对于代码文件：分析代码逻辑、识别问题、提供优化建议'
+
+  # function calling 相关提示词
+  function-call:
+    system: '你是一个助手，如果需要调用函数，请使用 function_call 返回 JSON。'
+    decision: '你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复"是"；如果不需要，请只回复"否"。不要提供任何解释或额外信息。'
+    selection: '你是一个助手，请根据用户问题选择并返回需要调用的函数。请直接返回function_call字段的JSON格式，**不要**返回多余解释。'
+    decision-simple: '你是一个助手。判断用户的问题是否需要调用函数。如果需要，请只回复"Y"；如果不需要，请只回复"N"。不要提供任何解释或额外信息。'
+
+  # 聊天相关提示词
+  chat:
+    default: '你是一个友善、专业的AI助手，请根据用户的问题提供准确、有用的回答。'
+    knowledge-base: '【以下是相关资料，可参考作答】\n{context}\n【用户提问】\n{question}'
+    error-fallback: '抱歉，我在处理您的请求时遇到了一些问题。请稍后再试，或者重新描述您的问题。'
+
+  # 图像识别相关提示词
+  vision:
+    default: '请分析这张图片的内容，描述你所看到的详细信息。'
+    with-question: '请根据用户的问题分析这张图片：{question}'
+    general: '你是一个专业的图像分析助手，请仔细观察图片并提供详细的描述和分析。'
+
+
 

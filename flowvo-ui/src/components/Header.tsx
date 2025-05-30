@@ -17,8 +17,10 @@ import {
   Link,
   Image,
   MenuDivider,
-  useToast
+  useToast,
+  useColorMode
 } from '@chakra-ui/react';
+import { MoonIcon, SunIcon } from '@chakra-ui/icons';
 import { 
   FiMessageSquare, 
   FiHome, 
@@ -52,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
   const toast = useToast();
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const { colorMode, toggleColorMode } = useColorMode();
   
   const { isAuthenticated, userInfo, logout } = useAuth();
   
@@ -118,24 +121,30 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
         
         {/* 中间导航菜单 */}
         <HStack spacing={5} display={{ base: 'none', md: 'flex' }}>
-          {navItems.map((item) => (
-            <Link 
-              key={item.path}
-              as={RouterLink}
-              to={item.path}
-              display="inline-flex"
-              alignItems="center"
-              fontWeight="medium"
-              px={2}
-              py={1}
-              borderRadius="md"
-              color={location.pathname.startsWith(item.path) ? 'blue.500' : 'gray.500'}
-              _hover={{ color: 'blue.400', bg: 'gray.50' }}
-            >
-              <item.icon style={{ marginRight: '0.5rem' }} />
-              {item.name}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            return (
+              <Link 
+                key={item.path}
+                as={RouterLink}
+                to={item.path}
+                display="inline-flex"
+                alignItems="center"
+                fontWeight="medium"
+                px={2}
+                py={1}
+                borderRadius="md"
+                color={useColorModeValue(isActive ? 'blue.500' : 'gray.600', isActive ? 'blue.300' : 'gray.400')}
+                _hover={{
+                  color: useColorModeValue(isActive ? 'blue.600' : 'gray.800', isActive ? 'blue.200' : 'gray.200'),
+                  bg: useColorModeValue('gray.100', 'gray.700')
+                }}
+              >
+                <item.icon style={{ marginRight: '0.5rem' }} />
+                {item.name}
+              </Link>
+            );
+          })}
         </HStack>
         
         {/* 移动端下拉菜单 */}
@@ -151,7 +160,14 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             </MenuButton>
             <MenuList>
               {navItems.map((item) => (
-                <MenuItem key={item.path} as={RouterLink} to={item.path}>
+                <MenuItem 
+                  key={item.path} 
+                  as={RouterLink} 
+                  to={item.path}
+                  bg={location.pathname.startsWith(item.path) ? useColorModeValue('blue.50', 'blue.900') : undefined}
+                  color={location.pathname.startsWith(item.path) ? useColorModeValue('blue.500', 'blue.300') : undefined}
+                  _hover={{ bg: useColorModeValue('gray.100', 'gray.700'), color: useColorModeValue('gray.900', 'gray.50') }}
+                >
                   <item.icon style={{ marginRight: '0.5rem' }} />
                   {item.name}
                 </MenuItem>
@@ -162,19 +178,26 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
         
         {/* 用户头像菜单 */}
         {isAuthenticated ? (
-          <Menu>
-            <MenuButton
-              as={Box}
+          <HStack spacing={4}>
+            <IconButton
+              aria-label="Toggle dark mode"
+              icon={colorMode === 'light' ? <SunIcon /> : <MoonIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+            />
+            <Menu>
+              <MenuButton
+                as={Box}
               cursor="pointer"
               transition="transform 0.3s ease"
               _hover={{ transform: 'scale(1.1)' }}
               ml={4}
               p={2}
             >
-              <Tooltip label={userInfo?.name || '用户信息'}>
+              <Tooltip label={userInfo?.nickname || '用户信息'}>
                 <Avatar 
                   size="md" 
-                  name={userInfo?.name || userInfo?.username || '用户'} 
+                  name={userInfo?.nickname || userInfo?.username || '用户'}
                   src={userInfo?.avatar || '/person.svg'} 
                   bg="transparent"
                   boxShadow="none"
@@ -191,26 +214,59 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             </MenuButton>
             <MenuList minWidth="200px">
               <Box px={4} py={3}>
-                <Text fontWeight="bold" fontSize="md">{userInfo?.name || userInfo?.username || '用户'}</Text>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontWeight="bold" fontSize="md" color={useColorModeValue('gray.800', 'whiteAlpha.900')}>{userInfo?.nickname || userInfo?.username || '用户'}</Text>
+                <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
                   {userInfo?.email || ''}
                 </Text>
               </Box>
               <MenuDivider />
-              <MenuItem icon={<FiUser />} as={RouterLink} to="/profile" fontSize="md" py={2}>
+              <MenuItem 
+                icon={<FiUser />} 
+                as={RouterLink} 
+                to="/profile" 
+                fontSize="md" 
+                py={2}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
+                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+              >
                 个人资料
               </MenuItem>
-              <MenuItem icon={<FiSettings />} as={RouterLink} to="/settings" fontSize="md" py={2}>
+              <MenuItem 
+                icon={<FiSettings />} 
+                as={RouterLink} 
+                to="/user-profile/settings"
+                fontSize="md" 
+                py={2}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
+                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+              >
                 设置
               </MenuItem>
               <MenuDivider />
-              <MenuItem icon={<FiLogOut />} onClick={handleLogout} fontSize="md" py={2}>
+              <MenuItem 
+                icon={<FiLogOut />} 
+                onClick={handleLogout} 
+                fontSize="md" 
+                py={2}
+                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
+                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
+                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+              >
                 退出登录
               </MenuItem>
             </MenuList>
-          </Menu>
+            </Menu>
+          </HStack>
         ) : (
           <HStack spacing={4}>
+            <IconButton
+              aria-label="Toggle dark mode"
+              icon={colorMode === 'light' ? <SunIcon /> : <MoonIcon />}
+              onClick={toggleColorMode}
+              variant="ghost"
+            />
             <Button 
               as={RouterLink} 
               to="/login" 

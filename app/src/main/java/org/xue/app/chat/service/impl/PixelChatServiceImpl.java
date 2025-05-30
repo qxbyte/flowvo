@@ -15,7 +15,7 @@ import org.xue.app.dto.ConversationDTO;
 import org.xue.app.dto.ConversationUpdateDTO;
 import org.xue.app.repository.ChatMessageRepository;
 import org.xue.app.repository.ConversationRepository;
-import org.xue.agent.model.AgentResponse;
+import org.xue.app.agent.model.AgentResponse;
 import org.xue.app.service.PromptsService;
 import org.xue.app.service.DocumentParserService;
 

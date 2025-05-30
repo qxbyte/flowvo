@@ -1,4 +1,4 @@
-# FlowVO-UI-New
+# FlowVO-UI
 
 这是FlowVO项目的React前端实现，采用Vite、React和ChakraUI构建。
 
@@ -33,18 +33,19 @@ npm run dev
 1. 后端API配置在`vite.config.ts`中的代理设置：
 
 ```typescript
-server: {
-  port: 5173,
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8084',
-      changeOrigin: true,
-    }
-  }
-}
+       const server: ServerConfig = {
+     port: 5173,
+     proxy: {
+       '/api': {
+         target: 'http://localhost:8080',
+         changeOrigin: true,
+       },
+     },
+   };
+
 ```
 
-2. 确保后端服务运行在正确的端口上（默认8084）
+2. 确保后端服务运行在正确的端口上（默认8080）
 
 ## 主要功能
 

@@ -7,7 +7,7 @@
         <artifactId>flowvo</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-	<groupId>org.xue</groupId>
+
 	<artifactId>app</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>app</name>
@@ -27,11 +27,34 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
-        <spring-ai.version>1.0.0-M7</spring-ai.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
         <spring-cloud.version>2024.0.1</spring-cloud.version>
+<!--        <spring-cloud.version>2025.0.0-RC1</spring-cloud.version>-->
         <grpc.version>1.59.1</grpc.version>
         <guava.version>32.1.3-jre</guava.version>
 	</properties>
+
+    <repositories>
+      <repository>
+        <id>spring-snapshots</id>
+        <name>Spring Snapshots</name>
+        <url>https://repo.spring.io/snapshot</url>
+        <releases>
+          <enabled>false</enabled>
+        </releases>
+      </repository>
+      <repository>
+        <name>Central Portal Snapshots</name>
+        <id>central-portal-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        <releases>
+          <enabled>false</enabled>
+        </releases>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+      </repository>
+    </repositories>
 
     <dependencyManagement>
         <dependencies>
@@ -94,20 +117,10 @@
         </dependency>
         <!-- core/pom.xml -->
         <dependency>
-          <groupId>org.springframework.cloud</groupId>
-          <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
-		<dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
-            <scope>provided</scope>
-        </dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -135,11 +148,11 @@
         </dependency>
         
         <!-- 添加agent模块依赖 -->
-        <dependency>
-            <groupId>org.xue</groupId>
-            <artifactId>agent</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.xue</groupId>-->
+<!--            <artifactId>agent</artifactId>-->
+<!--            <version>0.0.1-SNAPSHOT</version>-->
+<!--        </dependency>-->
 
         <!-- JWT依赖 -->
         <dependency>
@@ -169,16 +182,6 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>io.milvus</groupId>
-            <artifactId>milvus-sdk-java</artifactId>
-            <version>2.5.8</version>
-        </dependency>
 
         <!-- 文档解析依赖 -->
         <!-- Apache POI - 用于解析Office文档 -->
@@ -190,7 +193,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.5</version>
+            <version>5.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -211,6 +214,11 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.14.0</version>
         </dependency>
+
+        <dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
