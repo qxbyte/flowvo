@@ -46,10 +46,10 @@ import {
 
 // 模拟的统计数据
 const stats = [
-  { id: 1, label: '待处理任务', value: 24, change: '+5%', color: 'gray.500', icon: FiClipboard },
-  { id: 2, label: '已完成任务', value: 156, change: '+12%', color: 'gray.600', icon: FiCheckSquare },
-  { id: 3, label: '团队成员', value: 8, change: '0%', color: 'gray.700', icon: FiUsers },
-  { id: 4, label: '项目进度', value: '68%', change: '+2%', color: 'gray.800', icon: FiBarChart2 },
+  { id: 1, label: '待处理任务', value: 24, change: '+5%', color: { light: 'gray.500', dark: 'blue.500' }, icon: FiClipboard },
+  { id: 2, label: '已完成任务', value: 156, change: '+12%', color: { light: 'gray.600', dark: 'green.500' }, icon: FiCheckSquare },
+  { id: 3, label: '团队成员', value: 8, change: '0%', color: { light: 'gray.700', dark: 'purple.500' }, icon: FiUsers },
+  { id: 4, label: '项目进度', value: '68%', change: '+2%', color: { light: 'gray.800', dark: 'orange.500' }, icon: FiBarChart2 },
 ];
 
 // 模拟的任务数据
@@ -111,7 +111,7 @@ const DashboardPage: React.FC = () => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = '#F7FAFC';
+  const pageBg = useColorModeValue('gray.50', 'gray.900');
 
   return (
     <Box 
@@ -134,7 +134,7 @@ const DashboardPage: React.FC = () => {
         overflowX="hidden"
       >
         <Card 
-          bg="white" 
+          bg={cardBg} 
           boxShadow="sm" 
           borderRadius="16px" 
           overflow="visible"
@@ -170,14 +170,14 @@ const DashboardPage: React.FC = () => {
                       <Box 
                         p={3} 
                         borderRadius="full" 
-                        bg={stat.color} 
+                        bg={useColorModeValue(stat.color.light, stat.color.dark)} 
                         color="white" 
                         mr={4}
                       >
                         <Icon as={stat.icon} boxSize={5} />
                       </Box>
                       <Stat>
-                        <StatLabel color="gray.500">{stat.label}</StatLabel>
+                        <StatLabel color={useColorModeValue('gray.500', 'gray.400')}>{stat.label}</StatLabel>
                         <StatNumber>{stat.value}</StatNumber>
                         <StatHelpText color={stat.change.startsWith('+') ? 'green.500' : 'red.500'}>
                           {stat.change} <Icon as={stat.change.startsWith('+') ? FiTrendingUp : FiTrendingDown} />
@@ -272,7 +272,7 @@ const DashboardPage: React.FC = () => {
                         {statusLabels[project.status as keyof typeof statusLabels]}
                       </Badge>
                     </Flex>
-                    <Text color="gray.500" mb={4} noOfLines={2}>
+                    <Text color={useColorModeValue('gray.500', 'gray.400')} mb={4} noOfLines={2}>
                       {project.description}
                     </Text>
                     <Box mb={4}>
@@ -285,8 +285,8 @@ const DashboardPage: React.FC = () => {
                     <Divider mb={4} />
                     <Flex justify="space-between" align="center">
                       <HStack>
-                        <Icon as={FiUsers} color="gray.500" />
-                        <Text fontSize="sm" color="gray.500">{project.members} 人</Text>
+                        <Icon as={FiUsers} color={useColorModeValue('gray.500', 'gray.400')} />
+                        <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>{project.members} 人</Text>
                       </HStack>
                       <AvatarGroup size="sm" max={3}>
                         <Avatar name="张三" bg="red.500" />
@@ -305,7 +305,7 @@ const DashboardPage: React.FC = () => {
               <CardHeader pb={0}>
                 <Flex justify="space-between" align="center">
                   <Heading size="md">近期日程</Heading>
-                  <Icon as={FiCalendar} color="gray.500" />
+                  <Icon as={FiCalendar} color={useColorModeValue('gray.500', 'gray.400')} />
                 </Flex>
               </CardHeader>
               <CardBody>

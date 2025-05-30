@@ -1,5 +1,6 @@
 package org.xue.app.service;
 
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
  * 从配置文件读取各种提示词，便于统一管理和修改
  */
 @Service
+@Data
 public class PromptsService {
 
     // PixelChat相关提示词
@@ -50,49 +52,6 @@ public class PromptsService {
     @Value("${prompts.vision.general:你是一个专业的图像分析助手，请仔细观察图片并提供详细的描述和分析。}")
     private String visionGeneralPrompt;
 
-    // PixelChat相关方法
-    public String getPixelChatSystemPrompt() {
-        return pixelChatSystemPrompt;
-    }
-
-    public String getPixelChatFileAssistantPrompt() {
-        return pixelChatFileAssistantPrompt;
-    }
-
-    // 函数调用相关方法
-    public String getFunctionCallSystemPrompt() {
-        return functionCallSystemPrompt;
-    }
-
-    public String getFunctionCallDecisionPrompt() {
-        return functionCallDecisionPrompt;
-    }
-
-    public String getFunctionCallSelectionPrompt() {
-        return functionCallSelectionPrompt;
-    }
-
-    public String getFunctionCallDecisionSimplePrompt() {
-        return functionCallDecisionSimplePrompt;
-    }
-
-    // 聊天相关方法
-    public String getChatDefaultPrompt() {
-        return chatDefaultPrompt;
-    }
-
-    public String getChatErrorFallbackPrompt() {
-        return chatErrorFallbackPrompt;
-    }
-
-    // 图像识别相关方法
-    public String getVisionDefaultPrompt() {
-        return visionDefaultPrompt;
-    }
-
-    public String getVisionGeneralPrompt() {
-        return visionGeneralPrompt;
-    }
 
     // 工具方法：格式化提示词
     public String formatPrompt(String template, String... params) {

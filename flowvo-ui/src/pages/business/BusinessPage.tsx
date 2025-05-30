@@ -80,20 +80,20 @@ const businessModules = [
 ];
 
 const BusinessPage: React.FC = () => {
-  const cardBg = useColorModeValue('white', 'gray.800');
+  const moduleCardBg = useColorModeValue('white', 'gray.800');
+  const mainCardBg = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const hoverBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = '#F7FAFC';
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
+    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={useColorModeValue('gray.50', 'gray.800')}>
       <Box flex="1" maxW="1600px" mx="auto" w="100%">
-        <Card bg="white" boxShadow="sm" borderRadius="16px" overflow="hidden">
+        <Card bg={mainCardBg} boxShadow="sm" borderRadius="16px" overflow="hidden">
           <CardBody p={8}>
             <VStack spacing={8} align="stretch">
               <Box>
                 <Heading size="lg" mb={2}>业务系统</Heading>
-                <Text color="gray.500">选择以下业务功能模块进行管理和操作</Text>
+                <Text color={useColorModeValue('gray.500', 'gray.400')}>选择以下业务功能模块进行管理和操作</Text>
               </Box>
               
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
@@ -102,7 +102,7 @@ const BusinessPage: React.FC = () => {
                     key={module.id} 
                     as={RouterLink}
                     to={module.path}
-                    bg={cardBg} 
+                    bg={moduleCardBg} 
                     boxShadow="sm" 
                     borderRadius="16px" 
                     borderColor={borderColor} 
@@ -127,10 +127,16 @@ const BusinessPage: React.FC = () => {
                           >
                             <Icon as={module.icon} boxSize={6} color={module.color} />
                           </Box>
-                          <Heading size="md">{module.title}</Heading>
+                          <Heading 
+                            size="md" 
+                            color={useColorModeValue('gray.700', 'gray.200')}
+                            _hover={{ color: useColorModeValue('gray.700', 'gray.100') }}
+                          >
+                            {module.title}
+                          </Heading>
                         </Flex>
                         
-                        <Text color="gray.500" flex="1" mb={4}>
+                        <Text color={useColorModeValue('gray.500', 'gray.400')} flex="1" mb={4}>
                           {module.description}
                         </Text>
                         

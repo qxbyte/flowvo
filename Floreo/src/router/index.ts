@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import DocumentView from '../views/DocumentView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import UserSettingsView from '../views/UserSettingsView.vue' // Import the new view
 import ServiceHomeview from '../views/pages/ServiceHomeview.vue'
 
 const router = createRouter({
@@ -44,6 +45,12 @@ const router = createRouter({
       name: 'service',
       component: ServiceHomeview,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/settings', // Define the path for user settings
+      name: 'settings',
+      component: UserSettingsView,
+      meta: { requiresAuth: true } // Assuming settings page requires authentication
     }
   ]
 })
