@@ -7,11 +7,26 @@
 #/dataSources/
 #/dataSources.local.xml
 
+# maven/gradle 输出目录
 /target/
 /build/
-/node_modules/
+**/node_modules/
+**/target/
+/flowvo.git/**
+/flowvo.git/
 
-### log ###
+# Java 编译产物
+*.class
+*.jar
+*.war
+
+# IDEA、Eclipse 等 IDE
+.idea/
+*.iml
+*.classpath
+*.project
+
+# 日志
 *.log
 *.gz
 
@@ -27,7 +42,7 @@
 /Floreo/.vscode/
 /.cursor/
 
-.env.*
+.env
 
 /core/src/main/resources/application.yml
 /app/src/main/resources/application.yml

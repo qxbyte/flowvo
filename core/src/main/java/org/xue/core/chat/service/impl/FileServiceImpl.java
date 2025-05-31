@@ -11,7 +11,6 @@ import org.xue.core.chat.repository.FileInfoRepository;
 import org.xue.core.chat.service.FileService;
 import org.xue.core.chat.util.ContentUtils;
 import org.xue.core.client.feign.MilvusFeign;
-import org.xue.core.milvus.service.ChunkMilvusService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -21,12 +20,10 @@ import java.util.UUID;
 public class FileServiceImpl implements FileService {
 
     private final FileInfoRepository fileInfoRepository;
-    private final ChunkMilvusService milvusService;
     private final MilvusFeign milvusFeign;
 
-    public FileServiceImpl(FileInfoRepository fileInfoRepository, ChunkMilvusService milvusService, MilvusFeign milvusFeign) {
+    public FileServiceImpl(FileInfoRepository fileInfoRepository, MilvusFeign milvusFeign) {
         this.fileInfoRepository = fileInfoRepository;
-        this.milvusService = milvusService;
         this.milvusFeign = milvusFeign;
     }
 
@@ -54,8 +51,6 @@ public class FileServiceImpl implements FileService {
         fileInfo.setFileExtension(fileExtension);
         fileInfo.setUploadTime(LocalDateTime.now());
 
-        //保存向量数据库
-//        milvusService.insertChunks(content, fileInfo.getId());
         milvusFeign.insertChunks(new InsertChunksRequest(content, fileInfo.getId()));
 
         return fileInfo; // 不在这里保存，由调用者设置userId后保存
@@ -86,7 +81,6 @@ public class FileServiceImpl implements FileService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteDocument(String id) {
         fileInfoRepository.deleteById(id);
-//        milvusService.deleteById(id);
         milvusFeign.deleteById(id);
     }
 }
