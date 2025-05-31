@@ -93,7 +93,7 @@ const KnowledgePage: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   
-  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBg = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const highlightBg = useColorModeValue('blue.50', 'blue.900');
   

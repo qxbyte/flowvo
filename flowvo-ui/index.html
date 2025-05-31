@@ -4,7 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- HackerNoon Pixel Icon Library CSS -->
+    <link rel="stylesheet" href="/node_modules/@hackernoon/pixel-icon-library/fonts/iconfont.css">
+    <!-- HackerNoon Pixel Fonts CSS -->
+    <link rel="stylesheet" href="/hackernoon-fonts.css">
     <title>FlowVo</title>
+    <script>
+      try {
+        var colorModeKey = 'chakra-ui-color-mode';
+        var colorModeValue = localStorage.getItem(colorModeKey);
+        var system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        var computedColorMode = colorModeValue === 'system' || !colorModeValue ? system : colorModeValue;
+        if (computedColorMode === 'dark') {
+          document.documentElement.classList.add('chakra-ui-dark');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

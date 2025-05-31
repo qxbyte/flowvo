@@ -1,242 +1,214 @@
-import React, { useState, useEffect } from 'react';
-import { 
+import React, { useState } from 'react';
+import {
   Box,
-  Flex,
+  VStack,
   Heading,
+  Text,
   Input,
   Button,
-  FormControl,
-  FormLabel,
-  Text,
-  Link,
   useToast,
-  Image,
-  VStack,
-  Center,
-  HStack,
-  InputGroup,
-  InputRightElement,
-  useColorModeValue,
-  FormErrorMessage
+  FormControl,
+  FormErrorMessage,
+  Spinner,
+  useColorModeValue
 } from '@chakra-ui/react';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { authApi, type LoginRequest, type UserInfo } from '../../utils/api';
-import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../utils/api';
 
 const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{username?: string, password?: string}>({});
-  
-  const toast = useToast();
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
-  const location = useLocation();
-  
-  // 颜色设置
-  const bgColor = useColorModeValue('rgb(20, 16, 48)', 'rgb(20, 16, 48)'); // 深紫色背景
-  const cardBgColor = useColorModeValue('white', 'gray.800');
+  const toast = useToast();
+
+  const bgGradient = useColorModeValue(
+    'linear(to-br, #f8e8f0, #e8f0f8)',
+    'linear(to-br, #0F1218, #1F203D)'
+  );
+  const cardBg = useColorModeValue('white', '#000019FF');
   const textColor = useColorModeValue('gray.800', 'white');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  
-  // 验证用户是否已经登录
-  useEffect(() => {
-    if (isAuthenticated) {
-      // 获取重定向URL
-      const params = new URLSearchParams(location.search);
-      const redirectUrl = params.get('redirect') || '/';
-      navigate(redirectUrl);
+  const inputBg = useColorModeValue('white', 'gray.700');
+
+  const handleSubmit = async () => {
+    if (!email.trim()) {
+      setError('请输入邮箱地址');
+      return;
     }
-  }, [isAuthenticated, navigate, location]);
-  
-  const validateForm = () => {
-    const newErrors: {username?: string, password?: string} = {};
-    
-    if (!username) {
-      newErrors.username = '请输入用户名';
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError('请输入有效的邮箱地址');
+      return;
     }
-    
-    if (!password) {
-      newErrors.password = '请输入密码';
-    } else if (password.length < 6) {
-      newErrors.password = '密码至少6位';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-  
-  const handleLogin = async () => {
-    if (!validateForm()) return;
-    
+
     setIsLoading(true);
-    
+    setError('');
+
     try {
-      const loginData: LoginRequest = {
-        username,
-        password
-      };
+      const response = await authApi.checkEmail({ email });
       
-      const response = await authApi.login(loginData);
-      console.log('登录响应数据:', response.data);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || '登录失败');
+      if (response.data.success) {
+        // 将邮箱信息存储到sessionStorage，供后续页面使用
+        sessionStorage.setItem('currentEmail', email);
+        
+        if (response.data.userInfo) {
+          // 用户存在，跳转到登录页面
+          sessionStorage.setItem('userInfo', JSON.stringify(response.data.userInfo));
+          navigate('/login-password');
+        } else {
+          // 用户不存在，跳转到注册流程
+          navigate('/register-password');
+        }
+      } else {
+        setError(response.data.message || '检查邮箱失败');
       }
-      
-      // 验证响应数据
-      const { token, userInfo } = response.data;
-      if (!token || !userInfo) {
-        throw new Error('登录响应格式错误');
-      }
-      
-      // 调用登录方法
-      login(token, userInfo);
-      
-      toast({
-        title: '登录成功',
-        description: `欢迎回来，${userInfo.name || userInfo.username}`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      
-      // 获取重定向URL并立即跳转
-      const params = new URLSearchParams(location.search);
-      const redirectUrl = params.get('redirect') || '/';
-      navigate(redirectUrl);
-    } catch (error: any) {
-      console.error('登录失败:', error);
-      
-      toast({
-        title: '登录失败',
-        description: error.response?.data?.message || error.message || '登录失败，请稍后重试',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
+    } catch (error) {
+      console.error('邮箱检查失败:', error);
+      setError('网络错误，请稍后重试');
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
+
   return (
-    <Box bg={bgColor} minH="100vh" py={10} position="relative" overflow="hidden">
-      {/* 背景装饰 */}
-      <Box 
-        position="absolute" 
-        top="50%" 
-        left="50%" 
-        transform="translate(-50%, -50%)"
-        width="100%"
-        height="100%"
-        opacity="0.1"
-        zIndex={0}
-        backgroundImage="url('/assets/dots-pattern.svg')"
-        backgroundRepeat="repeat"
-      />
-      
-      {/* 主要内容区 */}
-      <Flex justify="center" align="center" minH="calc(100vh - 100px)" zIndex={1} position="relative">
-        <Box 
-          bg={cardBgColor} 
-          p={8} 
-          borderRadius="xl" 
-          boxShadow="xl" 
-          maxW="450px" 
-          w="90%" 
-          position="relative"
-          overflow="hidden"
+    <Box
+      minH="100vh"
+      bgGradient={bgGradient}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      justifyContent="center"
+      p={4}
+      pb={24}
+      position="relative"
+    >
+      {/* 顶部Logo */}
+      <Box
+        position="absolute"
+        top={8}
+        left="20%"
+        transform="translateX(-50%)"
+        display="flex"
+        alignItems="center"
+        gap={3}
+      >
+        <img 
+          src="/home.svg" 
+          alt="FlowVo" 
+          style={{ width: '32px', height: '32px' }}
+        />
+        <Text
+          fontSize="xl"
+          fontWeight="bold"
+          color={textColor}
+          fontFamily="monospace"
         >
-          {/* 彩色顶部边框 */}
-          <Box 
-            position="absolute" 
-            top={0} 
-            left={0} 
-            right={0} 
-            height="4px" 
-            bgGradient="linear(to-r, #FF0080, #7928CA, #4299E1)"
+          FlowVo
+        </Text>
+      </Box>
+
+      <Box
+        bg={cardBg}
+        borderRadius="24px"
+        p={12}
+        w="100%"
+        maxW="400px"
+        boxShadow="xl"
+        textAlign="center"
+        mt={-8}
+      >
+        {/* Logo/Icon */}
+        <Box
+          w="100px"
+          h="100px"
+          mx="auto"
+          mb={8}
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <img 
+            src="/login/apple-touch-icon.png" 
+            alt="FlowVo" 
+            style={{ width: '100px', height: '100px' }}
           />
-          
-          <VStack spacing={6} align="center" mb={8}>
-            <Image src="/assets/logo.svg" alt="FlowVo" w="60px" h="60px" />
-            <Heading size="lg" color={textColor}>登录到 FlowVo</Heading>
-            <Text fontSize="md" color="gray.500" textAlign="center">
-              欢迎回来！请输入您的账号信息。
-            </Text>
-          </VStack>
-          
-          <VStack spacing={4} align="stretch">
-            <FormControl isInvalid={!!errors.username}>
-              <FormLabel>用户名</FormLabel>
-              <Input 
-                placeholder="请输入用户名" 
-                value={username} 
-                onChange={(e) => setUsername(e.target.value)}
-                size="lg"
-                focusBorderColor="purple.500"
-              />
-              {errors.username && (
-                <FormErrorMessage>{errors.username}</FormErrorMessage>
-              )}
-            </FormControl>
-            
-            <FormControl isInvalid={!!errors.password}>
-              <FormLabel>密码</FormLabel>
-              <InputGroup size="lg">
-                <Input 
-                  type={showPassword ? "text" : "password"} 
-                  placeholder="请输入密码" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)}
-                  focusBorderColor="purple.500"
-                />
-                <InputRightElement width="4.5rem">
-                  <Button 
-                    h="1.75rem" 
-                    size="sm" 
-                    variant="ghost"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? <FiEyeOff /> : <FiEye />}
-                  </Button>
-                </InputRightElement>
-              </InputGroup>
-              {errors.password && (
-                <FormErrorMessage>{errors.password}</FormErrorMessage>
-              )}
-            </FormControl>
-            
-            <Button 
-              colorScheme="purple" 
-              size="lg" 
-              width="100%" 
-              mt={4} 
-              onClick={handleLogin}
-              isLoading={isLoading}
-              _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
-              transition="all 0.2s"
-            >
-              登录
-            </Button>
-            
-            <Center mt={6}>
-              <Text>还没有账号？</Text>
-              <Link as={RouterLink} to="/register" ml={2} color="purple.500" fontWeight="bold">
-                立即注册
-              </Link>
-            </Center>
-          </VStack>
         </Box>
-      </Flex>
-      
-      {/* 页脚 */}
-      <Center mt={10} color="whiteAlpha.700" fontSize="sm">
-        <Text>© 2024 FlowVo - AI 助手 | 版权所有</Text>
-      </Center>
+
+        {/* 标题 */}
+        <VStack spacing={4} mb={8}>
+          <Heading
+            fontSize="xl"
+            color={textColor}
+            fontWeight="700"
+            letterSpacing="-0.5px"
+          >
+            嗨，您好！
+          </Heading>
+          <Text
+            color="gray.500"
+            fontSize="sm"
+            maxW="300px"
+          >
+            马上开始使用我们的 FlowVo 服务吧。
+          </Text>
+        </VStack>
+
+        {/* 邮箱输入 */}
+        <VStack spacing={6}>
+          <FormControl isInvalid={!!error}>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
+              onKeyPress={handleKeyPress}
+              placeholder="请输入您的邮箱地址"
+              size="lg"
+              borderRadius="12px"
+              border="2px solid"
+              borderColor="gray.200"
+              bg={inputBg}
+              _hover={{
+                borderColor: '#2099F5'
+              }}
+              _focus={{
+                borderColor: '#2099F5',
+                boxShadow: '0 0 0 1px #2099F5'
+              }}
+              fontSize="16px"
+              h="52px"
+            />
+            {error && <FormErrorMessage>{error}</FormErrorMessage>}
+          </FormControl>
+
+          <Button
+            onClick={handleSubmit}
+            isLoading={isLoading}
+            colorScheme="blue"
+            size="lg"
+            w="full"
+            h="52px"
+            borderRadius="12px"
+            fontSize="16px"
+            fontWeight="600"
+            bg="#2099F5"
+            _hover={{
+              bg: '#1a85d9'
+            }}
+            spinner={<Spinner size="sm" />}
+          >
+            下一步
+          </Button>
+        </VStack>
+      </Box>
     </Box>
   );
 };

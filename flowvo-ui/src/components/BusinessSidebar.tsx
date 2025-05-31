@@ -44,9 +44,9 @@ const businessMenuItems = [
 const BusinessSidebar: React.FC = () => {
   const location = useLocation();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const bgColor = useColorModeValue('gray.50', 'gray.800');
+  const bgColor = useColorModeValue('gray.50', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const hoverBgColor = useColorModeValue('gray.200', 'gray.700');
+  const hoverBgColor = useColorModeValue('gray.200', '#1a1f28');
   const activeBgColor = useColorModeValue('gray.300', 'gray.600');
 
   // 移动端侧边栏

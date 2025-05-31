@@ -10,6 +10,7 @@ create table users
     nickname varchar(50)                     not null COMMENT '昵称',
     email    varchar(100)                    not null COMMENT '邮箱',
     role     varchar(20) default 'ROLE_USER' not null COMMENT '角色',
+    avatar_url varchar(255)                  null COMMENT '头像URL',
     constraint email
         unique (email),
     constraint username

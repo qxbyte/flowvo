@@ -282,6 +282,59 @@ npm config set registry https://registry.npmmirror.com
 - **提示词配置化**：
   - 将所有写死在代码中的AI提示词提取到配置文件中
 
+#### 用户设置页面功能完善
+
+新增了完整的用户设置管理功能，包括：
+
+**1. 个人资料管理**
+- 显示和修改用户昵称
+- 实时保存昵称更改
+- 用户名显示（只读，不可更改）
+
+**2. 邮箱地址管理**
+- 显示当前邮箱地址
+- 修改和保存新邮箱地址
+- 邮箱格式验证
+
+**3. 密码安全管理**
+- 输入当前密码进行身份验证
+- 设置新密码并确认密码
+- 密码强度验证（最少6位）
+- 新密码与确认密码匹配验证
+- 后台密码加密存储
+
+**4. 头像管理功能**
+- 圆形头像展示框架
+- 图片文件选择和预览
+- 支持JPG、PNG等常见图片格式
+- 文件大小限制（最大5MB）
+- 本地文件存储系统
+- 数据库avatar_url字段存储图片路径
+
+**技术实现特点：**
+- 前后端分离架构，RESTful API设计
+- 前端使用React + Chakra UI组件库
+- 后端Spring Boot + JPA + MySQL
+- 文件上传使用MultipartFile处理
+- JWT Token身份认证
+- 密码加密使用BCrypt算法
+- 图片静态资源访问配置
+- 完整的错误处理和用户反馈
+
+**数据库更新：**
+```sql
+-- 用户表新增头像字段
+ALTER TABLE users ADD COLUMN avatar_url VARCHAR(255) NULL COMMENT '头像URL';
+```
+
+**API端点：**
+- `GET /api/user/settings` - 获取用户设置信息
+- `POST /api/user/settings/nickname` - 更新昵称
+- `POST /api/user/settings/email` - 更新邮箱
+- `POST /api/user/settings/password` - 更新密码
+- `POST /api/user/settings/avatar` - 上传头像
+- `POST /api/user/settings/verify-password` - 验证当前密码
+
 ### 2025年5月最新更新
 - **UI改进**：
   - 改进了聊天界面设计，使用下拉框替代侧边栏显示对话记录
@@ -302,8 +355,5 @@ npm config set registry https://registry.npmmirror.com
 
 _FlowVO - 智能对话与向量检索平台&&业务MCP_
 
-
-```
 export HTTPS_PROXY=127.0.0.1:7890
 export HTTP_PROXY=127.0.0.1:7890
-```

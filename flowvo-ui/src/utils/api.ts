@@ -61,7 +61,8 @@ api.interceptors.response.use(
           localStorage.removeItem('userInfo');
           
           // 如果不是登录页面，重定向到登录页
-          if (!window.location.pathname.includes('/login')) {
+          if (!window.location.pathname.includes('/login') && 
+              !window.location.pathname.includes('/register')) {
             window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
           }
         } else {
@@ -94,7 +95,8 @@ export const orderApi = {
 
 // 认证相关类型
 export interface LoginRequest {
-  username: string;
+  username?: string;
+  email?: string;
   password: string;
 }
 
@@ -102,13 +104,13 @@ export interface RegisterRequest {
   username: string;
   password: string;
   email?: string;
-  nickname?: string;
+  name?: string;
 }
 
 export interface UserInfo {
   id: string;
   username: string;
-  nickname?: string;
+  name?: string;
   email?: string;
   avatar?: string;
   roles?: string[];
@@ -122,7 +124,7 @@ export interface AuthResponse {
   // 兼容旧版API返回格式
   tokenValue?: string;
   username?: string;
-  nickname?: string;
+  name?: string;
 }
 
 // 认证API
@@ -141,6 +143,10 @@ export const authApi = {
   
   getCurrentUser: (): Promise<AxiosResponse<UserInfo>> => {
     return api.get('/auth/me');
+  },
+  
+  checkEmail: (data: { email: string }): Promise<AxiosResponse<AuthResponse>> => {
+    return api.post('/auth/check-email', data);
   }
 };
 

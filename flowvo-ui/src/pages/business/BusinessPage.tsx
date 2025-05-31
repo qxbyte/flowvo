@@ -80,13 +80,13 @@ const businessModules = [
 ];
 
 const BusinessPage: React.FC = () => {
-  const moduleCardBg = useColorModeValue('white', 'gray.800');
-  const mainCardBg = useColorModeValue('white', 'gray.700');
+  const moduleCardBg = useColorModeValue('white', '#171A24');
+  const mainCardBg = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const hoverBg = useColorModeValue('gray.50', '#1a1f28');
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={useColorModeValue('gray.50', 'gray.800')}>
+    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={useColorModeValue('gray.50', '#1B212C')}>
       <Box flex="1" maxW="1600px" mx="auto" w="100%">
         <Card bg={mainCardBg} boxShadow="sm" borderRadius="16px" overflow="hidden">
           <CardBody p={8}>

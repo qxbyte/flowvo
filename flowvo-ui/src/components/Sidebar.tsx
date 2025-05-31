@@ -92,7 +92,7 @@ const Sidebar: React.FC = () => {
           leftIcon={<Icon as={FiPlus} />}
           color="white"
           bg="gray.700"
-          _hover={{ bg: "gray.800" }}
+          _hover={{ bg: "#1a1f28" }}
           width="full"
           borderRadius="10px"
           h={10}

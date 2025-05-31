@@ -1,8 +1,10 @@
 package org.xue.app.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,9 @@ public class WebConfig implements WebMvcConfigurer {
     
     private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
     
+    @Value("${app.upload.avatar-dir:./uploads/avatars/}")
+    private String avatarUploadDir;
+    
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         logger.info("配置CORS映射...");
@@ -26,5 +31,12 @@ public class WebConfig implements WebMvcConfigurer {
                 .exposedHeaders("Content-Type", "Authorization", "Accept", "X-Requested-With")
                 .allowCredentials(false)
                 .maxAge(3600);
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 配置头像图片的静态资源访问
+        registry.addResourceHandler("/uploads/avatars/**")
+                .addResourceLocations("file:" + avatarUploadDir);
     }
 } 

@@ -32,6 +32,11 @@ export default defineConfig({
             console.log('代理响应:', proxyRes.statusCode, req.url);
           });
         }
+      },
+      '/uploads': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
       }
     },
     cors: true,

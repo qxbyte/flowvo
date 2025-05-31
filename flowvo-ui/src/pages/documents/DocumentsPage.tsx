@@ -104,9 +104,9 @@ const DocumentsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const toast = useToast();
   
-  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBg = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const hoverBg = useColorModeValue('gray.50', '#1a1f28');
 
   // 过滤文档
   const filteredDocuments = documents.filter(doc => 
@@ -222,7 +222,8 @@ const DocumentsPage: React.FC = () => {
             boxShadow: 'md',
             borderColor: 'blue.300',
             transform: 'translateY(-4px)',
-            transition: 'all 0.2s'
+            transition: 'all 0.2s',
+            bg: "#1a1f28"
           }}
         >
           <CardHeader pb={0} pt={2} px={3} textAlign="center">
@@ -285,7 +286,7 @@ const DocumentsPage: React.FC = () => {
       minH="100%" 
       display="flex" 
       flexDirection="column" 
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={useColorModeValue('gray.50', '#1B212C')}
       overflowX="auto"
       position="relative"
       maxW="100%"
@@ -353,7 +354,7 @@ const DocumentsPage: React.FC = () => {
                   leftIcon={<FiFilePlus />}
                   bg="gray.700"
                   color="white"
-                  _hover={{ bg: "gray.800" }}
+                  _hover={{ bg: "#1a1f28" }}
                   size="sm"
                 >
                   上传文档
