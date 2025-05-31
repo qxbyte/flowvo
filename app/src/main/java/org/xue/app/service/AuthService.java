@@ -33,4 +33,12 @@ public interface AuthService {
      * @return 用户信息响应
      */
     AuthResponse getCurrentUser(String username);
+
+    /**
+     * 检查邮箱是否已存在
+     *
+     * @param email 邮箱地址
+     * @return 检查结果响应
+     */
+    AuthResponse checkEmail(String email);
 } 

@@ -108,10 +108,10 @@ const statusLabels = {
 };
 
 const DashboardPage: React.FC = () => {
-  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBg = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = useColorModeValue('gray.50', 'gray.900');
+  const hoverBg = useColorModeValue('gray.50', '#1a1f28');
+  const pageBg = useColorModeValue('gray.50', '#1B212C');
 
   return (
     <Box 
@@ -154,7 +154,7 @@ const DashboardPage: React.FC = () => {
                   leftIcon={<FiPlus />}
                   bg="gray.700"
                   color="white"
-                  _hover={{ bg: "gray.800" }}
+                  _hover={{ bg: "#1a1f28" }}
                 >
                   新建任务
                 </Button>
@@ -262,7 +262,8 @@ const DashboardPage: React.FC = () => {
                   _hover={{
                     transform: 'translateY(-4px)',
                     boxShadow: 'md',
-                    transition: 'all 0.2s'
+                    transition: 'all 0.2s',
+                    bg: "#1a1f28"
                   }}
                 >
                   <CardBody>

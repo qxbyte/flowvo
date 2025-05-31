@@ -50,8 +50,8 @@ const PixelRobot: React.FC = () => {
   // 像素风格的超级玛丽组件
   const PixelMario = () => {
     const isWalking = animationFrame === 1;
-    
-    return (
+
+  return (
       <div style={{
         position: 'relative',
         width: '32px',
@@ -71,7 +71,7 @@ const PixelRobot: React.FC = () => {
         }} />
         
         {/* 帽檐 */}
-        <div style={{
+          <div style={{
           position: 'absolute',
           top: '6px',
           left: '6px',
@@ -80,7 +80,7 @@ const PixelRobot: React.FC = () => {
           backgroundColor: '#ff0000',
           border: '1px solid #000'
         }} />
-        
+
         {/* 脸部 */}
         <div style={{
           position: 'absolute',
@@ -109,7 +109,7 @@ const PixelRobot: React.FC = () => {
           height: '2px',
           backgroundColor: '#000'
         }} />
-        
+
         {/* 鼻子 */}
         <div style={{
           position: 'absolute',
@@ -118,20 +118,20 @@ const PixelRobot: React.FC = () => {
           width: '2px',
           height: '2px',
           backgroundColor: '#ff6600'
-        }} />
-        
+          }} />
+          
         {/* 胡子 */}
-        <div style={{
+          <div style={{
           position: 'absolute',
           top: '14px',
           left: '12px',
           width: '8px',
           height: '2px',
           backgroundColor: '#8B4513'
-        }} />
-        
+          }} />
+          
         {/* 身体 */}
-        <div style={{
+          <div style={{
           position: 'absolute',
           top: '16px',
           left: '8px',
@@ -149,16 +149,16 @@ const PixelRobot: React.FC = () => {
           width: '2px',
           height: '10px',
           backgroundColor: '#ff0000'
-        }} />
-        <div style={{
+          }} />
+          <div style={{
           position: 'absolute',
           top: '16px',
           left: '20px',
           width: '2px',
           height: '10px',
           backgroundColor: '#ff0000'
-        }} />
-        
+          }} />
+
         {/* 纽扣 */}
         <div style={{
           position: 'absolute',
@@ -189,7 +189,7 @@ const PixelRobot: React.FC = () => {
           backgroundColor: '#ffcc99',
           border: '1px solid #000'
         }} />
-        
+
         {/* 腿部 */}
         <div style={{
           position: 'absolute',
@@ -209,7 +209,7 @@ const PixelRobot: React.FC = () => {
           backgroundColor: '#0066ff',
           border: '1px solid #000'
         }} />
-        
+
         {/* 鞋子 */}
         <div style={{
           position: 'absolute',

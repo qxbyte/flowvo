@@ -37,8 +37,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(LoginRequest request) {
         // 验证请求参数
-        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-            return LoginResponse.failure("请输入用户名");
+        if ((request.getUsername() == null || request.getUsername().trim().isEmpty()) && 
+            (request.getEmail() == null || request.getEmail().trim().isEmpty())) {
+            return LoginResponse.failure("请输入用户名或邮箱");
         }
         
         if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
@@ -46,8 +47,15 @@ public class AuthServiceImpl implements AuthService {
         }
         
         try {
-            // 查找用户
-            Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
+            // 查找用户（支持用户名或邮箱登录）
+            Optional<User> userOptional = Optional.empty();
+            
+            if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+                userOptional = userRepository.findByEmail(request.getEmail());
+            } else if (request.getUsername() != null && !request.getUsername().trim().isEmpty()) {
+                userOptional = userRepository.findByUsername(request.getUsername());
+            }
+            
             if (userOptional.isEmpty()) {
                 return LoginResponse.failure("用户名或密码不正确");
             }
@@ -73,8 +81,9 @@ public class AuthServiceImpl implements AuthService {
             UserInfoDTO userInfo = UserInfoDTO.builder()
                     .id(user.getId().toString())
                     .username(user.getUsername())
-                    .name(user.getUsername())
+                    .name(user.getNickname())
                     .email(user.getEmail())
+                    .avatar(user.getAvatarUrl())
                     .roles(Collections.singletonList(user.getRole()))
                     .build();
             
@@ -127,8 +136,9 @@ public class AuthServiceImpl implements AuthService {
             UserInfoDTO userInfo = UserInfoDTO.builder()
                     .id(savedUser.getId().toString())
                     .username(savedUser.getUsername())
-                    .name(request.getName() != null ? request.getName() : savedUser.getUsername())
+                    .name(savedUser.getNickname())
                     .email(savedUser.getEmail())
+                    .avatar(savedUser.getAvatarUrl())
                     .roles(Collections.singletonList("USER"))
                     .build();
             
@@ -150,7 +160,9 @@ public class AuthServiceImpl implements AuthService {
             UserInfoDTO userInfo = UserInfoDTO.builder()
                     .id(user.getId().toString())
                     .username(user.getUsername())
+                    .name(user.getNickname())
                     .email(user.getEmail())
+                    .avatar(user.getAvatarUrl())
                     .roles(Collections.singletonList(user.getRole()))
                     .build();
             
@@ -158,5 +170,48 @@ public class AuthServiceImpl implements AuthService {
         }
         
         return AuthResponse.failure("用户不存在");
+    }
+
+    @Override
+    public AuthResponse checkEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return AuthResponse.failure("邮箱不能为空");
+        }
+        
+        try {
+            // 检查邮箱是否已存在
+            Optional<User> userOptional = userRepository.findByEmail(email);
+            
+            if (userOptional.isPresent()) {
+                // 用户已存在，返回用户信息用于登录流程
+                User user = userOptional.get();
+                UserInfoDTO userInfo = UserInfoDTO.builder()
+                        .id(user.getId().toString())
+                        .username(user.getUsername())
+                        .name(user.getNickname())
+                        .email(user.getEmail())
+                        .avatar(user.getAvatarUrl())
+                        .roles(Collections.singletonList(user.getRole()))
+                        .build();
+                
+                return AuthResponse.builder()
+                        .success(true)
+                        .message("用户已存在")
+                        .userInfo(userInfo)
+                        .token(null)
+                        .build();
+            } else {
+                // 用户不存在，可以进入注册流程
+                return AuthResponse.builder()
+                        .success(true)
+                        .message("用户不存在，可以注册")
+                        .userInfo(null)
+                        .token(null)
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("检查邮箱失败", e);
+            return AuthResponse.failure("检查邮箱失败，请稍后重试");
+        }
     }
 } 

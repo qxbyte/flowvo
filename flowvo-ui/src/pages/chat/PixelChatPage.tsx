@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { pixelChatApi, type Conversation, type ConversationCreatePayload, type Message, type ChatMessageSendPayload, type Agent } from '../../utils/api';
 import type { AIModel } from '../../utils/api';
 import PixelAnimatedSendButton from '../../components/PixelAnimatedSendButton';
 import PixelAttachButton from '../../components/PixelAttachButton';
-import PixelRobot from '../../components/PixelRobot';
-import PixelDecorationSquares from '../../components/PixelDecorationSquares';
-import PixelRobotToggle from '../../components/PixelRobotToggle';
+import PixelAbstractRobot from '../../components/PixelAbstractRobot';
 
 // 文件附件类型定义
 interface FileAttachment {
@@ -65,62 +65,130 @@ const CodeBlock: React.FC<CodeBlockProps> = ({ children, className }) => {
     }
   };
 
+  // 提取语言信息
+  const match = /language-(\w+)/.exec(className || '');
+  const language = match ? match[1] : 'text';
+
+  // 自定义样式，基于IntelliJ IDEA Darcula主题但适配我们的颜色方案
+  const customStyle = {
+    ...darcula,
+    'pre[class*="language-"]': {
+      ...darcula['pre[class*="language-"]'],
+      backgroundColor: '#1F2023FF',
+      border: 'none',
+      borderRadius: '4px',
+      padding: '12px',
+      overflow: 'auto',
+      maxWidth: '100%',
+      fontFamily: 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace',
+      fontSize: '14px',
+      lineHeight: '1.5',
+      letterSpacing: '0.02em',
+      fontWeight: '600',
+      margin: '0'
+    },
+    'code[class*="language-"]': {
+      ...darcula['code[class*="language-"]'],
+      backgroundColor: 'transparent',
+      fontFamily: 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace',
+      fontSize: '14px',
+      lineHeight: '1.5',
+      letterSpacing: '0.02em',
+      fontWeight: '600',
+      color: '#E8E8F0'
+    }
+  };
+
   return (
     <div style={{ position: 'relative', margin: '8px 0' }}>
-      <pre style={{
-        backgroundColor: '#222',
-        border: '1px solid #444',
-        borderRadius: '4px',
-        padding: '12px',
-        overflow: 'auto',
-        maxWidth: '100%',
-        fontFamily: 'Courier New, monospace'
-      }}>
-        <code className={className} style={{
-          background: 'none',
-          padding: 0,
-          wordBreak: 'normal',
-          whiteSpace: 'pre'
-        }}>
-          {children}
-        </code>
-      </pre>
+      <SyntaxHighlighter
+        language={language}
+        style={customStyle}
+        customStyle={{
+          backgroundColor: '#1F2023FF',
+          border: 'none',
+          borderRadius: '4px',
+          padding: '12px',
+          overflow: 'auto',
+          maxWidth: '100%',
+          fontFamily: 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace',
+          fontSize: '14px',
+          lineHeight: '1.5',
+          letterSpacing: '0.02em',
+          fontWeight: '600',
+          margin: '0'
+        }}
+        showLineNumbers={false}
+        showInlineLineNumbers={false}
+        wrapLines={true}
+        wrapLongLines={true}
+      >
+        {children}
+      </SyntaxHighlighter>
       <button
         onClick={copyToClipboard}
         style={{
           position: 'absolute',
           top: '8px',
           right: '8px',
-          width: '24px',
-          height: '24px',
-          backgroundColor: copied ? '#00aa00' : '#333',
-          border: '1px solid ' + (copied ? '#00ff00' : '#555'),
-          color: copied ? '#fff' : '#ccc',
-          borderRadius: '3px',
+          width: '20px',
+          height: '20px',
+          backgroundColor: 'transparent',
+          border: 'none',
+          borderRadius: '0',
           cursor: 'pointer',
-          fontFamily: 'monospace',
-          fontSize: '10px',
+          transition: 'all 0.2s ease',
+          zIndex: 1,
+          opacity: copied ? 0.8 : 1,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s ease',
-          zIndex: 1
+          padding: '2px'
         }}
         onMouseEnter={(e) => {
           if (!copied) {
-            e.currentTarget.style.backgroundColor = '#444';
-            e.currentTarget.style.borderColor = '#777';
+            e.currentTarget.style.opacity = '0.8';
+            e.currentTarget.style.transform = 'scale(1.1)';
           }
         }}
         onMouseLeave={(e) => {
           if (!copied) {
-            e.currentTarget.style.backgroundColor = '#333';
-            e.currentTarget.style.borderColor = '#555';
+            e.currentTarget.style.opacity = '1';
+            e.currentTarget.style.transform = 'scale(1)';
           }
         }}
         title={copied ? '已复制!' : '复制代码'}
       >
-        {copied ? '✓' : '📋'}
+        {copied ? (
+          // 成功状态 - 显示勾
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            style={{ 
+              color: '#ffffff',
+              filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.6))'
+            }}
+          >
+            <path 
+              d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" 
+              fill="currentColor"
+            />
+          </svg>
+        ) : (
+          // 默认状态 - 显示复制图标
+          <img 
+            src="/piexl/svg/copy.svg" 
+            alt="复制" 
+            style={{ 
+              width: '16px', 
+              height: '16px',
+              imageRendering: 'pixelated',
+              filter: 'brightness(0) invert(1)'
+            }}
+          />
+        )}
       </button>
     </div>
   );
@@ -134,11 +202,16 @@ interface InlineCodeProps {
 const InlineCode: React.FC<InlineCodeProps> = ({ children }) => {
   return (
     <code style={{
-      backgroundColor: "#333",
-      padding: "2px 4px",
+      backgroundColor: "#1F2023FF",
+      padding: "2px 6px",
       borderRadius: "3px",
-      fontFamily: "Courier New, monospace",
-      wordBreak: "break-all"
+      fontFamily: "SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace",
+      fontSize: "13px",
+      lineHeight: "1.4",
+      letterSpacing: "0.02em",
+      fontWeight: "600",
+      wordBreak: "break-all",
+      color: "#E8E8F0" // 添加偏白的字体颜色
     }}>
       {children}
     </code>
@@ -496,7 +569,6 @@ const PixelToast: React.FC<PixelToastProps> = ({ message, type, isVisible, onClo
             top: "4px",
             right: "8px",
             background: "none",
-            border: "none",
             color: colors.text,
             fontFamily: "monospace",
             fontSize: "16px",
@@ -539,19 +611,19 @@ const PixelConfirmModal: React.FC<PixelConfirmModalProps> = ({ isOpen, title, me
       fontFamily: "monospace"
     }}>
       <div style={{
-        backgroundColor: "#000",
+        backgroundColor: "#1E0444",
         border: "4px solid #00ff00",
         padding: "0",
         minWidth: "400px",
         maxWidth: "500px"
       }}>
         <div style={{
-          backgroundColor: "#00ff00",
-          color: "#000",
+          backgroundColor: "#1E0444",
+          color: "#B8A9FF",
           padding: "12px 16px",
           fontSize: "14px",
           fontWeight: "bold",
-          borderBottom: "2px solid #00ff00"
+          borderBottom: "2px solid #B8A9FF"
         }}>
           {title}
         </div>
@@ -579,11 +651,12 @@ const PixelConfirmModal: React.FC<PixelConfirmModalProps> = ({ isOpen, title, me
               backgroundColor: "#666",
               color: "#fff",
               border: "2px solid #666",
-              fontFamily: "monospace",
+              fontFamily: "'HackerNoon', monospace",
               fontWeight: "bold",
               cursor: "pointer",
               borderRadius: "0",
-              outline: "none"
+              outline: "none",
+              letterSpacing: "1px"
             }}
           >
             CANCEL
@@ -595,11 +668,12 @@ const PixelConfirmModal: React.FC<PixelConfirmModalProps> = ({ isOpen, title, me
               backgroundColor: "#ff3333",
               color: "#fff",
               border: "2px solid #ff3333",
-              fontFamily: "monospace",
+              fontFamily: "'HackerNoon', monospace",
               fontWeight: "bold",
               cursor: "pointer",
               borderRadius: "0",
-              outline: "none"
+              outline: "none",
+              letterSpacing: "1px"
             }}
           >
             DELETE
@@ -671,13 +745,14 @@ const PixelChatPage: React.FC = () => {
     isVisible: false
   });
   
-  // 马里奥机器人开关状态
-  const [isMarioEnabled, setIsMarioEnabled] = useState(true);
   
   // 滚动相关状态
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  
+  // 播放/暂停开关状态
+  const [isPlaying, setIsPlaying] = useState(false); // 默认为关闭状态
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -1601,29 +1676,26 @@ const PixelChatPage: React.FC = () => {
   return (
     <>
       <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "#1a1a1a",
+        height: "100vh",
         display: "flex",
+        backgroundColor: "#1a1a2e",
         fontFamily: "monospace",
-        overflow: "hidden",
-        zIndex: 1000
+        position: "relative",
+        overflow: "hidden"
       }}>
+        
         {/* 侧边栏 */}
         <div style={{
           width: isSidebarCollapsed ? "60px" : "300px",
-          height: "100%",
-          backgroundColor: "#000",
-          border: "4px solid #00ff00",
-          borderRight: "2px solid #00ff00",
+          height: "100vh",
+          backgroundColor: "#1E0444",
+          borderRight: "2px solid #4A2F6A",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
           transition: "width 0.3s ease-in-out",
-          position: "relative"
+          position: "relative",
+          flexShrink: 0
         }}>
           {/* 收起/展开按钮 */}
           <button
@@ -1668,13 +1740,16 @@ const PixelChatPage: React.FC = () => {
             <>
           {/* 侧边栏标题 */}
           <div style={{
-            backgroundColor: "#00ff00",
-            color: "#000",
+            backgroundColor: "#1E0444",
+            color: "#B8A9FF",
             padding: "12px",
             fontWeight: "bold",
             fontSize: "14px",
-                borderBottom: "2px solid #00ff00",
-                flexShrink: 0
+                borderBottom: "2px solid #B8A9FF",
+                flexShrink: 0,
+                fontFamily: "'HackerNoon', monospace",
+                letterSpacing: "2px",
+                textAlign: "center"
           }}>
             PIXEL CHATS
           </div>
@@ -1687,14 +1762,15 @@ const PixelChatPage: React.FC = () => {
               style={{
                 width: "100%",
                 padding: "8px 12px",
-                backgroundColor: isCreatingConversation ? "#666" : "#ff6600",
+                backgroundColor: isCreatingConversation ? "#666" : "#F4B300",
                 color: "#000",
-                border: "2px solid " + (isCreatingConversation ? "#666" : "#ff6600"),
-                fontFamily: "monospace",
+                border: "3px solid " + (isCreatingConversation ? "#666" : "#F4B300"),
+                fontFamily: "'HackerNoon', monospace",
                 fontWeight: "bold",
                 cursor: isCreatingConversation ? "not-allowed" : "pointer",
                 borderRadius: "0",
-                outline: "none"
+                outline: "none",
+                letterSpacing: "1px"
               }}
             >
               {isCreatingConversation ? "CREATING..." : "+ NEW CHAT"}
@@ -1709,7 +1785,7 @@ const PixelChatPage: React.FC = () => {
                 minHeight: 0
               }}>
             {isLoadingConversations ? (
-              <div style={{ color: "#00ff00", textAlign: "center", padding: "20px" }}>
+              <div style={{ color: "#B8A9FF", textAlign: "center", padding: "20px" }}>
                 LOADING CHATS...
               </div>
             ) : conversations.length === 0 ? (
@@ -1721,12 +1797,12 @@ const PixelChatPage: React.FC = () => {
                 <div key={index}>
                   <div style={{
                     padding: "6px 12px",
-                    backgroundColor: "rgba(0, 255, 0, 0.1)",
-                    color: "#00ff00",
+                    backgroundColor: "rgba(139, 69, 173, 0.1)",
+                    color: "#B8A9FF",
                     fontFamily: "monospace",
                     fontWeight: "bold",
                     fontSize: "11px",
-                    borderBottom: "1px solid rgba(0, 255, 0, 0.3)",
+                    borderBottom: "1px solid rgba(139, 69, 173, 0.3)",
                     margin: "8px 0 4px 0",
                     textTransform: "uppercase",
                     letterSpacing: "0.5px"
@@ -1742,7 +1818,7 @@ const PixelChatPage: React.FC = () => {
                         margin: "4px 0",
                         backgroundColor: selectedConversationId === conv.id ? "#330066" : "transparent",
                         border: selectedConversationId === conv.id ? "2px solid #9933ff" : "2px solid transparent",
-                        color: selectedConversationId === conv.id ? "#cc99ff" : "#00ff00",
+                        color: selectedConversationId === conv.id ? "#cc99ff" : "#B8A9FF",
                         fontSize: "12px",
                         borderRadius: "0",
                         outline: "none",
@@ -1763,9 +1839,9 @@ const PixelChatPage: React.FC = () => {
                           autoFocus
                           style={{
                             flex: 1,
-                            backgroundColor: "#000",
-                            border: "1px solid #00ff00",
-                            color: "#00ff00",
+                            backgroundColor: "#1E0444",
+                            border: "1px solid #8E44AD",
+                            color: "#B8A9FF",
                             fontFamily: "monospace",
                             fontSize: "12px",
                             padding: "4px",
@@ -1796,19 +1872,33 @@ const PixelChatPage: React.FC = () => {
                               handleStartRename(conv.id, conv.title);
                             }}
                             style={{
-                              padding: "2px 6px",
-                              backgroundColor: "#ffcc00",
+                              padding: "4px",
+                              backgroundColor: "#00C4E3FF",
                               color: "#000",
-                              border: "1px solid #ffcc00",
+                              border: "2px solid #00C4E3FF",
                               fontFamily: "monospace",
                               fontSize: "10px",
                               cursor: "pointer",
-                    borderRadius: "0",
-                    outline: "none"
-                  }}
+                              borderRadius: "0",
+                              outline: "none",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "24px",
+                              height: "24px"
+                            }}
                             title="重命名"
                           >
-                            ED
+                            <img 
+                              src="/piexl/png/edit.png" 
+                              alt="编辑" 
+                              style={{ 
+                                width: '14px', 
+                                height: '14px',
+                                imageRendering: 'pixelated',
+                                filter: 'brightness(0) invert(1)'
+                              }}
+                            />
                           </button>
                           <button
                             onClick={(e) => {
@@ -1816,19 +1906,33 @@ const PixelChatPage: React.FC = () => {
                               handleStartDelete(conv.id, conv.title);
                             }}
                             style={{
-                              padding: "2px 6px",
+                              padding: "4px",
                               backgroundColor: "#ff3333",
                               color: "#fff",
-                              border: "1px solid #ff3333",
+                              border: "2px solid #ff3333",
                               fontFamily: "monospace",
                               fontSize: "10px",
                               cursor: "pointer",
                               borderRadius: "0",
-                              outline: "none"
+                              outline: "none",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "24px",
+                              height: "24px"
                             }}
                             title="删除"
                           >
-                            DEL
+                            <img 
+                              src="/piexl/png/trash.png" 
+                              alt="删除" 
+                              style={{ 
+                                width: '14px', 
+                                height: '14px',
+                                imageRendering: 'pixelated',
+                                filter: 'brightness(0) invert(1)'
+                              }}
+                            />
                           </button>
                         </div>
                       )}
@@ -1846,14 +1950,15 @@ const PixelChatPage: React.FC = () => {
                   style={{
                     width: "100%",
                     padding: "8px 12px",
-                    backgroundColor: "#0066ff",
+                    backgroundColor: "#DB39A1",
                     color: "#fff",
-                    border: "2px solid #0099ff",
-                    fontFamily: "monospace",
+                    border: "3px solid #DB39A1",
+                    fontFamily: "'HackerNoon', monospace",
                     fontWeight: "bold",
                     cursor: "pointer",
                     borderRadius: "0",
-                    outline: "none"
+                    outline: "none",
+                    letterSpacing: "1px"
                   }}
                 >
                   ← BACK TO HOME
@@ -1878,9 +1983,9 @@ const PixelChatPage: React.FC = () => {
                 style={{
                   width: "40px",
                   height: "40px",
-                  backgroundColor: isCreatingConversation ? "#666" : "#ff6600",
+                  backgroundColor: isCreatingConversation ? "#666" : "#F4B300",
                   color: "#000",
-                  border: "2px solid " + (isCreatingConversation ? "#666" : "#ff6600"),
+                  border: "3px solid " + (isCreatingConversation ? "#666" : "#F4B300"),
                   fontFamily: "monospace",
                   fontWeight: "bold",
                   cursor: isCreatingConversation ? "not-allowed" : "pointer",
@@ -1901,9 +2006,9 @@ const PixelChatPage: React.FC = () => {
                 style={{
                   width: "40px",
                   height: "40px",
-                  backgroundColor: "#0066ff",
+                  backgroundColor: "#DB39A1",
                   color: "#fff",
-                  border: "2px solid #0099ff",
+                  border: "3px solid #DB39A1",
                   fontFamily: "monospace",
                   fontWeight: "bold",
                   cursor: "pointer",
@@ -1927,25 +2032,26 @@ const PixelChatPage: React.FC = () => {
         {/* 主聊天区域 */}
         <div style={{ 
           flex: 1, 
-          height: "100%",
+          height: "100vh",
           display: "flex", 
           flexDirection: "column",
-          overflow: "hidden"
+          overflow: "visible", // 改为visible确保下拉菜单不被裁剪
+          minWidth: 0
         }}>
           {/* 聊天窗口 */}
           <div style={{
             flex: 1,
-            backgroundColor: "#000",
-            border: "4px solid #00ff00",
-            borderLeft: "2px solid #00ff00",
+            backgroundColor: "#1E0444",
+            borderLeft: "2px solid #4A2F6A",
             display: "flex",
             flexDirection: "column",
-            minHeight: 0
+            height: "100vh",
+            overflow: "visible" // 改为visible确保下拉菜单不被裁剪
           }}>
             {/* 标题栏 */}
             <div style={{
-              backgroundColor: "#00ff00",
-              color: "#000",
+              backgroundColor: "#1E0444",
+              color: "#B8A9FF",
               padding: "12px 16px",
               display: "flex",
               alignItems: "center",
@@ -1955,9 +2061,9 @@ const PixelChatPage: React.FC = () => {
               flexShrink: 0
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ width: "12px", height: "12px", backgroundColor: "#ff0000", border: "1px solid #000" }}></div>
-                <div style={{ width: "12px", height: "12px", backgroundColor: "#ffff00", border: "1px solid #000" }}></div>
-                <div style={{ width: "12px", height: "12px", backgroundColor: "#00aa00", border: "1px solid #000" }}></div>
+                <div style={{ width: "12px", height: "12px", backgroundColor: "#DB39A1FF", border: "1px solid #000" }}></div>
+                <div style={{ width: "12px", height: "12px", backgroundColor: "#F4B300FF", border: "1px solid #000" }}></div>
+                <div style={{ width: "12px", height: "12px", backgroundColor: "#00CBE9FF", border: "1px solid #000" }}></div>
                 <span style={{ marginLeft: "16px" }}>{currentConversationTitle}</span>
                 {isNewConversation && (
                   <span style={{ fontSize: "10px", color: "#666", marginLeft: "8px" }}>
@@ -1965,24 +2071,70 @@ const PixelChatPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: "12px" }}>
-                Messages: {messages.length}
+              <div style={{ 
+                fontSize: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}>
+                <span>Messages: {messages.length}</span>
+                
+                {/* 播放/暂停切换按钮 */}
+                <button
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  style={{
+                    width: "24px",
+                    height: "16px",
+                    backgroundColor: "transparent",
+                    border: "1px solid #B8A9FF",
+                    cursor: "pointer",
+                    borderRadius: "0",
+                    outline: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "2px",
+                    transition: "all 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "#00ff00";
+                    e.currentTarget.style.boxShadow = "0 0 4px rgba(0, 255, 0, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "#B8A9FF";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                  title={isPlaying ? "暂停" : "播放"}
+                >
+                  <img 
+                    src={isPlaying ? "/piexl/svg/pause.svg" : "/piexl/svg/play.svg"}
+                    alt={isPlaying ? "暂停" : "播放"}
+                    style={{ 
+                      width: '12px', 
+                      height: '12px',
+                      imageRendering: 'pixelated',
+                      filter: 'brightness(0) invert(1)' // 白色
+                    }}
+                  />
+                </button>
               </div>
             </div>
 
             {/* 消息区域 - 可滚动区域 */}
             <div 
               ref={messagesContainerRef}
+              id="messages-container"
               onScroll={handleScroll}
               style={{
-                flex: 1,
-                overflowY: "auto",
-                overflowX: "hidden",
+              flex: 1,
+              overflowY: "auto",
+              overflowX: "visible", // 改为visible确保下拉菜单不被裁剪
                 padding: "16px 10%",
-                backgroundColor: "#000",
-                color: "#00ff00",
-                fontSize: "14px",
+              backgroundColor: "#1E0444",
+              color: "#00ff00",
+              fontSize: "14px",
                 minHeight: 0,
+                maxHeight: "calc(100vh - 200px)", // 确保为输入区域留出空间
                 display: "flex",
                 justifyContent: "center",
                 position: "relative"
@@ -1991,152 +2143,220 @@ const PixelChatPage: React.FC = () => {
                 width: "100%",
                 maxWidth: "1000px",
                 minWidth: "300px"
-              }}>
-                {isLoadingMessages ? (
-                  <div style={{ textAlign: "center", padding: "40px" }}>
-                    LOADING MESSAGES...
-                  </div>
-                ) : !selectedConversationId ? (
-                  <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
-                    Select a chat to start messaging
-                  </div>
-                ) : messages.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
-                    {isNewConversation ? "Select a model and start the conversation!" : "No messages yet. Start the conversation!"}
-                  </div>
-                ) : (
-                  <div 
-                    style={{ display: "flex", flexDirection: "column", gap: "12px" }}
-                  >
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
+            }}>
+              {isLoadingMessages ? (
+                <div style={{ textAlign: "center", padding: "40px" }}>
+                  LOADING MESSAGES...
+                </div>
+              ) : !selectedConversationId ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+                  Select a chat to start messaging
+                </div>
+              ) : messages.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+                  {isNewConversation ? "Select a model and start the conversation!" : "No messages yet. Start the conversation!"}
+                </div>
+              ) : (
+                <div 
+                  style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+                >
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
                         data-message-id={message.id}
+                      style={{
+                        display: "flex",
+                        justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+                      }}
+                    >
+                      <div
                         style={{
-                          display: "flex",
-                          justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start'
+                            maxWidth: "75%",
+                          minWidth: "200px",
+                          padding: "12px 16px",
+                          backgroundColor: message.role === 'user' ? '#4D2788' : '#211337FF',
+                          color: message.role === 'user' ? '#E8D5FF' : '#B8A9FF',
+                          wordWrap: "break-word",
+                          overflowWrap: "break-word",
+                          position: "relative",
+                          clipPath: "polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px)"
                         }}
                       >
-                        <div
-                          style={{
-                            maxWidth: "75%",
-                            minWidth: "200px",
-                            padding: "12px 16px",
-                            border: "2px solid " + (message.role === 'user' ? '#0066ff' : '#00cc66'),
-                            backgroundColor: message.role === 'user' ? '#001166' : '#003d20',
-                            color: message.role === 'user' ? '#88aaff' : '#66ff99',
-                            wordWrap: "break-word",
-                            overflowWrap: "break-word"
-                          }}
-                        >
-                          <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
-                            {formatTime(message.createdAt)}
-                          </div>
-                          <div style={{ 
-                            wordBreak: "break-word",
-                            whiteSpace: "pre-wrap",
-                            lineHeight: "1.4"
-                          }}>
-                            {message.role === 'assistant' && typingMessageId === message.id ? (
-                              <TypewriterText 
-                                text={message.content} 
-                                speed={30}
-                                shouldStop={shouldStopTyping}
-                                onComplete={() => {
-                                  setTypingMessageId(null);
-                                  setShouldStopTyping(false);
+                        {/* 像素风格四角装饰 */}
+                        <div style={{
+                          position: "absolute",
+                          top: "0px",
+                          left: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{
+                          position: "absolute",
+                          top: "0px",
+                          right: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{
+                          position: "absolute",
+                          bottom: "0px",
+                          left: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{
+                          position: "absolute",
+                          bottom: "0px",
+                          right: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
+                          {formatTime(message.createdAt)}
+                        </div>
+                        <div style={{ 
+                          wordBreak: "break-word",
+                          whiteSpace: "pre-wrap",
+                          lineHeight: "1.4"
+                        }}>
+                          {message.role === 'assistant' && typingMessageId === message.id ? (
+                            <TypewriterText 
+                              text={message.content} 
+                              speed={30}
+                              shouldStop={shouldStopTyping}
+                              onComplete={() => {
+                                setTypingMessageId(null);
+                                setShouldStopTyping(false);
                                   setIsUserScrolling(false);
-                                  // 打字机效果完成后，滚动到底部并focus输入框
-                                  setTimeout(() => {
+                                // 打字机效果完成后，滚动到底部并focus输入框
+                                setTimeout(() => {
                                     scrollToBottomSmooth();
-                                    focusInput();
-                                  }, 100);
-                                }}
+                                  focusInput();
+                                }, 100);
+                              }}
                                 onUpdate={() => {
                                   // 在打字机效果期间，只有当用户没有手动滚动且在底部时才自动滚动
                                   // 这样用户可以自由向上滚动查看历史消息
                                   scrollFollow();
                                 }}
-                              />
-                            ) : (
-                              message.role === 'assistant' ? (
-                                <div className="markdown-content">
-                                  <ReactMarkdown 
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                      code: (props: any) => {
-                                        const { inline, className, children } = props;
-                                        const match = /language-(\w+)/.exec(className || '');
-                                        const codeContent = String(children).replace(/\n$/, '');
-                                        
-                                        return !inline && match ? (
-                                          <CodeBlock className={className}>
-                                            {codeContent}
-                                          </CodeBlock>
-                                        ) : (
-                                          <InlineCode>
-                                            {codeContent}
-                                          </InlineCode>
-                                        );
-                                      },
-                                      pre: (props: any) => {
-                                        return <>{props.children}</>;
-                                      }
-                                    }}
-                                  >
+                            />
+                          ) : (
+                            message.role === 'assistant' ? (
+                              <div className="markdown-content">
+                                <ReactMarkdown 
+                                  remarkPlugins={[remarkGfm]}
+                                  components={{
+                                    code: (props: any) => {
+                                      const { inline, className, children } = props;
+                                      const match = /language-(\w+)/.exec(className || '');
+                                      const codeContent = String(children).replace(/\n$/, '');
+                                      
+                                      return !inline && match ? (
+                                        <CodeBlock className={className}>
+                                          {codeContent}
+                                        </CodeBlock>
+                                      ) : (
+                                        <InlineCode>
+                                          {codeContent}
+                                        </InlineCode>
+                                      );
+                                    },
+                                    pre: (props: any) => {
+                                      return <>{props.children}</>;
+                                    }
+                                  }}
+                                >
                           {message.content}
-                                  </ReactMarkdown>
-                                </div>
-                              ) : (
-                                message.content
-                              )
-                            )}
-                          </div>
-                          {/* 显示附件 */}
-                          {message.attachments && message.attachments.length > 0 && (
-                            <MessageAttachments attachments={message.attachments} />
+                                </ReactMarkdown>
+                              </div>
+                            ) : (
+                              message.content
+                            )
                           )}
                         </div>
+                        {/* 显示附件 */}
+                        {message.attachments && message.attachments.length > 0 && (
+                          <MessageAttachments attachments={message.attachments} />
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  ))}
 
-                    {isSendingMessage && (
-                      <div style={{ display: "flex", justifyContent: "flex-start" }}>
-                        <div style={{
-                          backgroundColor: "#003d20",
-                          border: "2px solid #00cc66",
-                          color: "#66ff99",
-                          padding: "12px 16px",
+                  {isSendingMessage && (
+                    <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                      <div style={{
+                        backgroundColor: "#211337FF",
+                        color: "#B8A9FF",
+                        padding: "12px 16px",
                           maxWidth: "75%",
-                          minWidth: "200px"
-                        }}>
-                          <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
-                            Thinking...
-                          </div>
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            <div style={{
-                              width: "8px",
-                              height: "8px",
-                              backgroundColor: "#00cc66",
-                              animation: "pulse 1.4s infinite ease-in-out"
-                            }}></div>
-                            <div style={{
-                              width: "8px",
-                              height: "8px",
-                              backgroundColor: "#00cc66",
-                              animation: "pulse 1.4s infinite ease-in-out 0.2s"
-                            }}></div>
-                            <div style={{
-                              width: "8px",
-                              height: "8px",
-                              backgroundColor: "#00cc66",
-                              animation: "pulse 1.4s infinite ease-in-out 0.4s"
-                            }}></div>
-                          </div>
+                        minWidth: "200px",
+                        position: "relative",
+                        clipPath: "polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px)"
+                      }}>
+                        {/* 像素风格四角装饰 */}
+                        <div style={{
+                          position: "absolute",
+                          top: "0px",
+                          left: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{
+                          position: "absolute",
+                          top: "0px",
+                          right: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{
+                          position: "absolute",
+                          bottom: "0px",
+                          left: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{
+                          position: "absolute",
+                          bottom: "0px",
+                          right: "0px",
+                          width: "12px",
+                          height: "12px",
+                          backgroundColor: "#1E0444"
+                        }} />
+                        <div style={{ fontSize: "10px", opacity: 0.8, marginBottom: "4px" }}>
+                          Thinking...
+                        </div>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          <div style={{
+                            width: "8px",
+                            height: "8px",
+                            backgroundColor: "#00cc66",
+                            animation: "pulse 1.4s infinite ease-in-out"
+                          }}></div>
+                          <div style={{
+                            width: "8px",
+                            height: "8px",
+                            backgroundColor: "#00cc66",
+                            animation: "pulse 1.4s infinite ease-in-out 0.2s"
+                          }}></div>
+                          <div style={{
+                            width: "8px",
+                            height: "8px",
+                            backgroundColor: "#00cc66",
+                            animation: "pulse 1.4s infinite ease-in-out 0.4s"
+                          }}></div>
                         </div>
                       </div>
-                    )}
-                    <div ref={messagesEndRef} style={{ height: "1px" }} />
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} style={{ height: "1px" }} />
                   </div>
                 )}
               </div>
@@ -2193,9 +2413,10 @@ const PixelChatPage: React.FC = () => {
             <div style={{
               borderTop: "2px solid #0099ff",
               padding: "12px 16px",
-              backgroundColor: "#000",
+              backgroundColor: "#1E0444",
               flexShrink: 0,
-              position: "relative"
+              position: "relative",
+              overflow: "visible" // 改为visible确保下拉菜单不被裁剪
             }}>
               {/* 向下滚动按钮 - 放在输入区域内部 */}
               {/* {showScrollToBottom && (
@@ -2248,14 +2469,14 @@ const PixelChatPage: React.FC = () => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  backgroundColor: "rgba(0, 255, 0, 0.1)",
-                  border: "3px dashed #00ff00",
+                  backgroundColor: "rgba(139, 69, 173, 0.1)",
+                  border: "3px dashed #8E44AD",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   zIndex: 1000,
                   fontSize: "18px",
-                  color: "#00ff00",
+                  color: "#B8A9FF",
                   fontFamily: "monospace",
                   fontWeight: "bold"
                 }}>
@@ -2274,94 +2495,93 @@ const PixelChatPage: React.FC = () => {
                     <div style={{ flex: 1, position: "relative" }}>
                       <div style={{
                         padding: "6px",
-                        border: "2px solid #9933ff",
-                        backgroundColor: "#1a001a",
+                  border: "2px solid #9933ff",
+                        backgroundColor: "#1E0444",
                         marginBottom: "4px"
-                      }}>
-                        <div style={{
+                }}>
+                  <div style={{
                           display: "flex", 
                           flexWrap: "wrap", 
                           gap: "6px"
                         }}>
-                          {uploadedFiles.map((file) => (
-                            <div
-                              key={file.id}
-                              className="uploaded-file"
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
+                    {uploadedFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="uploaded-file"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
                                 gap: "4px",
                                 padding: "3px 6px",
-                                backgroundColor: "#2d002d",
-                                border: "1px solid #6600cc",
+                          backgroundColor: "#2d002d",
+                          border: "1px solid #6600cc",
                                 fontSize: "10px",
-                                fontFamily: "monospace",
-                                color: "#cc99ff",
+                          fontFamily: "monospace",
+                          color: "#cc99ff",
                                 position: "relative",
                                 height: "20px"
-                              }}
-                              title={`${file.name} (${formatFileSize(file.size)})`}
-                            >
+                        }}
+                        title={`${file.name} (${formatFileSize(file.size)})`}
+                      >
                               <div style={{ flexShrink: 0, transform: "scale(0.8)" }}>
-                                {getFileIcon(file.type)}
-                              </div>
-                              <span style={{ 
+                          {getFileIcon(file.type)}
+                        </div>
+                        <span style={{ 
                                 maxWidth: "80px", 
-                                overflow: "hidden", 
-                                textOverflow: "ellipsis",
+                          overflow: "hidden", 
+                          textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
                                 fontSize: "10px"
-                              }}>
-                                {file.name}
-                              </span>
-                              <span style={{ color: "#999", fontSize: "10px" }}>
-                                ({formatFileSize(file.size)})
-                              </span>
-                              <button
-                                onClick={() => removeFile(file.id)}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  color: "#ff6666",
-                                  cursor: "pointer",
+                        }}>
+                          {file.name}
+                        </span>
+                        <span style={{ color: "#999", fontSize: "10px" }}>
+                          ({formatFileSize(file.size)})
+                        </span>
+                        <button
+                          onClick={() => removeFile(file.id)}
+                          style={{
+                            background: "none",
+                            color: "#ff6666",
+                            cursor: "pointer",
                                   fontSize: "10px",
                                   marginLeft: "2px",
                                   padding: "0",
                                   lineHeight: "1"
-                                }}
-                                title="Remove file"
-                              >
-                                ×
-                              </button>
-                              
-                              {/* 图片预览悬浮框 */}
-                              {isImageFile(file.type) && file.base64 && (
-                                <div style={{
-                                  position: "absolute",
-                                  bottom: "100%",
-                                  left: "50%",
-                                  transform: "translateX(-50%)",
-                                  zIndex: 1001,
-                                  opacity: 0,
-                                  pointerEvents: "none",
-                                  transition: "opacity 0.3s ease"
-                                }}
-                                className="image-preview-tooltip"
-                                >
-                                  <img
-                                    src={file.base64}
-                                    alt={file.name}
-                                    style={{
-                                      maxWidth: "200px",
-                                      maxHeight: "200px",
-                                      border: "2px solid #9933ff",
-                                      backgroundColor: "#000"
-                                    }}
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                          }}
+                          title="Remove file"
+                        >
+                          ×
+                        </button>
+                        
+                        {/* 图片预览悬浮框 */}
+                        {isImageFile(file.type) && file.base64 && (
+                          <div style={{
+                            position: "absolute",
+                            bottom: "100%",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            zIndex: 1001,
+                            opacity: 0,
+                            pointerEvents: "none",
+                            transition: "opacity 0.3s ease"
+                          }}
+                          className="image-preview-tooltip"
+                          >
+                            <img
+                              src={file.base64}
+                              alt={file.name}
+                              style={{
+                                maxWidth: "200px",
+                                maxHeight: "200px",
+                                border: "2px solid #9933ff",
+                                backgroundColor: "#000"
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
                         </div>
                       </div>
                     </div>
@@ -2377,7 +2597,7 @@ const PixelChatPage: React.FC = () => {
                 marginBottom: "4px"
               }}>
                 <div style={{ display: "flex", gap: "8px", maxWidth: "800px", width: "100%", position: "relative" }}>
-                  <div style={{ flex: 1, position: "relative", zIndex: 2 }}>
+                  <div style={{ flex: 1, position: "relative" }}>
                     <textarea
                       ref={inputRef}
                       value={inputText}
@@ -2389,9 +2609,9 @@ const PixelChatPage: React.FC = () => {
                       disabled={isSendingMessage}
                       style={{
                         width: "100%",
-                        backgroundColor: "#000",
-                        border: "2px solid #00ff00",
-                        color: "#00ff00",
+                        backgroundColor: "#1E0444",
+                        border: "2px solid #8E44AD",
+                        color: "#B8A9FF",
                         fontFamily: "monospace",
                         fontSize: "14px",
                         padding: "8px",
@@ -2412,7 +2632,7 @@ const PixelChatPage: React.FC = () => {
                       {inputText.length}/500
                     </div>
                   </div>
-                  <div style={{ position: "relative", zIndex: 2 }}>
+                  <div style={{ position: "relative" }}>
                     <PixelAnimatedSendButton
                       isSending={isSendingMessage || !!typingMessageId}
                       isDisabled={(inputText.trim() === "" && uploadedFiles.length === 0)}
@@ -2430,7 +2650,7 @@ const PixelChatPage: React.FC = () => {
                 marginBottom: "8px"
               }}>
                 <div style={{ maxWidth: "800px", width: "100%", position: "relative" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "flex-start", position: "relative", zIndex: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "16px", justifyContent: "flex-start", position: "relative" }}>
                     {/* 上传按钮 */}
                     <PixelAttachButton
                       onFileSelect={handleFileUpload}
@@ -2449,7 +2669,7 @@ const PixelChatPage: React.FC = () => {
                         padding: "6px 12px",
                         backgroundColor: isUpdatingModel ? "#333" : "#0066ff",
                         color: isUpdatingModel ? "#666" : "#fff",
-                        border: "2px solid " + (isUpdatingModel ? "#555" : "#0099ff"),
+                        border: "3px solid " + (isUpdatingModel ? "#555" : "#0099ff"),
                         fontFamily: "monospace",
                         fontSize: "12px",
                         fontWeight: "bold",
@@ -2474,7 +2694,7 @@ const PixelChatPage: React.FC = () => {
                         padding: "6px 12px",
                         backgroundColor: isLoadingAgents ? "#333" : "#ff6600",
                         color: isLoadingAgents ? "#666" : "#fff",
-                        border: "2px solid " + (isLoadingAgents ? "#333" : "#cc4400"),
+                        border: "3px solid " + (isLoadingAgents ? "#333" : "#cc4400"),
                         fontFamily: "monospace",
                         fontSize: "12px",
                         fontWeight: "bold",
@@ -2495,9 +2715,9 @@ const PixelChatPage: React.FC = () => {
                         position: "absolute",
                         bottom: "50px",
                         left: "56px",
-                        backgroundColor: "#000",
-                        border: "2px solid #00ff00",
-                        zIndex: 100,
+                        backgroundColor: "#1E0444",
+                        border: "2px solid #8E44AD",
+                        zIndex: 9999, // 大幅提高z-index
                         width: "220px"
                       }}>
                         {/* OpenAI模型 */}
@@ -2519,8 +2739,8 @@ const PixelChatPage: React.FC = () => {
                                 onClick={() => handleUpdateModel(model.id)}
                                 style={{
                                   padding: "8px 16px",
-                                  backgroundColor: selectedModel === model.id ? "#cc9900" : "transparent",
-                                  color: selectedModel === model.id ? "#000" : "#00ff00",
+                                  backgroundColor: selectedModel === model.id ? "#4D2788" : "transparent",
+                                  color: selectedModel === model.id ? "#fff" : "#B8A9FF",
                                   fontFamily: "monospace",
                                   fontSize: "12px",
                                   cursor: "pointer",
@@ -2553,8 +2773,8 @@ const PixelChatPage: React.FC = () => {
                                 onClick={() => handleUpdateModel(model.id)}
                                 style={{
                                   padding: "8px 16px",
-                                  backgroundColor: selectedModel === model.id ? "#cc9900" : "transparent",
-                                  color: selectedModel === model.id ? "#000" : "#00ff00",
+                                  backgroundColor: selectedModel === model.id ? "#4D2788" : "transparent",
+                                  color: selectedModel === model.id ? "#fff" : "#B8A9FF",
                                   fontFamily: "monospace",
                                   fontSize: "12px",
                                   cursor: "pointer",
@@ -2575,10 +2795,10 @@ const PixelChatPage: React.FC = () => {
                       <div style={{
                         position: "absolute",
                         bottom: "50px",
-                        left: "242px",
-                        backgroundColor: "#000",
+                        left: "246px",
+                        backgroundColor: "#1E0444",
                         border: "2px solid #cc4400",
-                        zIndex: 100,
+                        zIndex: 9999, // 大幅提高z-index
                         width: "210px"
                       }}>
                         {/* 默认选项 */}
@@ -2671,14 +2891,31 @@ const PixelChatPage: React.FC = () => {
         onCancel={handleCancelDelete}
       />
 
-      {/* 马里奥机器人开关 */}
-      <PixelRobotToggle
-        isEnabled={isMarioEnabled}
-        onToggle={setIsMarioEnabled}
-      />
-
-      {/* 像素风格随机走动机器人 - 根据开关状态显示 */}
-      {isMarioEnabled && <PixelRobot />}
+      {/* 像素风格随机走动机器人 - 根据播放状态显示 */}
+      {isPlaying && (
+        <div 
+          id="robots-container"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            pointerEvents: "none",
+            zIndex: 998,
+            overflow: "hidden"
+          }}
+        >
+          {/* 渲染6个机器人 */}
+          {Array.from({ length: 6 }, (_, index) => (
+            <PixelAbstractRobot
+              key={index}
+              containerId="messages-container"
+              robotIndex={index}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 悬浮的向下箭头按钮 */}
       {showScrollToBottom && (
@@ -2750,16 +2987,16 @@ const PixelChatPage: React.FC = () => {
         
         ::-webkit-scrollbar-track {
           background: #000;
-          border: 1px solid #00ff00;
+          border: 1px solid #8E44AD;
         }
         
         ::-webkit-scrollbar-thumb {
-          background: #00ff00;
+          background: #8E44AD;
           border: 1px solid #000;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-          background: #00aa00;
+          background: #9966CC;
         }
         
         ::-webkit-scrollbar-corner {
@@ -2769,7 +3006,7 @@ const PixelChatPage: React.FC = () => {
         /* Firefox滚动条样式 */
         * {
           scrollbar-width: thin;
-          scrollbar-color: #00ff00 #000;
+          scrollbar-color: #8E44AD #000;
         }
         
         /* Markdown样式 - 优化代码块显示 */
@@ -2783,21 +3020,31 @@ const PixelChatPage: React.FC = () => {
         }
         
         .markdown-content code {
-          background-color: #333;
-          padding: 2px 4px;
+          background-color: #1F2023FF;
+          padding: 2px 6px;
           border-radius: 3px;
-          font-family: "Courier New", monospace;
+          font-family: "SF Mono", "Monaco", "Menlo", "JetBrains Mono", "Fira Code", "Courier New", monospace;
+          font-size: 13px;
+          line-height: 1.4;
+          letter-spacing: 0.02em;
+          font-weight: 600;
           word-break: break-all;
+          color: #E8E8F0;
         }
         
         .markdown-content pre {
-          background-color: #222;
-          border: 1px solid #444;
+          background-color: #1F2023FF;
+          border: none;
           border-radius: 4px;
-          padding: 6px;
+          padding: 12px;
           overflow-x: auto;
-          margin: 2px 0;
+          margin: 6px 0;
           max-width: 100%;
+          font-family: "SF Mono", "Monaco", "Menlo", "JetBrains Mono", "Fira Code", "Courier New", monospace;
+          font-size: 14px;
+          line-height: 1.5;
+          letter-spacing: 0.02em;
+          font-weight: 600;
         }
         
         .markdown-content pre code {
@@ -2805,6 +3052,11 @@ const PixelChatPage: React.FC = () => {
           padding: 0;
           word-break: normal;
           white-space: pre;
+          font-family: inherit;
+          font-size: inherit;
+          line-height: inherit;
+          letter-spacing: inherit;
+          font-weight: 600;
         }
         
         .markdown-content ul, .markdown-content ol {
@@ -2836,7 +3088,7 @@ const PixelChatPage: React.FC = () => {
         }
         
         .markdown-content blockquote {
-          border-left: 4px solid #00ff00;
+          border-left: 4px solid #8E44AD;
           margin: 2px 0;
           padding-left: 6px;
           font-style: italic;
@@ -2860,11 +3112,11 @@ const PixelChatPage: React.FC = () => {
         
         /* 对话记录悬浮效果 */
         .conversation-item:hover {
-          border-color: rgba(0, 255, 0, 0.5) !important;
+          border-color: rgba(139, 69, 173, 0.5) !important;
         }
         
         .conversation-item:hover:not(.selected) {
-          background-color: rgba(0, 255, 0, 0.05) !important;
+          background-color: rgba(139, 69, 173, 0.05) !important;
         }
       `}</style>
     </>

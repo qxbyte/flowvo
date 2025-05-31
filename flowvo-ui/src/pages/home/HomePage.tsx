@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Container,
@@ -12,7 +12,8 @@ import {
   Button,
   useColorModeValue,
   Flex,
-  Image
+  Image,
+  keyframes
 } from '@chakra-ui/react';
 import {
   FiFile,
@@ -21,10 +22,66 @@ import {
   FiArrowRight
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import PixelChatDemo from '../../components/PixelChatDemo';
 
 const HomePage: React.FC = () => {
-  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBg = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  
+  // 添加按钮相关的颜色配置
+  const startButtonBg = useColorModeValue('blue.500', 'blue.400');
+  const startButtonHoverBg = useColorModeValue('blue.600', 'blue.500');
+  const startButtonTextColor = useColorModeValue('white', 'white');
+  const startButtonHoverTextColor = useColorModeValue('white', 'white');
+  
+  const detailButtonBg = useColorModeValue('transparent', 'transparent');
+  const detailButtonBorderColor = useColorModeValue('blue.500', 'blue.300');
+  const detailButtonTextColor = useColorModeValue('blue.500', 'blue.300');
+  const detailButtonHoverBg = useColorModeValue('blue.500', 'blue.300');
+  const detailButtonHoverTextColor = useColorModeValue('white', 'gray.900');
+  const detailButtonHoverBorderColor = useColorModeValue('blue.500', 'blue.300');
+  
+  // 每个卡片的鼠标位置状态
+  const [cardMousePositions, setCardMousePositions] = useState<{[key: string]: {x: number, y: number}}>({});
+
+  // 处理单个卡片的鼠标移动
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>, cardId: string) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCardMousePositions(prev => ({
+      ...prev,
+      [cardId]: {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      }
+    }));
+  };
+
+  // 处理鼠标离开卡片
+  const handleCardMouseLeave = (cardId: string) => {
+    setCardMousePositions(prev => {
+      const newPositions = { ...prev };
+      delete newPositions[cardId];
+      return newPositions;
+    });
+  };
+
+  // 动画效果定义
+  const floatAnimation = keyframes`
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+  `;
+
+  const pulseGlow = keyframes`
+    0% { box-shadow: 0 0 20px rgba(32, 153, 245, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(32, 153, 245, 0.6); }
+    100% { box-shadow: 0 0 20px rgba(32, 153, 245, 0.3); }
+  `;
+
+  const scaleIn = keyframes`
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  `;
 
   const modules = [
     {
@@ -55,7 +112,7 @@ const HomePage: React.FC = () => {
 
   return (
     <Box 
-      bg={useColorModeValue('gray.50', 'gray.900')} 
+      bg={useColorModeValue('gray.50', '#1B212C')} 
       minH="100%" 
       h="100%" 
       py={10}
@@ -81,23 +138,117 @@ const HomePage: React.FC = () => {
             <Button 
               as={Link} 
               to="/pixel-chat" 
-              colorScheme="blue" 
               size="lg" 
               rightIcon={<Icon as={FiArrowRight} />}
               borderRadius="full"
               px={8}
+              bg={startButtonBg}
+              color={startButtonTextColor}
+              _hover={{
+                bg: startButtonHoverBg,
+                color: startButtonHoverTextColor
+              }}
+              _active={{
+                bg: startButtonHoverBg,
+                color: startButtonHoverTextColor
+              }}
             >
               开始使用
             </Button>
           </Box>
+          
+          {/* 像素聊天演示区域 */}
           <Box 
-            maxW={{ base: '80%', md: '45%' }} 
-            borderRadius="xl" 
-            overflow="hidden" 
-            boxShadow="xl"
+            maxW={{ base: '90%', md: '45%' }} 
+            position="relative"
+            animation={`${scaleIn} 0.8s ease-out`}
           >
-            <Box bg="blue.500" h="300px" display="flex" alignItems="center" justifyContent="center">
-              <Text color="white" fontWeight="bold" fontSize="xl">平台演示图</Text>
+            <Box
+              borderRadius="20px"
+              overflow="hidden"
+              boxShadow="0 20px 40px rgba(0,0,0,0.15)"
+              bg="gray.900"
+              border="3px solid"
+              borderColor={useColorModeValue('gray.300', 'gray.600')}
+              position="relative"
+              animation={`${floatAnimation} 4s ease-in-out infinite`}
+              _hover={{
+                transform: 'scale(1.02)',
+                transition: 'transform 0.3s ease'
+              }}
+              _before={{
+                content: '""',
+                position: 'absolute',
+                top: -2,
+                left: -2,
+                right: -2,
+                bottom: -2,
+                borderRadius: '22px',
+                background: 'linear-gradient(45deg, #2099F5, #00ff88, #ff6b9d, #c471ed)',
+                backgroundSize: '400% 400%',
+                animation: `${pulseGlow} 3s ease-in-out infinite`,
+                zIndex: -1,
+                opacity: 0.6
+              }}
+            >
+              <PixelChatDemo />
+              
+              {/* 覆盖层效果 */}
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                right={0}
+                bottom={0}
+                background="linear-gradient(135deg, transparent 0%, rgba(32, 153, 245, 0.1) 50%, transparent 100%)"
+                pointerEvents="none"
+              />
+              
+              {/* 左上角装饰 */}
+              <Box
+                position="absolute"
+                top={4}
+                left={4}
+                width="8px"
+                height="8px"
+                borderRadius="50%"
+                bg="#00ff88"
+                boxShadow="0 0 10px #00ff88"
+                animation={`${pulseGlow} 2s ease-in-out infinite`}
+              />
+              
+              {/* 右上角装饰 */}
+              <Box
+                position="absolute"
+                top={4}
+                right={4}
+                width="6px"
+                height="6px"
+                borderRadius="50%"
+                bg="#ff6b9d"
+                boxShadow="0 0 8px #ff6b9d"
+                animation={`${pulseGlow} 2.5s ease-in-out infinite`}
+              />
+            </Box>
+            
+            {/* 底部标签 */}
+            <Box
+              position="absolute"
+              bottom={-6}
+              left="50%"
+              transform="translateX(-50%)"
+              bg={useColorModeValue('white', 'gray.800')}
+              px={4}
+              py={2}
+              borderRadius="full"
+              fontSize="sm"
+              fontWeight="bold"
+              color={useColorModeValue('gray.700', 'gray.200')}
+              boxShadow="0 4px 12px rgba(0,0,0,0.15)"
+              border="2px solid"
+              borderColor={useColorModeValue('gray.200', 'gray.600')}
+            >
+              🎮 像素聊天体验
             </Box>
           </Box>
         </Flex>
@@ -116,13 +267,68 @@ const HomePage: React.FC = () => {
               borderRadius="xl" 
               overflow="hidden" 
               boxShadow="md"
-              transition="transform 0.2s, box-shadow 0.2s"
+              position="relative"
+              transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
               _hover={{
-                transform: 'translateY(-4px)',
-                boxShadow: 'lg'
+                transform: 'translateY(-8px)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.2)'
               }}
+              _before={{
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: `radial-gradient(600px circle at ${cardMousePositions[module.id]?.x || 0}px ${cardMousePositions[module.id]?.y || 0}px, 
+                  rgba(45, 91, 255, 0.12) 0%, 
+                  rgba(65, 70, 245, 0.10) 15%, 
+                  rgba(95, 55, 235, 0.08) 30%, 
+                  rgba(138, 43, 226, 0.06) 45%, 
+                  rgba(195, 40, 190, 0.05) 60%, 
+                  rgba(255, 45, 146, 0.03) 75%, 
+                  rgba(255, 75, 160, 0.02) 85%, 
+                  transparent 100%)`,
+                borderRadius: 'xl',
+                opacity: 0,
+                transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                pointerEvents: 'none',
+                zIndex: 1
+              }}
+              _after={{
+                content: '""',
+                position: 'absolute',
+                top: -1,
+                left: -1,
+                right: -1,
+                bottom: -1,
+                background: `radial-gradient(500px circle at ${cardMousePositions[module.id]?.x || 0}px ${cardMousePositions[module.id]?.y || 0}px, 
+                  rgba(45, 91, 255, 0.25) 0%, 
+                  rgba(75, 75, 245, 0.20) 20%, 
+                  rgba(115, 60, 235, 0.18) 35%, 
+                  rgba(138, 43, 226, 0.15) 50%, 
+                  rgba(180, 40, 200, 0.12) 65%, 
+                  rgba(220, 42, 170, 0.10) 80%, 
+                  rgba(255, 45, 146, 0.05) 90%, 
+                  transparent 100%)`,
+                borderRadius: 'xl',
+                opacity: 0,
+                transition: 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                pointerEvents: 'none',
+                zIndex: -1
+              }}
+              sx={{
+                '&:hover::before': {
+                  opacity: 1
+                },
+                '&:hover::after': {
+                  opacity: 1
+                }
+              }}
+              onMouseMove={(e) => handleCardMouseMove(e, module.id)}
+              onMouseLeave={() => handleCardMouseLeave(module.id)}
             >
-              <CardBody>
+              <CardBody position="relative" zIndex={2}>
                 <Flex 
                   w="60px" 
                   h="60px" 
@@ -132,6 +338,8 @@ const HomePage: React.FC = () => {
                   align="center" 
                   justify="center"
                   mb={4}
+                  position="relative"
+                  zIndex={3}
                 >
                   <Icon as={module.icon} boxSize="30px" />
                 </Flex>
@@ -144,10 +352,24 @@ const HomePage: React.FC = () => {
                     as={Link}
                     to={module.path}
                     mt={4}
-                    colorScheme="blue"
                     variant="outline"
                     rightIcon={<Icon as={FiArrowRight} />}
                     alignSelf="flex-start"
+                    position="relative"
+                    zIndex={3}
+                    bg={detailButtonBg}
+                    color={detailButtonTextColor}
+                    borderColor={detailButtonBorderColor}
+                    _hover={{
+                      bg: detailButtonHoverBg,
+                      color: detailButtonHoverTextColor,
+                      borderColor: detailButtonHoverBorderColor
+                    }}
+                    _active={{
+                      bg: detailButtonHoverBg,
+                      color: detailButtonHoverTextColor,
+                      borderColor: detailButtonHoverBorderColor
+                    }}
                   >
                     查看详情
                   </Button>

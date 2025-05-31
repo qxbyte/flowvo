@@ -1,0 +1,18 @@
+
+spring:
+  config:
+    activate:
+      on-profile: vision   # 只有当 --spring.profiles.active=module-a 时，本文件才会被读入
+
+
+# 图像识别配置
+vision:
+  max-file-size: 10MB
+  supported-formats: jpeg,png,gif,webp,bmp
+  timeout: 30s
+
+# Vision API 配置
+  ai:
+    api:
+      key: ${VISION_API_KEY}
+      url: ${VISION_BASE_URL}

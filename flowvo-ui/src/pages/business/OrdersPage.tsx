@@ -142,9 +142,9 @@ const OrdersPage: React.FC = () => {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const toast = useToast();
   
-  const cardBg = useColorModeValue('white', 'gray.800');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = useColorModeValue('gray.50', 'gray.900');
+  const cardBg = useColorModeValue('white', '#171A24');
+  const hoverBg = useColorModeValue('gray.50', '#1a1f28');
+  const pageBg = useColorModeValue('gray.50', '#1B212C');
   const searchIconColor = useColorModeValue('gray.300', 'gray.500');
 
   // 使用防抖处理所有筛选条件

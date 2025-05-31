@@ -41,7 +41,7 @@ interface NavItemProps extends FlexProps {
 const NavItem = ({ icon, children, to, isActive, ...rest }: NavItemProps) => {
   const activeColor = useColorModeValue('blue.500', 'blue.300');
   const activeBg = useColorModeValue('blue.50', 'blue.900');
-  const hoverBg = useColorModeValue('gray.100', 'gray.700');
+  const hoverBg = useColorModeValue('gray.100', '#1a1f28');
 
   return (
     <Link
@@ -95,7 +95,7 @@ const SidebarContent = ({ onClose, ...rest }: SidebarProps) => {
 
   return (
     <Box
-      bg={useColorModeValue('gray.50', 'gray.800')}
+      bg={useColorModeValue('gray.50', '#171A24')}
       borderRight="1px"
       borderRightColor={useColorModeValue('gray.200', 'gray.700')}
       w={{ base: 'full', md: '240px' }}
