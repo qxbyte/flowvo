@@ -301,3 +301,9 @@ npm config set registry https://registry.npmmirror.com
   - 添加了更清晰的UI状态提示（加载中、无对话等）
 
 _FlowVO - 智能对话与向量检索平台&&业务MCP_
+
+
+```
+export HTTPS_PROXY=127.0.0.1:7890
+export HTTP_PROXY=127.0.0.1:7890
+```
