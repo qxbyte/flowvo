@@ -197,7 +197,7 @@ npm config set registry https://registry.npmmirror.com
 
 ## 更新日志
 
-### 2024年12月最新更新
+### 2025年4月最新更新
 
 #### 像素风格UI优化 【界面优化】
 - **马里奥机器人**：将原有的机器人替换为马里奥风格的像素画角色

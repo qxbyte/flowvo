@@ -129,7 +129,7 @@ watch(currentChatId, async (newId, oldId) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #1f2023;
+  background-color: #ffffff;
   overflow: hidden;
   max-width: 1200px;
   margin: 0 auto;
