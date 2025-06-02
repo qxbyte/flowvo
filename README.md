@@ -1,8 +1,15 @@
-# FlowVO - 智能对话与向量检索平台
+# FlowVO - 智能平台
 
 ## 📖 项目概述
 
-FlowVO 是一个基于微服务架构的智能对话和向量检索平台，集成了自然语言处理、向量数据库和数据管理功能。该平台通过 Function Call 机制处理用户请求，提供智能化服务体验。
+FlowVO 是一个基于微服务架构的智能对话和向量检索平台，集成了自然语言处理、向量数据库和数据管理功能。该平台通过 Function Call 机制处理用户请求，以及智能化MCP服务体验。
+
+![img.png](cite/Image/home.png)
+![img.png](cite/Image/chat.png)
+![img.png](cite/Image/document.png)
+![img.png](cite/Image/knowledge.png)
+![img.png](cite/Image/business.png)
+
 
 ### 🎯 核心特性
 
