@@ -13,6 +13,7 @@ import RegisterNicknamePage from './pages/auth/RegisterNicknamePage';
 import RegisterSuccessPage from './pages/auth/RegisterSuccessPage';
 import MainLayout from './layouts/MainLayout';
 import Header from './components/Header';
+import ProtectedRoute from './components/ProtectedRoute';
 import { Spinner, Center, VStack, Text } from '@chakra-ui/react';
 import { useAuth } from './hooks/useAuth';
 
@@ -29,28 +30,6 @@ const LoadingFallback = () => (
     </VStack>
   </Center>
 );
-
-// 路由保护组件
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
-
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  const location = useLocation();
-  
-  // 如果正在加载认证状态，显示加载界面
-  if (loading) {
-    return <LoadingFallback />;
-  }
-  
-  // 加载完成后，如果未认证则重定向到登录页面
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-  
-  return <>{children}</>;
-};
 
 const App: React.FC = () => {
   // 非业务系统页面只使用Header

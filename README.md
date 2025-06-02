@@ -197,6 +197,24 @@ npm config set registry https://registry.npmmirror.com
 
 ## 更新日志
 
+### 2025年6月2日 - 文档上传功能修复
+**问题修复**：
+- ✅ 修复了文档标签显示为Java对象字符串的问题（如`[Ljava.lang.String;@4dd5955a`）
+- ✅ 修复了前端上传请求超时和错误状态持久化问题
+- ✅ 优化了文件大小限制配置（支持10MB文件上传）
+- ✅ 改进了Feign客户端的参数传递机制
+
+**技术改进**：
+- 修改Feign客户端uploadFile方法的tags参数类型从`String[]`改为`List<String>`
+- 在agents模块Document实体的tags字段添加`@JsonProperty`注解和`FetchType.EAGER`
+- 优化了app模块DocumentManagementService中的参数转换逻辑
+- 恢复了生产环境的安全配置，文档API需要认证访问
+
+**测试验证**：
+- 直接调用agents服务：标签正确返回JSON数组格式
+- 通过app模块调用：标签现在也正确显示为`["测试", "配置文件"]`格式
+- 完整上传流程：文档解析、向量化、存储均正常工作
+
 ### 2025年4月最新更新
 
 #### 像素风格UI优化 【界面优化】
@@ -357,3 +375,68 @@ _FlowVO - 智能对话与向量检索平台&&业务MCP_
 
 export HTTPS_PROXY=127.0.0.1:7890
 export HTTP_PROXY=127.0.0.1:7890
+
+## 🔧 最近更新
+
+### 文档上传功能修复 (2025-06-02)
+
+**问题描述：**
+1. 前端文档上传请求无法到达后端，显示"API网络错误: 未收到响应"
+2. 文档标签显示为Java类名 `[Ljava.lang.String;@4dd5955a`
+3. 关闭上传页面重新打开后，前面的报错仍然显示
+
+**根本原因：**
+1. **安全配置问题**：文档管理API没有正确的认证配置
+2. **Content-Type问题**：手动设置`multipart/form-data`缺少boundary参数
+3. **状态管理问题**：组件未在挂载时清理错误状态
+
+**解决方案：**
+
+#### 1. **生产环境安全配置** 🔒
+- **恢复严格认证**：文档API需要认证访问，确保生产环境安全
+- **配置路径**：`app/src/main/java/org/xue/app/config/SecurityConfig.java`
+```java
+.requestMatchers("/api/v1/documents/**").authenticated()
+```
+
+#### 2. **文件大小限制扩展** 📁
+- **agents模块**：扩展到10MB
+- **app模块**：确认支持10MB
+- **配置位置**：
+  - `agents/src/main/resources/application.yml`
+  - `app/src/main/resources/application.yml`
+
+#### 3. **日志优化** 📝
+- **关闭调试日志**：Spring Security等框架日志降级为WARN
+- **配置位置**：`agents/src/main/resources/application.yml`
+
+#### 4. **前端修复** 🔧
+- **Content-Type修复**：移除手动设置，让浏览器自动生成boundary
+- **状态管理修复**：DocumentUpload组件挂载时清理错误状态
+- **超时配置统一**：前端、代理、后端统一使用5分钟超时
+
+#### 5. **超时配置优化** ⏱️
+- **前端API**：5分钟（300000ms）
+- **Vite代理**：5分钟超时
+- **后端Feign**：app→agents调用5分钟超时
+
+**技术要点：**
+- `multipart/form-data`必须包含正确的boundary参数
+- 手动设置Content-Type会覆盖浏览器生成的boundary
+- 组件状态管理需要在挂载时清理错误状态
+- 生产环境必须启用适当的认证和授权
+
+**架构说明：**
+- 前端 → app模块（认证+路由） → agents模块（解析处理）
+- app和agents解耦，agents作为插件可移植到其他项目
+- app模块简单处理，agents专注文档解析和向量化
+
+**测试确认：**
+- ✅ 生产环境安全配置
+- ✅ 文件大小支持10MB
+- ✅ 关闭不必要的调试日志
+- ✅ 修复Content-Type问题
+- ✅ 修复前端状态管理
+- ✅ 统一超时配置
+
+## 📋 目录

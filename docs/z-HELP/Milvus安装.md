@@ -1,6 +1,8 @@
 # 安装Milvus
 ### 下载docker-compose配置文件
-wget https://github.com/milvus-io/milvus/releases/download/v2.5.10/milvus-standalone-docker-compose.yml -O docker-compose.yml
+wget https://github.com/milvus-io/milvus/releases/download/v2.5.12/milvus-standalone-docker-compose.yml -O docker-compose.yml
+或者
+curl -L https://github.com/milvus-io/milvus/releases/download/v2.5.12/milvus-standalone-docker-compose.yml -o docker-compose.yml
 ### 启动
 sudo docker compose up -d
 

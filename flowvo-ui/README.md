@@ -390,3 +390,229 @@ npm install react-router-dom react-icons
 - ✅ 保存当前页面URL作为登录后的重定向目标
 
 ...
+
+# Flowvo UI - 智能文档管理系统前端
+
+基于 React + TypeScript + Chakra UI 构建的现代化文档管理系统前端界面。
+
+## 🚀 主要功能
+
+### 📚 文档管理
+- **文档上传**: 支持拖拽上传，多种文件格式（PDF、Word、Excel、PowerPoint、文本文件等）
+- **智能解析**: 自动提取文档内容并进行向量化处理
+- **标签管理**: 为文档添加自定义标签，便于分类和搜索
+- **元数据编辑**: 修改文档名称、描述等信息
+- **状态监控**: 实时查看文档处理状态（处理中、已完成、失败）
+
+### 🔍 智能搜索
+- **语义搜索**: 基于向量相似度的智能内容搜索
+- **多维度搜索**: 支持文档名称、标签、内容的综合搜索
+- **搜索结果高亮**: 清晰显示匹配度和相关内容片段
+
+### 🔐 用户认证与安全
+- **JWT Token 认证**: 安全的用户身份验证
+- **自动 Token 验证**: 实时检测 Token 有效性
+- **权限控制**: 基于用户身份的访问控制
+- **数据隔离**: 用户文档数据完全隔离
+
+### 💻 现代化 UI/UX
+- **响应式设计**: 支持桌面端和移动端
+- **深色/浅色主题**: 智能主题切换
+- **实时状态反馈**: 加载状态、错误提示、成功反馈
+- **拖拽上传**: 现代化的文件上传体验
+
+## 🛠 技术栈
+
+- **框架**: React 18 + TypeScript
+- **UI组件库**: Chakra UI
+- **状态管理**: Zustand
+- **路由**: React Router DOM
+- **HTTP客户端**: Axios
+- **构建工具**: Vite
+- **开发工具**: ESLint + TypeScript
+
+## 📦 安装与运行
+
+### 环境要求
+- Node.js >= 16.0.0
+- npm >= 8.0.0
+
+### 安装依赖
+```bash
+cd flowvo-ui
+npm install
+```
+
+### 开发环境运行
+```bash
+npm run dev
+```
+
+### 生产环境构建
+```bash
+npm run build
+```
+
+## 🔧 配置说明
+
+### API 代理配置
+前端通过 Vite 代理转发 API 请求到后端服务：
+
+```typescript
+// vite.config.ts
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+      secure: false
+    }
+  }
+}
+```
+
+### 环境变量
+创建 `.env.local` 文件配置环境变量：
+
+```bash
+VITE_API_BASE_URL=http://localhost:8080
+VITE_UPLOAD_MAX_SIZE=50MB
+```
+
+## 📋 使用指南
+
+### 1. 用户登录
+访问 `/login` 页面进行用户登录，系统会自动验证 Token 并保存用户信息。
+
+### 2. 文档上传
+1. 点击"上传文档"按钮
+2. 拖拽文件或点击选择文件
+3. 添加标签和描述（可选）
+4. 点击上传
+
+### 3. 文档管理
+- **查看文档**: 点击文档名称查看详细信息
+- **编辑信息**: 右键菜单选择"编辑信息"
+- **重新处理**: 对处理失败的文档可重新处理
+- **删除文档**: 右键菜单选择"删除"
+
+### 4. 智能搜索
+在搜索框中输入关键词，系统会：
+- 搜索文档标题和标签
+- 进行语义内容搜索
+- 按相关度排序结果
+
+## 🏗 项目结构
+
+```
+flowvo-ui/
+├── src/
+│   ├── components/          # 可复用组件
+│   │   ├── DocumentUpload.tsx    # 文档上传组件
+│   │   ├── ProtectedRoute.tsx    # 路由保护组件
+│   │   └── Header.tsx            # 页面头部
+│   ├── pages/              # 页面组件
+│   │   ├── documents/           # 文档管理页面
+│   │   ├── auth/               # 认证相关页面
+│   │   └── home/               # 首页
+│   ├── stores/             # 状态管理
+│   │   └── documentStore.ts     # 文档状态管理
+│   ├── hooks/              # 自定义 Hooks
+│   │   └── useAuth.tsx          # 认证 Hook
+│   ├── utils/              # 工具函数
+│   │   └── api.ts              # API 接口定义
+│   └── layouts/            # 布局组件
+├── public/                 # 静态资源
+└── package.json           # 项目配置
+```
+
+## 🔐 认证流程
+
+1. **登录**: 用户输入凭据，后端返回 JWT Token
+2. **Token 存储**: Token 保存在 localStorage 中
+3. **自动验证**: 每次页面刷新时验证 Token 有效性
+4. **请求拦截**: Axios 自动在请求头中添加 Authorization
+5. **错误处理**: Token 过期时自动跳转到登录页
+
+## 🎨 主题定制
+
+系统支持深色和浅色主题，可通过 Chakra UI 的 `useColorMode` 进行切换：
+
+```typescript
+const { colorMode, toggleColorMode } = useColorMode();
+```
+
+## 📊 状态管理
+
+使用 Zustand 进行状态管理，主要状态包括：
+
+- **文档列表**: documents
+- **搜索结果**: searchResults  
+- **加载状态**: loading
+- **错误信息**: error
+- **用户信息**: userInfo (通过 AuthContext)
+
+## 🔄 API 接口
+
+### 文档管理接口
+- `POST /api/v1/documents/upload` - 上传文档
+- `GET /api/v1/documents/user/{userId}` - 获取用户文档
+- `DELETE /api/v1/documents/{documentId}` - 删除文档
+- `PUT /api/v1/documents/{documentId}` - 更新文档信息
+- `POST /api/v1/documents/search` - 搜索文档
+
+### 认证接口
+- `POST /api/auth/login` - 用户登录
+- `GET /api/auth/me` - 获取当前用户信息
+- `POST /api/auth/logout` - 用户退出
+
+## 🐛 错误处理
+
+系统提供完善的错误处理机制：
+
+1. **网络错误**: 显示网络连接问题提示
+2. **认证错误**: 自动跳转到登录页面
+3. **业务错误**: 显示具体的错误信息
+4. **文件上传错误**: 显示文件类型或大小限制提示
+
+## 🔮 功能特性
+
+### 响应式设计
+- 支持桌面、平板、手机等多种设备
+- 自适应布局和交互方式
+
+### 用户体验优化
+- 实时状态反馈
+- 优雅的加载动画
+- 智能的错误提示
+- 直观的操作流程
+
+### 性能优化
+- 组件懒加载
+- 图片延迟加载
+- 请求去重和缓存
+- 虚拟滚动（大列表）
+
+## 🤝 开发贡献
+
+1. Fork 项目
+2. 创建功能分支: `git checkout -b feature/AmazingFeature`
+3. 提交更改: `git commit -m 'Add some AmazingFeature'`
+4. 推送分支: `git push origin feature/AmazingFeature`
+5. 提交 Pull Request
+
+## 📄 许可证
+
+本项目基于 MIT 许可证开源。
+
+## 🆘 问题反馈
+
+如果您在使用过程中遇到问题或有改进建议，请：
+
+1. 查看 [常见问题](docs/FAQ.md)
+2. 搜索已有的 [Issues](../../issues)
+3. 创建新的 Issue 描述问题
+
+---
+
+**Happy Coding! 🎉**
