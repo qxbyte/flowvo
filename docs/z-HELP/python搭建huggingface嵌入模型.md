@@ -19,6 +19,8 @@ source embedding_env/bin/activate
 
 pip install -U pip
 
+
+# 安装 uvicorn
 pip install fastapi uvicorn sentence-transformers
 
 # 推荐使用国内源加速（可选）
@@ -62,7 +64,6 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 curl https://huggingface.co
 无法连接huggingface时
 export http_proxy=http://127.0.0.1:7890
-
 export https_proxy=http://127.0.0.1:7890
 
 停止服务：pkill -f "uvicorn embed_server:app"

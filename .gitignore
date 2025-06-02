@@ -27,6 +27,7 @@
 *.project
 
 # 日志
+/logs/
 *.log
 *.gz
 
@@ -48,5 +49,9 @@
 /uploads/**/**
 
 .env
+.env.backup
+
+/models/
+/models/**
 
 /core/src/main/resources/application.yml
