@@ -30,21 +30,24 @@ spring:
   # 文件上传配置
   servlet:
     multipart:
-      max-file-size: 50MB      # 单个文件最大大小
-      max-request-size: 100MB  # 请求最大大小
+      max-file-size: 100MB
+      max-request-size: 100MB
       enabled: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/FlowVo?useSSL=false&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/flowvo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     username: root
     password: Aa111111
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
-    show-sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
 
   thymeleaf:
     prefix: classpath:/templates/
@@ -65,10 +68,10 @@ spring:
 eureka:
   client:
     enabled: false                           # 禁用Eureka客户端
-    service-url:                             # 修正了破折号
+    service-url:
       defaultZone: http://localhost:8761/eureka
-    fetch-registry: false                    # 修正了破折号
-    register-with-eureka: false              # 修正了破折号
+    fetch-registry: false
+    register-with-eureka: false
   instance:
     instance-id: ${spring.application.name}_${server.port}
     prefer-ip-address: true
@@ -128,7 +131,7 @@ app:
 # 文件上传配置
 file:
   upload:
-    max-size: 50MB
+    max-size: 10MB
     allowed-types: image/jpeg,image/png,image/gif,image/webp,image/bmp,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
   document:
     # 文档解析配置
@@ -168,6 +171,8 @@ logging:
     org.xue.app.milvus: DEBUG
     org.xue.app.agents: DEBUG
     org.springframework.cloud.netflix.eureka: OFF
+    org.xue.app: DEBUG
+    feign: DEBUG
 
 proxy:
   host: 127.0.0.1
@@ -177,6 +182,27 @@ proxy:
 local:
   embedding:
     server: http://localhost:8000
+
+# Agents服务配置
+agents:
+  service:
+    url: http://localhost:8081
+
+# OpenFeign配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 30000
+        readTimeout: 120000  # 增加到5分钟，用于文档处理
+      agents:  # 专门针对agents服务的配置
+        connectTimeout: 30000
+        readTimeout: 300000  # 5分钟超时，用于大文件处理
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
 
 
 

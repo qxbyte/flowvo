@@ -21,7 +21,15 @@ api.interceptors.request.use(
     // 如果有token则添加到请求头
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('使用localStorage中的token');
+      console.log('使用localStorage中的token:', token.substring(0, 20) + '...');
+    } else {
+      console.log('没有找到token，发送无认证请求');
+    }
+
+    // 如果是FormData请求，删除默认的Content-Type，让浏览器自动设置正确的multipart边界
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+      console.log('检测到FormData，删除默认Content-Type，让浏览器自动设置multipart边界');
     }
 
     return config;
@@ -445,5 +453,132 @@ export interface AIModel {
     provider: string;
     visionSupported: boolean;
 }
+
+// --- 文档管理相关类型和API ---
+
+// 文档类型定义
+export interface Document {
+  id: string;
+  name: string;
+  content?: string;
+  size: number;
+  type: string;
+  tags?: string[];
+  description?: string;
+  filePath?: string;
+  userId: string;
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  chunkCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 文档上传请求
+export interface DocumentUploadRequest {
+  file: File;
+  userId: string;
+  tags?: string[];
+  description?: string;
+}
+
+// 文档搜索请求
+export interface DocumentSearchRequest {
+  query: string;
+  userId?: string;
+  limit?: number;
+  threshold?: number;
+}
+
+// 搜索结果
+export interface DocumentSearchResult {
+  documentId: string;
+  documentName: string;
+  content: string;
+  score: number;
+  chunkIndex: number;
+}
+
+// App模块API响应包装类型
+export interface AppDocumentResponse {
+  success: boolean;
+  message?: string;
+  document?: Document;
+  documents?: Document[];
+  count?: number;
+  results?: DocumentSearchResult[];
+  query?: string;
+  supportedTypes?: string[];
+}
+
+// 文档管理API
+export const documentApi = {
+  // 上传文档
+  uploadDocument: (data: DocumentUploadRequest): Promise<AxiosResponse<AppDocumentResponse>> => {
+    const formData = new FormData();
+    formData.append('file', data.file);
+    formData.append('userId', data.userId);
+    if (data.tags) {
+      data.tags.forEach(tag => formData.append('tags', tag));
+    }
+    if (data.description) {
+      formData.append('description', data.description);
+    }
+
+    console.log('准备上传文档:', data.file.name, '大小:', data.file.size, 'bytes');
+
+    // 调用app模块的文档上传接口，为大文件处理增加更长超时时间
+    return api.post('/v1/documents/upload', formData, {
+      // 不要手动设置Content-Type，让浏览器自动设置boundary
+      timeout: 300000, // 5分钟超时，用于处理大文件和复杂文档解析
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          console.log('文档上传进度:', progress + '%');
+        }
+      }
+    });
+  },
+
+  // 删除文档
+  deleteDocument: (documentId: string, userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
+    return api.delete(`/v1/documents/${documentId}?userId=${userId}`);
+  },
+
+  // 更新文档
+  updateDocument: (documentId: string, userId: string, document: Partial<Document>): Promise<AxiosResponse<AppDocumentResponse>> => {
+    return api.put(`/v1/documents/${documentId}?userId=${userId}`, document);
+  },
+
+  // 获取文档详情
+  getDocument: (documentId: string, userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
+    return api.get(`/v1/documents/${documentId}?userId=${userId}`);
+  },
+
+  // 获取用户文档列表
+  getUserDocuments: (userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
+    return api.get(`/v1/documents/user/${userId}`);
+  },
+
+  // 搜索文档
+  searchDocuments: (params: DocumentSearchRequest): Promise<AxiosResponse<AppDocumentResponse>> => {
+    const searchParams = new URLSearchParams();
+    searchParams.append('query', params.query);
+    if (params.userId) searchParams.append('userId', params.userId);
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.threshold) searchParams.append('threshold', params.threshold.toString());
+
+    return api.post(`/v1/documents/search?${searchParams.toString()}`);
+  },
+
+  // 重新处理文档
+  reprocessDocument: (documentId: string, userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
+    return api.post(`/v1/documents/${documentId}/reprocess?userId=${userId}`);
+  },
+
+  // 获取支持的文件类型
+  getSupportedTypes: (): Promise<AxiosResponse<AppDocumentResponse>> => {
+    return api.get('/v1/documents/supported-types');
+  }
+};
 
 export default api;

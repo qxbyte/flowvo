@@ -33,6 +33,27 @@ export default defineConfig({
           });
         }
       },
+      '/agents': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/agents/, '/api'),
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('agents代理错误', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('agents代理请求:', req.method, req.url);
+            // 确保Authorization头被正确传递
+            if (req.headers.authorization) {
+              proxyReq.setHeader('Authorization', req.headers.authorization);
+            }
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('agents代理响应:', proxyRes.statusCode, req.url);
+          });
+        }
+      },
       '/uploads': {
         target: 'http://localhost:8080',
         changeOrigin: true,
