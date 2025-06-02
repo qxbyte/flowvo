@@ -42,7 +42,7 @@ import {
 import MainLayout from '../../layouts/MainLayout';
 
 const DashboardPage: React.FC = () => {
-  const cardBg = useColorModeValue('white', 'gray.800');
+  const cardBg = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
 
   // 模拟数据

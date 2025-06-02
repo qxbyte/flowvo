@@ -1,0 +1,210 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+# http://localhost:8080/sendStream-test
+
+spring:
+  application:
+    name: app
+  profiles:
+    active: dev
+    include:
+      - devtools
+      - prompt
+      - agent
+      - vision
+  security:
+    user:
+      name: admin
+      password: 123456
+
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+
+  # 这是 Spring Boot/Spring Framework 的全局开关，用来允许同名的 Bean 被多次定义时，后定义的 Bean 会覆盖前面的
+  main:
+    allow-bean-definition-overriding: true
+
+  # 文件上传配置
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+      enabled: true
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/flowvo?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: Aa111111
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML5
+    cache: false
+    
+  # Cloud配置
+  cloud:
+    compatibility-verifier:
+      enabled: false # 禁用兼容性校验不交验Spring Cloud BOM与Spring Boot 3.5.0的兼容校验（Spring Cloud 2025已经在路上）
+    discovery:
+      enabled: false  # 禁用服务发现
+    service-registry:
+      auto-registration:
+        enabled: false  # 禁用自动注册
+
+eureka:
+  client:
+    enabled: false                           # 禁用Eureka客户端
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    fetch-registry: false
+    register-with-eureka: false
+  instance:
+    instance-id: ${spring.application.name}_${server.port}
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30    # 服务提供者实例续期时间间隔
+    lease-expiration-duration-in-seconds: 90 # 服务提供者失效的时间，默认为90秒
+
+# JWT配置
+jwt:
+  secret: bTn5CjmhDSqFdBvKWLhPcCmH4n42jKnZeY6LzmNKRnawT2JyX9dM3h5L6qTVczK8
+  expiration: 86400000  # 24小时有效期（毫秒）
+
+# openai的配置，不可以更换为其他模型
+ai:
+  # 网络连接超时设置（秒）
+  connect-timeout: 30
+  read-timeout: 120
+  # 公共聊天配置
+  temperature: 0.7
+  max-tokens: 2048
+  openai:
+    # 使用正确的OpenAI API key（注释掉的是真实的OpenAI key）
+    api-key: ${AI_OPENAI_API_KEY}
+    base-url: ${AI_OPENAI_BASE_URL}
+    # 代理设置
+    proxy:
+      enabled: true  # 是否启用代理
+      host: 127.0.0.1
+      port: 7890
+    chat:
+      options:
+        model: gpt-4o-mini,gpt-4o,gpt-4-turbo,gpt-3.5-turbo
+  deepseek:
+    api-key: ${AI_DEEPSEEK_API_KEY}
+    base-url: ${AI_DEEPSEEK_BASE_URL}
+    # 代理设置
+    proxy:
+      enabled: false  # 是否启用代理
+      host: 127.0.0.1
+      port: 7890
+    chat:
+      options:
+        model: deepseek-chat
+
+# 文件上传和图像识别配置
+app:
+  upload:
+    path: uploads
+    avatar-dir: ./uploads/avatars/
+  vision:
+    max-file-size: 10485760  # 10MB
+    supported-types: image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp
+    default-model: gpt-4o-mini
+    connect-timeout: 30
+    read-timeout: 60
+    write-timeout: 60
+
+# 文件上传配置
+file:
+  upload:
+    max-size: 10MB
+    allowed-types: image/jpeg,image/png,image/gif,image/webp,image/bmp,text/plain,text/markdown,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+  document:
+    # 文档解析配置
+    max-content-length: 50000  # 提取的文档内容最大长度（字符数）
+    extract-text: true         # 是否提取文档文本内容
+    support-formats: pdf,doc,docx,xls,xlsx,ppt,pptx
+    # 解析器配置
+    parsers:
+      pdf:
+        enabled: true
+        max-pages: 50           # PDF最大解析页数
+        max-content-length: 50000
+      word:
+        enabled: true
+        max-content-length: 50000
+      excel:
+        enabled: true
+        max-sheets: 10          # Excel最大解析工作表数
+        max-rows: 100          # 每个工作表最大行数
+        max-columns: 20        # 每个工作表最大列数
+        output-format: json    # 输出格式：json
+      powerpoint:
+        enabled: true
+        max-slides: 50         # PowerPoint最大解析幻灯片数
+        max-content-length: 50000
+      text:
+        enabled: true
+        max-lines: 2000        # 文本文件最大行数
+        max-content-length: 50000
+        encoding: UTF-8        # 文本编码
+
+logging:
+  level:
+    root: INFO
+    org.springframework.boot.autoconfigure: WARN
+    org.springframework.security: DEBUG
+    org.xue.app.milvus: DEBUG
+    org.xue.app.agents: DEBUG
+    org.springframework.cloud.netflix.eureka: OFF
+    org.xue.app: DEBUG
+    feign: DEBUG
+
+proxy:
+  host: 127.0.0.1
+  port: 7890
+
+# 文本分割/向量化模型
+local:
+  embedding:
+    server: http://localhost:8000
+
+# Agents服务配置
+agents:
+  service:
+    url: http://localhost:8081
+
+# OpenFeign配置
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 30000
+        readTimeout: 120000  # 增加到5分钟，用于文档处理
+      agents:  # 专门针对agents服务的配置
+        connectTimeout: 30000
+        readTimeout: 300000  # 5分钟超时，用于大文件处理
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
+
+
+
+

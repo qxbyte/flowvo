@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.xue.app.dto.AuthResponse;
+import org.xue.app.dto.CheckEmailRequest;
 import org.xue.app.dto.LoginRequest;
 import org.xue.app.dto.LoginResponse;
 import org.xue.app.dto.RegisterRequest;
@@ -61,6 +62,15 @@ public class AuthController {
     public ResponseEntity<AuthResponse> logout() {
         // JWT是无状态的，客户端需要自行删除token
         return ResponseEntity.ok(AuthResponse.success(null, null));
+    }
+    
+    /**
+     * 检查邮箱是否已存在
+     */
+    @PostMapping("/check-email")
+    public ResponseEntity<AuthResponse> checkEmail(@RequestBody CheckEmailRequest request) {
+        AuthResponse response = authService.checkEmail(request.getEmail());
+        return ResponseEntity.ok(response);
     }
     
     /**

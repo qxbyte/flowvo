@@ -9,7 +9,7 @@ interface ChatMessageProps {
 const ChatMessage: React.FC<ChatMessageProps> = ({ content, sender }) => {
   const bgColor = useColorModeValue(
     sender === 'user' ? 'blue.50' : 'green.50',
-    sender === 'user' ? 'blue.900' : 'green.900'
+    sender === 'user' ? '#1e3a8a' : '#166534'
   );
   
   const textColor = useColorModeValue('gray.800', 'white');

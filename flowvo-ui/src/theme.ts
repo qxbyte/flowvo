@@ -2,8 +2,8 @@ import { extendTheme, type ThemeConfig } from "@chakra-ui/react";
 
 // 设置颜色模式配置
 const config: ThemeConfig = {
-  initialColorMode: "light",
-  useSystemColorMode: false,
+  initialColorMode: "system",
+  useSystemColorMode: true,
 };
 
 // 自定义主题
@@ -123,7 +123,7 @@ const theme = extendTheme({
         width: "100%"
       },
       body: {
-        bg: props.colorMode === "dark" ? "gray.900" : "gray.50",
+        bg: props.colorMode === "dark" ? "#1B212C" : "gray.50",
         color: props.colorMode === "dark" ? "gray.100" : "gray.800",
         minHeight: "100%",
         width: "100%",

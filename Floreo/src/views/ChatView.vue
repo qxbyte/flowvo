@@ -47,11 +47,11 @@ let refreshTimer: number | null = null
 // 页面加载时获取对话记录列表
 onMounted(async () => {
   console.log('ChatView 组件已挂载，检查用户认证状态')
-  
+
   // 检查用户是否已登录
   const token = localStorage.getItem('token')
   const isAuthenticated = token && localStorage.getItem('isAuthenticated') === 'true'
-  
+
   if (!isAuthenticated) {
     console.log('用户未登录，重定向到登录页面')
     // 清除可能存在的无效认证数据
@@ -59,18 +59,18 @@ onMounted(async () => {
     localStorage.removeItem('token')
     localStorage.removeItem('userId')
     localStorage.removeItem('username')
-    
+
     // 重定向到登录页
     router.push('/login')
     return // 防止继续执行后续代码
   }
-  
+
   console.log('用户已登录，准备加载对话记录...')
   console.log('当前登录用户:', localStorage.getItem('username'))
-  
+
   await loadChatRecords()
   console.log('对话记录加载完成，记录数量:', chatRecords.value.length, '详细数据:', chatRecords.value)
-  
+
   // 设置定时刷新对话列表（每30秒刷新一次）
   refreshTimer = window.setInterval(async () => {
     console.log('定时刷新对话列表...')
@@ -89,7 +89,7 @@ onBeforeUnmount(() => {
 // 处理对话加载
 const loadChat = async (chatId: string) => {
   console.log('ChatView收到loadChat事件，chatId:', chatId)
-  
+
   // 当收到'refresh'参数时，刷新全部对话列表
   if (chatId === 'refresh') {
     console.log('正在刷新对话列表...')
@@ -97,7 +97,7 @@ const loadChat = async (chatId: string) => {
     console.log('对话列表刷新完成, 记录数量:', chatRecords.value.length)
     return
   }
-  
+
   // 加载特定对话
   if (chatId) {
     await loadChatMessages(chatId)

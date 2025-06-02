@@ -1,12 +1,12 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import axios from 'axios';
-import { type UserInfo, authApi, type AuthResponse } from '../utils/api';
+import { type UserInfo, authApi } from '../utils/api';
 
 // 定义认证上下文的类型
 interface AuthContextType {
   isAuthenticated: boolean;
   userInfo: UserInfo | null;
+  loading: boolean; // 添加loading状态
   login: (token: string, userInfo: UserInfo) => void;
   logout: () => void;
 }
@@ -15,6 +15,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   userInfo: null,
+  loading: true, // 初始状态为loading
   login: () => {},
   logout: () => {},
 });
@@ -23,34 +24,36 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState<boolean>(true); // 添加loading状态
   
   // 在组件挂载时，从本地存储中恢复认证状态并验证token
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUserInfo = localStorage.getItem('userInfo');
-    
-    if (token) {
-      try {
-        let parsedUserInfo = null;
-        
-        // 尝试解析用户信息
-        if (storedUserInfo) {
-          try {
-            parsedUserInfo = JSON.parse(storedUserInfo);
-          } catch (e) {
-            console.warn('解析存储的用户信息失败，将通过API重新获取');
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      const storedUserInfo = localStorage.getItem('userInfo');
+      
+      if (token) {
+        try {
+          let parsedUserInfo = null;
+          
+          // 尝试解析用户信息
+          if (storedUserInfo) {
+            try {
+              parsedUserInfo = JSON.parse(storedUserInfo);
+            } catch (e) {
+              console.warn('解析存储的用户信息失败，将通过API重新获取');
+            }
           }
-        }
 
-        // 设置初始认证状态
-        setIsAuthenticated(true);
-        if (parsedUserInfo && typeof parsedUserInfo === 'object') {
-          setUserInfo(parsedUserInfo);
-        }
-        
-        // 验证token并获取最新的用户信息
-        authApi.getCurrentUser()
-          .then(response => {
+          // 设置初始认证状态
+          setIsAuthenticated(true);
+          if (parsedUserInfo && typeof parsedUserInfo === 'object') {
+            setUserInfo(parsedUserInfo);
+          }
+          
+          try {
+            // 验证token并获取最新的用户信息
+            const response = await authApi.getCurrentUser();
             if (response.data) {
               let userData = response.data as UserInfo;
               
@@ -62,37 +65,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // 更新用户信息
               setUserInfo(userData);
               localStorage.setItem('userInfo', JSON.stringify(userData));
-              console.log('成功更新用户信息:', userData);
+              console.log('Token验证成功，用户信息已更新:', userData);
+              setIsAuthenticated(true);
             }
-          })
-          .catch(error => {
+          } catch (error: any) {
             console.error('验证token失败:', error);
             
             // 只有在明确收到401未授权响应时才清除登录状态
             if (error.response && error.response.status === 401) {
               console.warn('Token已过期，清除登录状态');
-              logout();
+              localStorage.removeItem('token');
+              localStorage.removeItem('userInfo');
+              setIsAuthenticated(false);
+              setUserInfo(null);
+              
               // 避免在登录页面重定向
-              if (!window.location.pathname.includes('/login')) {
+              if (!window.location.pathname.includes('/login') && 
+                  !window.location.pathname.includes('/register')) {
                 // 保存当前页面URL作为重定向目标
                 const currentPath = window.location.pathname + window.location.search;
                 window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
               }
             } else {
               // 其他错误保持当前状态
-              console.warn('验证token遇到问题，保持当前状态:', error.message);
+              console.warn('验证token遇到网络问题，保持当前登录状态:', error.message);
+              // 保持当前的isAuthenticated状态，不强制登出
             }
-          });
-      } catch (error) {
-        console.error('处理认证状态时发生错误:', error);
-        // 发生错误时清除可能损坏的数据
-        logout();
+          }
+        } catch (error: any) {
+          console.error('处理认证状态时发生错误:', error);
+          // 发生错误时清除可能损坏的数据
+          localStorage.removeItem('token');
+          localStorage.removeItem('userInfo');
+          setIsAuthenticated(false);
+          setUserInfo(null);
+        }
+      } else {
+        // 没有token时确保清除认证状态
+        setIsAuthenticated(false);
+        setUserInfo(null);
       }
-    } else {
-      // 没有token时确保清除认证状态
-      setIsAuthenticated(false);
-      setUserInfo(null);
-    }
+      
+      // 认证检查完成，停止loading
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
   
   // 登录方法
@@ -127,7 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userInfo, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, userInfo, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

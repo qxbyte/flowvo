@@ -10,6 +10,9 @@
   
   /* 导航栏高度变量 */
   --header-height: 60px;
+  
+  /* 支持系统颜色模式 */
+  color-scheme: light dark;
 }
 
 a {

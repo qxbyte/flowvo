@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react';
+import React, { type ReactNode, useEffect } from 'react';
 import { 
   Box, 
   Flex, 
@@ -52,11 +52,43 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
-  const bgColor = useColorModeValue('white', 'gray.800');
+  const bgColor = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const { colorMode, toggleColorMode } = useColorMode();
   
+  // 预先计算所有需要的颜色值
+  const activeTextColor = useColorModeValue('blue.500', 'blue.300');
+  const inactiveTextColor = useColorModeValue('gray.600', 'gray.400');
+  const activeHoverTextColor = useColorModeValue('blue.600', 'blue.200');
+  const inactiveHoverTextColor = useColorModeValue('gray.800', 'gray.200');
+  const hoverBgColor = useColorModeValue('gray.100', 'gray.700');
+  const menuActiveBgColor = useColorModeValue('blue.50', 'blue.900');
+  const menuActiveTextColor = useColorModeValue('blue.500', 'blue.300');
+  const menuHoverBgColor = useColorModeValue('gray.100', 'gray.700');
+  const menuHoverTextColor = useColorModeValue('gray.900', 'gray.50');
+  const userTextColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const emailTextColor = useColorModeValue('gray.500', 'gray.400');
+  const menuItemTextColor = useColorModeValue('gray.700', 'whiteAlpha.900');
+  const menuItemHoverBgColor = useColorModeValue('gray.100', 'whiteAlpha.100');
+  
   const { isAuthenticated, userInfo, logout } = useAuth();
+  
+  // 调试用户信息
+  useEffect(() => {
+    console.log('Header中的userInfo:', userInfo);
+    console.log('name:', userInfo?.name);
+    console.log('name存在且非空:', userInfo?.name && userInfo.name.trim());
+    console.log('头像URL:', userInfo?.avatar);
+  }, [userInfo]);
+  
+  // 构建完整的头像URL
+  const getAvatarUrl = (avatar?: string) => {
+    if (!avatar) return undefined;
+    // 如果是完整URL，直接返回
+    if (avatar.startsWith('http')) return avatar;
+    // 相对路径会通过Vite代理转发到后端
+    return avatar;
+  };
   
   // 判断是否为聊天页面，给不同的布局
   const isChatPage = location.pathname.startsWith('/pixel-chat');
@@ -72,13 +104,16 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
         duration: 3000,
         isClosable: true,
       });
+      
+      // 退出登录后重定向到登录页面
+      navigate('/login');
     } catch (error) {
       console.error('退出登录失败:', error);
     }
   };
   
   return (
-    <Box minH="100vh" bg={useColorModeValue('gray.50', 'gray.800')} position="relative" p={0} m={0}>
+    <Box minH="100vh" bg={useColorModeValue('gray.50', '#1B212C')} position="relative" p={0} m={0}>
       {/* 顶部导航栏 */}
       <Flex
         as="header"
@@ -114,7 +149,19 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             transition="transform 0.3s ease"
             _hover={{ transform: 'scale(1.1)' }}
           />
-          <Heading size="md" fontFamily="monospace" display={{ base: 'none', md: 'block' }}>
+          <Heading 
+            size="md" 
+            fontFamily="monospace" 
+            display={{ base: 'none', md: 'block' }}
+            transition="all 0.3s ease"
+            _hover={{
+              background: 'linear-gradient(45deg, #ff0000, #ff7700, #ffdd00, #00ff00, #0077ff, #4400ff, #aa00ff)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              color: 'transparent',
+              transform: 'scale(1.05)'
+            }}
+          >
             FlowVo
           </Heading>
         </Link>
@@ -134,10 +181,10 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
                 px={2}
                 py={1}
                 borderRadius="md"
-                color={useColorModeValue(isActive ? 'blue.500' : 'gray.600', isActive ? 'blue.300' : 'gray.400')}
+                color={isActive ? activeTextColor : inactiveTextColor}
                 _hover={{
-                  color: useColorModeValue(isActive ? 'blue.600' : 'gray.800', isActive ? 'blue.200' : 'gray.200'),
-                  bg: useColorModeValue('gray.100', 'gray.700')
+                  color: isActive ? activeHoverTextColor : inactiveHoverTextColor,
+                  bg: hoverBgColor
                 }}
               >
                 <item.icon style={{ marginRight: '0.5rem' }} />
@@ -164,9 +211,9 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
                   key={item.path} 
                   as={RouterLink} 
                   to={item.path}
-                  bg={location.pathname.startsWith(item.path) ? useColorModeValue('blue.50', 'blue.900') : undefined}
-                  color={location.pathname.startsWith(item.path) ? useColorModeValue('blue.500', 'blue.300') : undefined}
-                  _hover={{ bg: useColorModeValue('gray.100', 'gray.700'), color: useColorModeValue('gray.900', 'gray.50') }}
+                  bg={location.pathname.startsWith(item.path) ? menuActiveBgColor : undefined}
+                  color={location.pathname.startsWith(item.path) ? menuActiveTextColor : undefined}
+                  _hover={{ bg: menuHoverBgColor, color: menuHoverTextColor }}
                 >
                   <item.icon style={{ marginRight: '0.5rem' }} />
                   {item.name}
@@ -188,75 +235,56 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
             <Menu>
               <MenuButton
                 as={Box}
-              cursor="pointer"
-              transition="transform 0.3s ease"
-              _hover={{ transform: 'scale(1.1)' }}
-              ml={4}
-              p={2}
-            >
-              <Tooltip label={userInfo?.nickname || '用户信息'}>
-                <Avatar 
-                  size="md" 
-                  name={userInfo?.nickname || userInfo?.username || '用户'}
-                  src={userInfo?.avatar || '/person.svg'} 
-                  bg="transparent"
-                  boxShadow="none"
-                  border="none"
-                  borderRadius="0"
-                  padding="0"
-                  width="40px"
-                  height="32px"
-                  minWidth="40px"
-                  overflow="visible"
-                  icon={<Image src="/person.svg" alt="用户" boxSize="32px" objectFit="contain" />}
-                />
-              </Tooltip>
-            </MenuButton>
-            <MenuList minWidth="200px">
-              <Box px={4} py={3}>
-                <Text fontWeight="bold" fontSize="md" color={useColorModeValue('gray.800', 'whiteAlpha.900')}>{userInfo?.nickname || userInfo?.username || '用户'}</Text>
-                <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
-                  {userInfo?.email || ''}
-                </Text>
-              </Box>
-              <MenuDivider />
-              <MenuItem 
-                icon={<FiUser />} 
-                as={RouterLink} 
-                to="/profile" 
-                fontSize="md" 
-                py={2}
-                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
-                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
+                cursor="pointer"
+                ml={4}
+                p={2}
               >
-                个人资料
-              </MenuItem>
-              <MenuItem 
-                icon={<FiSettings />} 
-                as={RouterLink} 
-                to="/user-profile/settings"
-                fontSize="md" 
-                py={2}
-                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
-                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
-              >
-                设置
-              </MenuItem>
-              <MenuDivider />
-              <MenuItem 
-                icon={<FiLogOut />} 
-                onClick={handleLogout} 
-                fontSize="md" 
-                py={2}
-                color={useColorModeValue('gray.700', 'whiteAlpha.900')}
-                _hover={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100'), color: useColorModeValue('gray.700', 'whiteAlpha.900') }}
-                _focus={{ bg: useColorModeValue('gray.100', 'whiteAlpha.100') }}
-              >
-                退出登录
-              </MenuItem>
-            </MenuList>
+                <Tooltip label={userInfo?.name || '用户信息'}>
+                  <Avatar 
+                    size="sm" 
+                    name={userInfo?.name || '用户'}
+                    src={getAvatarUrl(userInfo?.avatar)}
+                    bg={userInfo?.avatar ? "transparent" : "blue.500"}
+                    color={userInfo?.avatar ? "transparent" : "white"}
+                    borderRadius="full"
+                  />
+                </Tooltip>
+              </MenuButton>
+              <MenuList minWidth="200px" zIndex={1000}>
+                <Box px={4} py={3}>
+                  <Text fontWeight="bold" fontSize="md" color={userTextColor}>
+                    {userInfo?.name && userInfo.name.trim() ? userInfo.name : '用户'}
+                  </Text>
+                  <Text fontSize="sm" color={emailTextColor}>
+                    {userInfo?.email || ''}
+                  </Text>
+                </Box>
+                <MenuDivider />
+                <MenuItem 
+                  icon={<FiSettings />} 
+                  as={RouterLink} 
+                  to="/user-profile/settings"
+                  fontSize="md" 
+                  py={2}
+                  color={menuItemTextColor}
+                  _hover={{ bg: menuItemHoverBgColor, color: menuItemTextColor }}
+                  _focus={{ bg: menuItemHoverBgColor }}
+                >
+                  设置
+                </MenuItem>
+                <MenuDivider />
+                <MenuItem 
+                  icon={<FiLogOut />} 
+                  onClick={handleLogout} 
+                  fontSize="md" 
+                  py={2}
+                  color={menuItemTextColor}
+                  _hover={{ bg: menuItemHoverBgColor, color: menuItemTextColor }}
+                  _focus={{ bg: menuItemHoverBgColor }}
+                >
+                  退出登录
+                </MenuItem>
+              </MenuList>
             </Menu>
           </HStack>
         ) : (
@@ -275,15 +303,6 @@ const Header: React.FC<HeaderProps> = ({ children }) => {
               variant="outline"
             >
               登录
-            </Button>
-            <Button 
-              as={RouterLink} 
-              to="/register" 
-              size="sm" 
-              colorScheme="blue"
-              display={{ base: 'none', sm: 'flex' }}
-            >
-              注册
             </Button>
           </HStack>
         )}

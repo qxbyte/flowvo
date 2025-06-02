@@ -27,6 +27,7 @@
 *.project
 
 # 日志
+/logs/
 *.log
 *.gz
 
@@ -42,8 +43,15 @@
 /Floreo/.vscode/
 /.cursor/
 
+# 上传目录
+/uploads/
+/uploads/**
+/uploads/**/**
+
 .env
+.env.backup
+
+/models/
+/models/**
 
 /core/src/main/resources/application.yml
-/app/src/main/resources/application.yml
-/app/src/main/resources/application-*.yml

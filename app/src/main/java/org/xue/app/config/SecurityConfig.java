@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.xue.app.security.JwtAuthenticationFilter;
 import org.xue.app.security.JwtService;
+import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
 
@@ -62,25 +63,31 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .authorizeHttpRequests(auth -> auth
+                    // 首先明确允许OPTIONS请求（CORS预检）
+                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     // 允许登录相关接口、订单接口和静态资源访问
                     .requestMatchers(
                     "/api/auth/login",
                     "/api/auth/register",
                     "/api/auth/logout",
                     "/api/auth/me",
+                    "/api/auth/check-email",
                     "/api/user/login",
                     "/api/user/register",
                     "/api/user/check",
                     "/api/orders/**",
                     "/api/chat/**",
                     "/api/pixel_chat/**",
+                    "/api/v1/documents/**",
+                    "/uploads/**",
                     "/index.html",
                     "/js/**",
                     "/css/**",
                     "/assets/**"
-                ).permitAll()
-                // 其他所有请求都需要认证
-                .anyRequest().authenticated())
+                    ).permitAll()
+                    // 其他所有请求都需要认证
+                    .anyRequest().authenticated()
+            )
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -89,7 +96,8 @@ public class SecurityConfig {
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.setCharacterEncoding("UTF-8");
                     response.getWriter().write("{\"message\":\"未授权的访问，请登录\"}");
                 }))
             .build();

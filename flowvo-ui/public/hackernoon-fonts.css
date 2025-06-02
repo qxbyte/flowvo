@@ -1,0 +1,68 @@
+/* HackerNoon字体定义 */
+
+/* HackerNoon Font V1 - 原版像素字体 */
+@font-face {
+  font-family: 'HackerNoon';
+  src: url('/fonts/HackerNoonV1-Regular.otf') format('opentype'),
+       url('/fonts/HackerNoonV1-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* HackerNoon Font V2 - 现代版像素字体 */
+@font-face {
+  font-family: 'HackerNoonV2';
+  src: url('/fonts/HackerNoonV2-Regular.otf') format('opentype'),
+       url('/fonts/HackerNoonV2-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 像素字体样式类 */
+.hackernoon-font {
+  font-family: 'HackerNoon', monospace;
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+.hackernoon-font-v2 {
+  font-family: 'HackerNoonV2', monospace;
+  font-weight: normal;
+  letter-spacing: 1px;
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}
+
+/* 不同尺寸的像素字体 */
+.hackernoon-title {
+  font-family: 'HackerNoonV2', monospace;
+  font-size: 24px;
+  letter-spacing: 2px;
+  line-height: 1.2;
+}
+
+.hackernoon-subtitle {
+  font-family: 'HackerNoonV2', monospace;
+  font-size: 18px;
+  letter-spacing: 1.5px;
+  line-height: 1.3;
+}
+
+.hackernoon-button {
+  font-family: 'HackerNoon', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hackernoon-small {
+  font-family: 'HackerNoon', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+} 

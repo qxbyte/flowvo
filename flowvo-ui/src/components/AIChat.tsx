@@ -117,7 +117,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   
-  const bgColor = useColorModeValue('white', 'gray.800');
+  const bgColor = useColorModeValue('white', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   
   const [loading, setLoading] = useState(false);
@@ -1095,7 +1095,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
               bg: useColorModeValue('gray.200', 'gray.600')
             }}
             _focus={{
-              bg: useColorModeValue('white', 'gray.800'),
+              bg: useColorModeValue('white', '#171A24'),
               borderColor: 'blue.300',
               boxShadow: '0 0 0 1px rgba(66, 153, 225, 0.6)'
             }}
