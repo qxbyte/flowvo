@@ -52,7 +52,7 @@ server:
 # 向量化服务配置
 embedding:
   # 服务类型：EXTERNAL（外部Python服务）或 SPRING_AI（Spring AI内置服务）
-  type: SPRING_AI  # 切换到外部服务模式，避免OpenAI API问题
+  type: SPRING_AI  # 使用Spring AI内置服务（OpenAI嵌入模型）
   external:
     # 外部向量化服务URL
     url: http://localhost:8000

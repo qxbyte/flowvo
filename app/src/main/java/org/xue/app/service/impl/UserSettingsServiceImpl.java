@@ -9,6 +9,8 @@ import org.xue.app.dto.UserSettingsDTO;
 import org.xue.app.entity.User;
 import org.xue.app.repository.UserRepository;
 import org.xue.app.service.UserSettingsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +22,8 @@ import java.util.UUID;
 
 @Service
 public class UserSettingsServiceImpl implements UserSettingsService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserSettingsServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -120,10 +124,31 @@ public class UserSettingsServiceImpl implements UserSettingsService {
     @Override
     public String uploadAvatar(String username, MultipartFile file) {
         try {
+            // 处理相对路径，转换为绝对路径
+            String absoluteAvatarDir;
+            if (avatarUploadDir.startsWith("./")) {
+                // 获取当前工作目录（应该是项目根目录）
+                String workingDir = System.getProperty("user.dir");
+                logger.info("当前工作目录: {}", workingDir);
+                
+                // 如果工作目录是app子目录，需要返回到项目根目录
+                if (workingDir.endsWith("/app") || workingDir.endsWith("\\app")) {
+                    workingDir = new File(workingDir).getParent();
+                    logger.info("调整工作目录到项目根目录: {}", workingDir);
+                }
+                
+                absoluteAvatarDir = Paths.get(workingDir, avatarUploadDir.substring(2)).toString();
+            } else {
+                absoluteAvatarDir = avatarUploadDir;
+            }
+            
+            logger.info("头像上传目录: {}", absoluteAvatarDir);
+            
             // 创建上传目录
-            Path uploadPath = Paths.get(avatarUploadDir);
+            Path uploadPath = Paths.get(absoluteAvatarDir);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
+                logger.info("创建头像上传目录: {}", uploadPath);
             }
 
             // 生成唯一文件名
@@ -137,6 +162,7 @@ public class UserSettingsServiceImpl implements UserSettingsService {
             // 保存文件
             Path filePath = uploadPath.resolve(filename);
             Files.copy(file.getInputStream(), filePath);
+            logger.info("头像文件保存到: {}", filePath);
 
             // 更新用户头像URL
             Optional<User> userOptional = userRepository.findByUsername(username);
@@ -145,10 +171,12 @@ public class UserSettingsServiceImpl implements UserSettingsService {
                 String avatarUrl = "/uploads/avatars/" + filename;
                 user.setAvatarUrl(avatarUrl);
                 userRepository.save(user);
+                logger.info("用户 {} 头像URL更新为: {}", username, avatarUrl);
                 return avatarUrl;
             }
 
         } catch (IOException e) {
+            logger.error("头像上传失败: {}", e.getMessage(), e);
             throw new RuntimeException("头像上传失败: " + e.getMessage());
         }
         
