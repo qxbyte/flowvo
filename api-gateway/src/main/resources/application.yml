@@ -1,0 +1,70 @@
+server:
+  port: 9870
+
+spring:
+  application:
+    name: api-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    compatibility-verifier:
+      enabled: false
+    gateway:
+      routes:
+        # App服务路由 (用户认证和订单管理)
+        - id: app-service
+          uri: http://localhost:8080
+          predicates:
+            - Path=/api/auth/**,/api/orders/**,/api/chat/**,/api/pixel_chat/**,/api/vision/**,/api/user/**
+        
+        # Agents服务路由 (知识库问答和文档管理)
+        - id: agents-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/knowledge-qa/**,/api/agents/**,/api/documents/**
+        
+        # 静态资源路由
+        - id: static-resources
+          uri: http://localhost:8080
+          predicates:
+            - Path=/uploads/**,/js/**,/css/**,/assets/**,/favicon.ico,/index.html
+
+      # 全局CORS配置
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+# JWT配置
+jwt:
+  secret: bTn5CjmhDSqFdBvKWLhPcCmH4n42jKnZeY6LzmNKRnawT2JyX9dM3h5L6qTVczK8
+  expiration: 86400 # 24小时
+
+# 日志配置
+logging:
+  level:
+    org.xue.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# 健康检查
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always 

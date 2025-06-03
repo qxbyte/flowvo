@@ -106,19 +106,23 @@ public class JwtService {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
         
-        log.info("创建新Token - 用户: {}, 创建时间: {}, 过期时间: {}, 有效期: {} 天", 
+        log.info("创建新Token - 用户: {}, Claims: {}, 创建时间: {}, 过期时间: {}, 有效期: {} 天", 
             subject, 
+            claims,
             now, 
             expiryDate,
             jwtExpiration / (1000 * 60 * 60 * 24));
             
-        return Jwts.builder()
-                .setClaims(claims)
+        String token = Jwts.builder()
                 .setSubject(subject)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
+                .addClaims(claims)  // 使用addClaims而不是setClaims，避免覆盖
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+                
+        log.info("生成的Token: {}", token);
+        return token;
     }
 
     // 验证token是否有效

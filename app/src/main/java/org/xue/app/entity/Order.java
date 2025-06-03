@@ -31,6 +31,12 @@ public class Order {
     private String orderNumber;
     
     /**
+     * 用户ID（订单所属用户）
+     */
+    @Column(name = "user_id", nullable = false)
+    private String userId;
+    
+    /**
      * 客户名称
      */
     @Column(name = "customer_name", nullable = false)

@@ -14,6 +14,8 @@
 **/target/
 /flowvo.git/**
 /flowvo.git/
+/flowvo-ui/dist/
+/flowvo-ui/dist/**
 
 # Java 编译产物
 *.class
@@ -22,14 +24,19 @@
 
 # IDEA、Eclipse 等 IDE
 .idea/
+*.iws
 *.iml
+*.ipr
 *.classpath
 *.project
+
 
 # 日志
 /logs/
 *.log
 *.gz
+
+/pids/
 
 # Generated files
 /out/
@@ -53,5 +60,7 @@
 
 /models/
 /models/**
+
+/embedding_env/
 
 /core/src/main/resources/application.yml

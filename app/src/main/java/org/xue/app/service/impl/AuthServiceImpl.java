@@ -15,6 +15,8 @@ import org.xue.app.service.AuthService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 认证服务实现类
@@ -74,14 +76,27 @@ public class AuthServiceImpl implements AuthService {
                     .authorities(Collections.singletonList(new SimpleGrantedAuthority(user.getRole())))
                     .build();
             
-            // 生成令牌
-            String token = jwtService.generateToken(userDetails);
+            // 创建额外的claims，包含用户ID
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", user.getId().toString());
+            
+            log.info("=== JWT生成调试信息 ===");
+            log.info("用户数据库ID: {}", user.getId());
+            log.info("用户名: {}", user.getUsername());
+            log.info("添加到JWT的userId: {}", user.getId().toString());
+            log.info("extraClaims内容: {}", extraClaims);
+            
+            // 生成包含用户ID的令牌
+            String token = jwtService.generateToken(extraClaims, userDetails);
+            
+            log.info("生成的JWT token: {}", token);
+            log.info("=====================");
             
             // 构建用户信息并返回
             UserInfoDTO userInfo = UserInfoDTO.builder()
                     .id(user.getId().toString())
                     .username(user.getUsername())
-                    .name(user.getNickname())
+                    .name(user.getNickname() != null ? user.getNickname() : user.getUsername())
                     .email(user.getEmail())
                     .avatar(user.getAvatarUrl())
                     .roles(Collections.singletonList(user.getRole()))
@@ -90,7 +105,7 @@ public class AuthServiceImpl implements AuthService {
             return LoginResponse.success(token, userInfo);
         } catch (Exception e) {
             log.error("登录失败", e);
-            return LoginResponse.failure("登录失败，请稍后重试");
+            return LoginResponse.failure("登录失败: " + e.getMessage());
         }
     }
 
@@ -115,9 +130,22 @@ public class AuthServiceImpl implements AuthService {
             User user = new User();
             user.setUsername(request.getUsername());
             user.setPassword(passwordEncoder.encode(request.getPassword()));
-            user.setNickname(request.getNickname());
+            
+            // 处理昵称字段，确保不为null
+            String nickname = request.getNickname();
+            if (nickname == null || nickname.trim().isEmpty()) {
+                nickname = request.getName(); // 尝试使用name字段
+                if (nickname == null || nickname.trim().isEmpty()) {
+                    nickname = request.getUsername(); // 最后使用username
+                }
+            }
+            user.setNickname(nickname);
+            
             user.setEmail(request.getEmail() != null ? request.getEmail() : request.getUsername() + "@example.com");
             user.setRole("USER");
+            
+            log.info("注册新用户: username={}, nickname={}, email={}", 
+                user.getUsername(), user.getNickname(), user.getEmail());
             
             // 保存用户
             User savedUser = userRepository.save(user);
@@ -129,8 +157,12 @@ public class AuthServiceImpl implements AuthService {
                     .authorities(new ArrayList<>())
                     .build();
             
-            // 生成令牌
-            String token = jwtService.generateToken(userDetails);
+            // 创建额外的claims，包含用户ID
+            Map<String, Object> extraClaims = new HashMap<>();
+            extraClaims.put("userId", savedUser.getId().toString());
+            
+            // 生成包含用户ID的令牌
+            String token = jwtService.generateToken(extraClaims, userDetails);
             
             // 构建用户信息
             UserInfoDTO userInfo = UserInfoDTO.builder()

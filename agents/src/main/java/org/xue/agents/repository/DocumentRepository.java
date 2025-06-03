@@ -55,4 +55,26 @@ public interface DocumentRepository extends JpaRepository<Document, String> {
      * 根据文档名称和用户ID模糊查询
      */
     List<Document> findByUserIdAndNameContainingIgnoreCaseOrderByUpdatedAtDesc(String userId, String name);
-} 
+
+    List<Document> findByCategoryOrderByUpdatedAtDesc(String categoryId);
+    
+    /**
+     * 根据用户ID和分类查询文档（用户隔离）
+     */
+    List<Document> findByUserIdAndCategoryOrderByUpdatedAtDesc(String userId, String categoryId);
+    
+    /**
+     * 根据用户ID和分类查询文档（简单版本）
+     */
+    List<Document> findByUserIdAndCategory(String userId, String categoryId);
+    
+    /**
+     * 查询用户的分类统计信息
+     */
+    @Query("SELECT d.category, c.name, c.icon, COUNT(d), MAX(d.updatedAt) " +
+           "FROM Document d LEFT JOIN DocumentCategory c ON d.category = c.id " +
+           "WHERE d.userId = :userId AND d.status = 'COMPLETED' " +
+           "GROUP BY d.category, c.name, c.icon " +
+           "ORDER BY COUNT(d) DESC")
+    List<Object[]> findCategoryStatisticsByUserId(@Param("userId") String userId);
+}

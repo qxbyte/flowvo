@@ -48,14 +48,18 @@ api.interceptors.response.use(
   },
   (error) => {
     if (error.response) {
-      // 如果是401未授权错误，可能是token过期或无效
-      if (error.response.status === 401) {
-        console.error('认证失败(401)，请求URL:', error.config.url);
+      // 根据状态码决定日志级别
+      const status = error.response.status;
+      const url = error.config.url;
+      const method = error.config.method?.toUpperCase();
+      
+      if (status === 401) {
+        console.error('认证失败(401)，请求URL:', url);
         
         // 判断是否为token验证相关的请求
-        const isAuthEndpoint = error.config.url && (
-          error.config.url.includes('/auth/me') || 
-          error.config.url.includes('/auth/validate')
+        const isAuthEndpoint = url && (
+          url.includes('/auth/me') || 
+          url.includes('/auth/validate')
         );
         
         // 判断请求是否包含有效token
@@ -76,13 +80,21 @@ api.interceptors.response.use(
         } else {
           console.warn('API请求需要认证，但不会强制重定向登录页');
         }
+      } else if (status === 400) {
+        // 对于DELETE请求的400错误，通常是业务逻辑错误，由业务代码自己处理，这里不输出日志
+        if (method !== 'DELETE') {
+          console.warn('API业务逻辑错误(400):', url, error.response.data);
+        }
+      } else if (status >= 500) {
+        // 5xx错误是严重的服务器错误
+        console.error('API服务器错误(' + status + '):', url, error.response.data);
+      } else {
+        // 其他错误使用warn级别
+        console.warn('API错误(' + status + '):', url, error.response.data);
       }
-      // 服务器错误响应
-      console.error('API错误:', error.response.status, error.config.url);
-      console.error('错误详情:', error.response.data);
     } else if (error.request) {
       // 请求发送但没有收到响应
-      console.error('API网络错误:', '未收到响应', error.config.url);
+      console.warn('API网络错误: 未收到响应', error.config.url);
     } else {
       // 请求配置错误
       console.error('API请求错误:', error.message);
@@ -155,6 +167,54 @@ export const authApi = {
   
   checkEmail: (data: { email: string }): Promise<AxiosResponse<AuthResponse>> => {
     return api.post('/auth/check-email', data);
+  }
+};
+
+// 用户设置相关类型
+export interface UserSettings {
+  username: string;
+  nickname: string;
+  email: string;
+  avatarUrl: string;
+}
+
+// 用户设置API
+export const userSettingsApi = {
+  // 获取用户设置
+  getUserSettings: (): Promise<AxiosResponse<UserSettings>> => {
+    return api.get('/user/settings');
+  },
+  
+  // 更新用户设置
+  updateUserSettings: (settings: Partial<UserSettings>): Promise<AxiosResponse<UserSettings>> => {
+    return api.post('/user/settings', settings);
+  },
+  
+  // 更新昵称
+  updateNickname: (nickname: string): Promise<AxiosResponse<{ message: string; nickname: string }>> => {
+    return api.post('/user/settings/nickname', { nickname });
+  },
+  
+  // 更新邮箱
+  updateEmail: (email: string): Promise<AxiosResponse<{ message: string; email: string }>> => {
+    return api.post('/user/settings/email', { email });
+  },
+  
+  // 更新密码
+  updatePassword: (currentPassword: string, newPassword: string, confirmPassword: string): Promise<AxiosResponse<{ message: string }>> => {
+    return api.post('/user/settings/password', { currentPassword, newPassword, confirmPassword });
+  },
+  
+  // 上传头像
+  uploadAvatar: (file: File): Promise<AxiosResponse<{ message: string; avatarUrl: string }>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/user/settings/avatar', formData);
+  },
+  
+  // 验证当前密码
+  verifyCurrentPassword: (currentPassword: string): Promise<AxiosResponse<{ valid: boolean }>> => {
+    return api.post('/user/settings/verify-password', { currentPassword });
   }
 };
 
@@ -467,6 +527,27 @@ export interface Document {
   description?: string;
   filePath?: string;
   userId: string;
+  category?: string;
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  chunkCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 包含分类信息的文档类型
+export interface DocumentWithCategory {
+  id: string;
+  name: string;
+  content?: string;
+  size: number;
+  type: string;
+  tags?: string[];
+  description?: string;
+  filePath?: string;
+  userId: string;
+  categoryId?: string;
+  categoryName?: string;
+  categoryIcon?: string;
   status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
   chunkCount?: number;
   createdAt: string;
@@ -479,6 +560,7 @@ export interface DocumentUploadRequest {
   userId: string;
   tags?: string[];
   description?: string;
+  category?: string;
 }
 
 // 文档搜索请求
@@ -512,22 +594,31 @@ export interface AppDocumentResponse {
 
 // 文档管理API
 export const documentApi = {
-  // 上传文档
-  uploadDocument: (data: DocumentUploadRequest): Promise<AxiosResponse<AppDocumentResponse>> => {
+  // 文档上传（文件格式）
+  uploadDocument: (data: DocumentUploadRequest): Promise<AxiosResponse<Document>> => {
     const formData = new FormData();
     formData.append('file', data.file);
     formData.append('userId', data.userId);
-    if (data.tags) {
-      data.tags.forEach(tag => formData.append('tags', tag));
-    }
+    
     if (data.description) {
       formData.append('description', data.description);
     }
+    
+    if (data.tags && data.tags.length > 0) {
+      // 将tags数组转换为多个同名参数
+      data.tags.forEach(tag => {
+        formData.append('tags', tag);
+      });
+    }
 
-    console.log('准备上传文档:', data.file.name, '大小:', data.file.size, 'bytes');
+    if (data.category) {
+      formData.append('category', data.category);
+    }
 
-    // 调用app模块的文档上传接口，为大文件处理增加更长超时时间
-    return api.post('/v1/documents/upload', formData, {
+    console.log('准备上传文档:', data.file.name, '大小:', data.file.size, 'bytes', '分类:', data.category);
+
+    // 使用agents服务的upload-file接口
+    return api.post('/documents/upload-file', formData, {
       // 不要手动设置Content-Type，让浏览器自动设置boundary
       timeout: 300000, // 5分钟超时，用于处理大文件和复杂文档解析
       onUploadProgress: (progressEvent) => {
@@ -540,44 +631,288 @@ export const documentApi = {
   },
 
   // 删除文档
-  deleteDocument: (documentId: string, userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
-    return api.delete(`/v1/documents/${documentId}?userId=${userId}`);
+  deleteDocument: (documentId: string, userId: string): Promise<AxiosResponse<void>> => {
+    return api.delete(`/documents/${documentId}?userId=${userId}`);
   },
 
   // 更新文档
-  updateDocument: (documentId: string, userId: string, document: Partial<Document>): Promise<AxiosResponse<AppDocumentResponse>> => {
-    return api.put(`/v1/documents/${documentId}?userId=${userId}`, document);
+  updateDocument: (documentId: string, userId: string, document: Partial<Document>): Promise<AxiosResponse<Document>> => {
+    return api.put(`/documents/${documentId}?userId=${userId}`, document);
   },
 
   // 获取文档详情
-  getDocument: (documentId: string, userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
-    return api.get(`/v1/documents/${documentId}?userId=${userId}`);
+  getDocument: (documentId: string, userId: string): Promise<AxiosResponse<Document>> => {
+    return api.get(`/documents/${documentId}?userId=${userId}`);
   },
 
   // 获取用户文档列表
-  getUserDocuments: (userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
-    return api.get(`/v1/documents/user/${userId}`);
+  getUserDocuments: (userId: string): Promise<AxiosResponse<Document[]>> => {
+    return api.get(`/documents/user/${userId}`);
+  },
+
+  // 获取用户文档列表（包含分类信息）
+  getUserDocumentsWithCategory: (userId: string): Promise<AxiosResponse<DocumentWithCategory[]>> => {
+    return api.get(`/documents/user/${userId}/with-category`);
   },
 
   // 搜索文档
-  searchDocuments: (params: DocumentSearchRequest): Promise<AxiosResponse<AppDocumentResponse>> => {
-    const searchParams = new URLSearchParams();
-    searchParams.append('query', params.query);
-    if (params.userId) searchParams.append('userId', params.userId);
-    if (params.limit) searchParams.append('limit', params.limit.toString());
-    if (params.threshold) searchParams.append('threshold', params.threshold.toString());
-
-    return api.post(`/v1/documents/search?${searchParams.toString()}`);
+  searchDocuments: (params: DocumentSearchRequest): Promise<AxiosResponse<DocumentSearchResult[]>> => {
+    // agents服务的搜索接口使用POST请求体而不是查询参数
+    return api.post('/documents/search', params);
   },
 
   // 重新处理文档
-  reprocessDocument: (documentId: string, userId: string): Promise<AxiosResponse<AppDocumentResponse>> => {
-    return api.post(`/v1/documents/${documentId}/reprocess?userId=${userId}`);
+  reprocessDocument: (documentId: string, userId: string): Promise<AxiosResponse<Document>> => {
+    return api.post(`/documents/${documentId}/reprocess?userId=${userId}`);
+  },
+
+  // 重新处理文档（包含新文件上传）
+  reprocessDocumentWithFile: (documentId: string, userId: string, file: File): Promise<AxiosResponse<Document>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userId', userId);
+    
+    return api.post(`/documents/${documentId}/reprocess-with-file`, formData, {
+      timeout: 300000, // 5分钟超时，用于处理大文件和复杂文档解析
+    });
   },
 
   // 获取支持的文件类型
-  getSupportedTypes: (): Promise<AxiosResponse<AppDocumentResponse>> => {
-    return api.get('/v1/documents/supported-types');
+  getSupportedTypes: (): Promise<AxiosResponse<string[]>> => {
+    return api.get('/documents/supported-types');
+  }
+};
+
+// --- Knowledge QA API ---
+
+// 知识库问答请求类型
+export interface KnowledgeQaRequest {
+  question: string;
+  userId?: string;
+  category?: string;
+  topK?: number;
+  similarityThreshold?: number;
+  maxTokens?: number;
+  temperature?: number;
+  sessionId?: string;
+}
+
+// 源文档信息
+export interface SourceDocument {
+  documentId: string;
+  title: string;
+  content: string;
+  page?: number;
+  chunkIndex: number;
+  score: number;
+}
+
+// 知识库问答响应类型
+export interface KnowledgeQaResponse {
+  id: string;
+  question: string;
+  answer: string;
+  sources: SourceDocument[];
+  questionCategory?: string;
+  responseTimeMs: number;
+  similarityScore: number;
+  createdAt: string;
+  status: string;
+}
+
+// 问答记录类型
+export interface KnowledgeQaRecord {
+  id: string;
+  userId: string;
+  question: string;
+  answer?: string;
+  questionCategory?: string;
+  feedbackRating?: number;
+  feedbackComment?: string;
+  status: 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 热门问题类型
+export interface PopularQuestion {
+  id: string;
+  questionPattern: string;
+  category?: string;
+  questionCount: number;
+  lastAskedTime: string;
+  trendScore: number;
+  representativeQuestion: string;
+  standardAnswer?: string;
+}
+
+// 文档分类类型
+export interface DocumentCategory {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  sortOrder: number;
+  status: 'ACTIVE' | 'INACTIVE';
+  // 可选的统计信息字段（用于分类管理页面）
+  documentCount?: number;
+  completionRate?: number;
+  lastUpdatedTime?: string;
+}
+
+// 文档信息类型
+export interface DocumentInfo {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 分类统计类型
+export interface CategoryStatistics {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon?: string;
+  documentCount: number;
+  lastUpdatedTime?: string;
+  completionRate: number;
+  documents?: DocumentInfo[];
+}
+
+// 知识库问答API
+export const knowledgeQaApi = {
+  // 同步问答
+  askQuestion: (request: KnowledgeQaRequest): Promise<AxiosResponse<KnowledgeQaResponse>> => {
+    return api.post('/knowledge-qa/ask', request);
+  },
+
+  // 流式问答
+  askQuestionStream: async (
+    request: KnowledgeQaRequest, 
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
+  ): Promise<void> => {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch('/api/knowledge-qa/ask-stream', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      body: JSON.stringify(request),
+      signal
+    });
+
+    if (!response.ok) {
+      throw new Error('流式问答请求失败');
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new Error('无法获取响应流');
+    }
+
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.substring(6);
+            if (data.trim() && data !== '[DONE]') {
+              onChunk(data);
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  },
+
+  // 获取最近提问
+  getRecentQuestions: (limit: number = 10, category?: string): Promise<AxiosResponse<KnowledgeQaRecord[]>> => {
+    const params = new URLSearchParams({ limit: limit.toString() });
+    if (category) params.append('category', category);
+    return api.get(`/knowledge-qa/recent-questions?${params.toString()}`);
+  },
+
+  // 获取热门问题
+  getHotQuestions: (limit: number = 10, category?: string): Promise<AxiosResponse<PopularQuestion[]>> => {
+    const params = new URLSearchParams({ limit: limit.toString() });
+    if (category) params.append('category', category);
+    return api.get(`/knowledge-qa/hot-questions?${params.toString()}`);
+  },
+
+  // 获取知识库分类统计
+  getKnowledgeBaseStatistics: (): Promise<AxiosResponse<CategoryStatistics[]>> => {
+    return api.get('/knowledge-qa/knowledge-base-statistics');
+  },
+
+  // 获取分类下的文档列表
+  getCategoryDocuments: (categoryId: string): Promise<AxiosResponse<CategoryStatistics>> => {
+    return api.get(`/knowledge-qa/categories/${categoryId}/documents`);
+  },
+
+  // 获取所有分类
+  getAllCategories: (): Promise<AxiosResponse<DocumentCategory[]>> => {
+    return api.get('/knowledge-qa/categories');
+  },
+
+  // 提交用户反馈
+  submitFeedback: (recordId: string, rating: number, comment?: string): Promise<AxiosResponse<string>> => {
+    const params = new URLSearchParams({
+      recordId,
+      rating: rating.toString()
+    });
+    if (comment) params.append('comment', comment);
+    return api.post(`/knowledge-qa/feedback?${params.toString()}`);
+  },
+
+  // 获取用户问答历史
+  getUserQaHistory: (userId: string, page: number = 0, size: number = 10): Promise<AxiosResponse<KnowledgeQaRecord[]>> => {
+    return api.get(`/knowledge-qa/users/${userId}/history?page=${page}&size=${size}`);
+  },
+
+  // --- 分类管理 API ---
+  
+  // 创建分类
+  createCategory: (categoryData: {
+    name: string;
+    description?: string;
+    sortOrder?: number;
+  }): Promise<AxiosResponse<DocumentCategory>> => {
+    return api.post('/knowledge-qa/categories', categoryData);
+  },
+
+  // 更新分类
+  updateCategory: (categoryId: string, categoryData: {
+    name?: string;
+    description?: string;
+    sortOrder?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+  }): Promise<AxiosResponse<DocumentCategory>> => {
+    return api.put(`/knowledge-qa/categories/${categoryId}`, categoryData);
+  },
+
+  // 删除分类
+  deleteCategory: (categoryId: string): Promise<AxiosResponse<string>> => {
+    return api.delete(`/knowledge-qa/categories/${categoryId}`);
+  },
+
+  // 获取单个分类详情
+  getCategoryById: (categoryId: string): Promise<AxiosResponse<DocumentCategory>> => {
+    return api.get(`/knowledge-qa/categories/${categoryId}`);
   }
 };
 

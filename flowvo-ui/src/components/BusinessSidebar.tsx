@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Box, 
   VStack, 
@@ -16,6 +16,7 @@ import {
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
+  Collapse,
 } from '@chakra-ui/react';
 import { 
   FiMenu,
@@ -26,14 +27,19 @@ import {
   FiCalendar,
   FiSettings,
   FiHelpCircle,
-  FiShoppingCart
+  FiShoppingCart,
+  FiDatabase,
+  FiChevronDown,
+  FiChevronRight,
+  FiSearch,
+  FiFolder
 } from 'react-icons/fi';
 import { Link as RouterLink, useLocation } from 'react-router-dom'; // aliased import
 import { Link as ChakraLink } from '@chakra-ui/react'; // Chakra's Link
 
 // 业务菜单项
 const businessMenuItems = [
-  { id: 'dashboard', title: '仪表盘', icon: FiHome, path: '/business' },
+  { id: 'dashboard', title: '首页', icon: FiHome, path: '/business' },
   { id: 'orders', title: '订单管理', icon: FiShoppingCart, path: '/business/orders' },
   { id: 'tasks', title: '任务管理', icon: FiClipboard, path: '/business/tasks' },
   { id: 'team', title: '团队管理', icon: FiUsers, path: '/business/team' },
@@ -41,9 +47,19 @@ const businessMenuItems = [
   { id: 'calendar', title: '日程安排', icon: FiCalendar, path: '/business/calendar' },
 ];
 
+// 知识库子菜单项
+const knowledgeMenuItems = [
+  { id: 'search-settings', title: '检索设置', icon: FiSearch, path: '/business/knowledge/search-settings' },
+  { id: 'category-management', title: '分类管理', icon: FiFolder, path: '/business/knowledge/categories' },
+];
+
 const BusinessSidebar: React.FC = () => {
   const location = useLocation();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isKnowledgeOpen, setIsKnowledgeOpen] = useState(
+    location.pathname.startsWith('/business/knowledge')
+  );
+  
   const bgColor = useColorModeValue('gray.50', '#171A24');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const hoverBgColor = useColorModeValue('gray.200', '#1a1f28');
@@ -89,7 +105,7 @@ const BusinessSidebar: React.FC = () => {
                 justifyContent="flex-start"
                 variant="ghost"
                 bg={isActive ? activeBgColor : 'transparent'}
-                _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }} // No !important
+                _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }}
                 size="md"
                 borderRadius="md"
                 width="full"
@@ -101,6 +117,61 @@ const BusinessSidebar: React.FC = () => {
             </ChakraLink>
           );
         })}
+
+        {/* 知识库菜单 */}
+        <Box>
+          <Button
+            leftIcon={<Icon as={FiDatabase} />}
+            rightIcon={<Icon as={isKnowledgeOpen ? FiChevronDown : FiChevronRight} />}
+            justifyContent="space-between"
+            variant="ghost"
+            bg={location.pathname.startsWith('/business/knowledge') ? activeBgColor : 'transparent'}
+            _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }}
+            size="md"
+            borderRadius="md"
+            width="full"
+            color={useColorModeValue('gray.700', 'gray.200')}
+            onClick={() => setIsKnowledgeOpen(!isKnowledgeOpen)}
+            px={3}
+          >
+            <Flex align="center" flex={1}>
+              <Text>知识库</Text>
+            </Flex>
+          </Button>
+          <Collapse in={isKnowledgeOpen} animateOpacity>
+            <VStack spacing={1} align="stretch" pl={4} mt={1}>
+              {knowledgeMenuItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <ChakraLink
+                    key={item.id}
+                    as={RouterLink}
+                    to={item.path}
+                    _hover={{ textDecoration: 'none' }}
+                    width="full"
+                  >
+                    <Button
+                      leftIcon={<Icon as={item.icon} size="14px" />}
+                      justifyContent="flex-start"
+                      variant="ghost"
+                      size="sm"
+                      bg={isActive ? activeBgColor : 'transparent'}
+                      _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }}
+                      borderRadius="md"
+                      width="full"
+                      color={useColorModeValue('gray.600', 'gray.300')}
+                      fontSize="sm"
+                      onClick={isMobile ? onClose : undefined}
+                      px={3}
+                    >
+                      {item.title}
+                    </Button>
+                  </ChakraLink>
+                );
+              })}
+            </VStack>
+          </Collapse>
+        </Box>
       </VStack>
 
       <Divider />
@@ -160,13 +231,30 @@ const BusinessSidebar: React.FC = () => {
       {/* 桌面端侧边栏 */}
       <Box
         w={{ base: '0', md: '260px' }}
-        h="100%"
+        h="calc(100vh - var(--header-height, 70px))"
         sx={{ bg: bgColor }}
         borderRight="1px"
         borderColor={borderColor}
-        position="sticky"
-        top={0}
+        position="fixed"
+        top="var(--header-height, 70px)"
+        left={0}
+        zIndex={10}
         display={{ base: 'none', md: 'block' }}
+        overflowY="auto"
+        overflowX="hidden"
+        css={{
+          '&::-webkit-scrollbar': {
+            width: '4px',
+          },
+          '&::-webkit-scrollbar-track': {
+            width: '6px',
+            background: 'transparent',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: useColorModeValue('rgba(0,0,0,0.1)', 'rgba(255,255,255,0.1)'),
+            borderRadius: '24px',
+          },
+        }}
       >
         <SidebarContent />
       </Box>

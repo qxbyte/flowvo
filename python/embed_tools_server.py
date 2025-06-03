@@ -42,7 +42,7 @@ class Config:
     LOCAL_FALLBACK_MODEL: str = "all-mpnet-base-v2"  # 本地备用模型名
     
     # 目标维度配置
-    TARGET_DIMENSION: int = 1536  # 目标维度，与OpenAI保持一致
+    TARGET_DIMENSION: int = 768  # 使用模型原始维度，提供更好的向量质量
     
     # 文本切分配置
     DEFAULT_CHUNK_SIZE: int = 512

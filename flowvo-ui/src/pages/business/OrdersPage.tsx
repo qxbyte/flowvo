@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Box,
   Heading,
@@ -142,10 +142,79 @@ const OrdersPage: React.FC = () => {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const toast = useToast();
   
-  const cardBg = useColorModeValue('white', '#171A24');
-  const hoverBg = useColorModeValue('gray.50', '#1a1f28');
+  // 统一颜色配置 - 遵循知识库页面的颜色规范
+  const cardBg = useColorModeValue('white', '#2D3748');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const hoverBg = useColorModeValue('gray.50', 'gray.600');
+  const activeBg = useColorModeValue('gray.100', 'gray.500');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
+  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
+  const inputBg = useColorModeValue('white', 'gray.700');
+  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
   const pageBg = useColorModeValue('gray.50', '#1B212C');
-  const searchIconColor = useColorModeValue('gray.300', 'gray.500');
+  
+  // 统计卡片背景色
+  const blueStatBg = useColorModeValue('blue.100', 'blue.800');
+  const greenStatBg = useColorModeValue('green.100', 'green.800');
+  const orangeStatBg = useColorModeValue('orange.100', 'orange.800');
+  const redStatBg = useColorModeValue('red.100', 'red.800');
+  
+  // 图标颜色
+  const blueIconColor = useColorModeValue('blue.500', 'blue.300');
+  const greenIconColor = useColorModeValue('green.500', 'green.300');
+  const orangeIconColor = useColorModeValue('orange.500', 'orange.300');
+  const redIconColor = useColorModeValue('red.500', 'red.300');
+  
+  // 按钮颜色
+  const primaryButtonBg = useColorModeValue('#1a73e8', 'blue.500');
+  const primaryButtonHoverBg = useColorModeValue('#1557b0', 'blue.400');
+  const primaryButtonActiveBg = useColorModeValue('#1046a3', 'blue.600');
+  const redButtonBg = useColorModeValue('red.500', 'red.400');
+  const redButtonHoverBg = useColorModeValue('red.600', 'red.500');
+  const redButtonActiveBg = useColorModeValue('red.700', 'red.600');
+  
+  // 输入框颜色
+  const inputHoverBorderColor = useColorModeValue('blue.300', 'blue.500');
+  const inputFocusBorderColor = useColorModeValue('blue.500', 'blue.400');
+  const inputFocusBoxShadow = useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400');
+  
+  // 模态框和其他UI颜色
+  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.600');
+  const spinnerColor = useColorModeValue('blue.500', 'blue.300');
+  const paginationTextColor = useColorModeValue('gray.500', 'gray.400');
+  
+  // 预计算所有状态的Badge颜色
+  const badgeColors = {
+    pending: {
+      bg: useColorModeValue('orange.100', 'orange.800'),
+      color: useColorModeValue('orange.700', 'orange.200')
+    },
+    paid: {
+      bg: useColorModeValue('green.100', 'green.800'),
+      color: useColorModeValue('green.700', 'green.200')
+    },
+    canceled: {
+      bg: useColorModeValue('red.100', 'red.800'),
+      color: useColorModeValue('red.700', 'red.200')
+    },
+    processing: {
+      bg: useColorModeValue('blue.100', 'blue.800'),
+      color: useColorModeValue('blue.700', 'blue.200')
+    },
+    shipped: {
+      bg: useColorModeValue('purple.100', 'purple.800'),
+      color: useColorModeValue('purple.700', 'purple.200')
+    },
+    completed: {
+      bg: useColorModeValue('green.100', 'green.800'),
+      color: useColorModeValue('green.700', 'green.200')
+    }
+  };
+  
+  // Badge颜色获取函数（不再调用Hook）
+  const getBadgeColors = (status: string) => {
+    return badgeColors[status as keyof typeof badgeColors] || badgeColors.pending;
+  };
 
   // 使用防抖处理所有筛选条件
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -154,7 +223,7 @@ const OrdersPage: React.FC = () => {
   const debouncedEndDate = useDebounce(endDate, 300);
 
   // 获取订单列表
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -202,23 +271,17 @@ const OrdersPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, debouncedSearchQuery, debouncedStatus, debouncedStartDate, debouncedEndDate]);
 
-  // 首次加载时获取数据
+  // 筛选条件变化时重置页码并获取数据
   useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  // 监听筛选条件变化
-  useEffect(() => {
-    setCurrentPage(1); // 重置到第一页
-    fetchOrders();
+    setCurrentPage(1);
   }, [debouncedSearchQuery, debouncedStatus, debouncedStartDate, debouncedEndDate]);
 
-  // 监听分页变化
+  // 分页或筛选条件变化时获取数据
   useEffect(() => {
     fetchOrders();
-  }, [currentPage, itemsPerPage]);
+  }, [fetchOrders]);
 
   // 处理状态选择变化
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -393,8 +456,8 @@ const OrdersPage: React.FC = () => {
   return (
     <Box 
       w="100%" 
-      py={4} 
-      px={{ base: 2, md: 4, lg: 6 }} 
+      py={6} 
+      px={6} 
       minH="100%" 
       display="flex" 
       flexDirection="column" 
@@ -405,7 +468,7 @@ const OrdersPage: React.FC = () => {
     >
       <Box 
         flex="1" 
-        maxW={{ base: "100%", xl: "1600px" }} 
+        maxW="1200px" 
         mx="auto" 
         w="100%"
         overflowX="hidden"
@@ -416,8 +479,10 @@ const OrdersPage: React.FC = () => {
           borderRadius="16px" 
           overflow="visible"
           w="100%"
+          borderWidth="1px" 
+          borderColor={borderColor}
         >
-          <CardBody p={{ base: 3, md: 6, lg: 8 }}>
+          <CardBody p={8}>
             {/* 页面标题和操作按钮 */}
             <Flex 
               justify="space-between" 
@@ -427,66 +492,73 @@ const OrdersPage: React.FC = () => {
               gap={{ base: 3, sm: 0 }}
               w="100%"
             >
-              <Heading size="lg">订单管理</Heading>
+              <Heading size="lg" color={textColor}>订单管理</Heading>
               <Button
                 leftIcon={<FiPlusCircle />}
                 colorScheme="blue"
                 onClick={handleOpenCreateModal}
+                bg={primaryButtonBg}
+                _hover={{
+                  bg: primaryButtonHoverBg
+                }}
+                _active={{
+                  bg: primaryButtonActiveBg
+                }}
               >
                 新建订单
               </Button>
             </Flex>
 
             {/* 订单统计信息卡片 */}
-            <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={{ base: 3, md: 4 }} mb={{ base: 4, md: 6 }}>
-              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
+            <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={6} mb={6}>
+              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg" borderWidth="1px" borderColor={borderColor}>
                 <Flex align="center">
-                  <Box bg={useColorModeValue('blue.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiShoppingCart} color={useColorModeValue('blue.500', 'blue.300')} />
+                  <Box bg={blueStatBg} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiShoppingCart} color={blueIconColor} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>总订单数</Text>
-                    <Text fontSize="2xl" fontWeight="bold">{totalItems}</Text>
+                    <Text fontSize="sm" color={mutedTextColor}>总订单数</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>{totalItems}</Text>
                   </Box>
                 </Flex>
               </Card>
               
-              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
+              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg" borderWidth="1px" borderColor={borderColor}>
                 <Flex align="center">
-                  <Box bg={useColorModeValue('green.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiCheck} color={useColorModeValue('green.500', 'green.300')} />
+                  <Box bg={greenStatBg} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiCheck} color={greenIconColor} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>已完成订单</Text>
-                    <Text fontSize="2xl" fontWeight="bold">
+                    <Text fontSize="sm" color={mutedTextColor}>已完成订单</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>
                       {orders.filter(order => order.status === 'completed').length}
                     </Text>
                   </Box>
                 </Flex>
               </Card>
               
-              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
+              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg" borderWidth="1px" borderColor={borderColor}>
                 <Flex align="center">
-                  <Box bg={useColorModeValue('orange.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiClock} color={useColorModeValue('orange.500', 'orange.300')} />
+                  <Box bg={orangeStatBg} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiClock} color={orangeIconColor} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>待处理订单</Text>
-                    <Text fontSize="2xl" fontWeight="bold">
+                    <Text fontSize="sm" color={mutedTextColor}>待处理订单</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>
                       {orders.filter(order => order.status === 'pending' || order.status === 'processing').length}
                     </Text>
                   </Box>
                 </Flex>
               </Card>
               
-              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg">
+              <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg" borderWidth="1px" borderColor={borderColor}>
                 <Flex align="center">
-                  <Box bg={useColorModeValue('red.100', 'gray.700')} p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiX} color={useColorModeValue('red.500', 'red.300')} />
+                  <Box bg={redStatBg} p={3} borderRadius="full" mr={4}>
+                    <Icon as={FiX} color={redIconColor} />
                   </Box>
                   <Box>
-                    <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>已取消订单</Text>
-                    <Text fontSize="2xl" fontWeight="bold">
+                    <Text fontSize="sm" color={mutedTextColor}>已取消订单</Text>
+                    <Text fontSize="2xl" fontWeight="bold" color={textColor}>
                       {orders.filter(order => order.status === 'canceled').length}
                     </Text>
                   </Box>
@@ -497,18 +569,29 @@ const OrdersPage: React.FC = () => {
             {/* 搜索和筛选 */}
             <Stack 
               direction={{ base: "column", md: "row" }} 
-              spacing={{ base: 2, md: 4 }} 
-              mb={{ base: 4, md: 6 }}
+              spacing={4} 
+              mb={6}
               w="100%"
             >
               <InputGroup maxW={{ base: "100%", md: "300px" }} size="md">
                 <InputLeftElement pointerEvents="none">
-                  <FiSearch color={searchIconColor} />
+                  <FiSearch color={mutedTextColor} />
                 </InputLeftElement>
                 <Input
                   placeholder="搜索订单号或客户名..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  bg={inputBg}
+                  borderColor={borderColor}
+                  color={textColor}
+                  _placeholder={{ color: mutedTextColor }}
+                  _hover={{
+                    borderColor: inputHoverBorderColor
+                  }}
+                  _focus={{
+                    borderColor: inputFocusBorderColor,
+                    boxShadow: inputFocusBoxShadow
+                  }}
                 />
               </InputGroup>
               
@@ -516,6 +599,16 @@ const OrdersPage: React.FC = () => {
                 value={selectedStatus}
                 onChange={handleStatusChange}
                 maxW={{ base: "100%", md: "200px" }}
+                bg={inputBg}
+                borderColor={borderColor}
+                color={textColor}
+                _hover={{
+                  borderColor: inputHoverBorderColor
+                }}
+                _focus={{
+                  borderColor: inputFocusBorderColor,
+                  boxShadow: inputFocusBoxShadow
+                }}
               >
                 <option value="all">全部状态</option>
                 <option value="pending">待付款</option>
@@ -532,6 +625,16 @@ const OrdersPage: React.FC = () => {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 maxW={{ base: "100%", md: "160px" }}
+                bg={inputBg}
+                borderColor={borderColor}
+                color={textColor}
+                _hover={{
+                  borderColor: inputHoverBorderColor
+                }}
+                _focus={{
+                  borderColor: inputFocusBorderColor,
+                  boxShadow: inputFocusBoxShadow
+                }}
               />
               
               <Input
@@ -540,12 +643,28 @@ const OrdersPage: React.FC = () => {
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 maxW={{ base: "100%", md: "160px" }}
+                bg={inputBg}
+                borderColor={borderColor}
+                color={textColor}
+                _hover={{
+                  borderColor: inputHoverBorderColor
+                }}
+                _focus={{
+                  borderColor: inputFocusBorderColor,
+                  boxShadow: inputFocusBoxShadow
+                }}
               />
               
               <Button
                 variant="outline"
                 onClick={handleClearFilters}
                 flexShrink={0}
+                borderColor={borderColor}
+                color={textColor}
+                _hover={{
+                  bg: hoverBg,
+                  borderColor: inputHoverBorderColor
+                }}
               >
                 清除筛选
               </Button>
@@ -555,6 +674,7 @@ const OrdersPage: React.FC = () => {
             <Box 
               mb={6} 
               borderWidth="1px" 
+              borderColor={borderColor}
               borderRadius="lg" 
               overflow="hidden"
               overflowX="auto"
@@ -562,30 +682,33 @@ const OrdersPage: React.FC = () => {
             >
               {loading ? (
                 <Flex justify="center" align="center" h="200px">
-                  <Spinner size="xl" />
+                  <Spinner size="xl" color={spinnerColor} />
                 </Flex>
               ) : (
                 <Table variant="simple" size={{ base: "sm", md: "md" }}>
-                  <Thead bg={useColorModeValue('gray.50', 'gray.700')}>
+                  <Thead bg={tableHeaderBg}>
                     <Tr>
-                      <Th>订单号</Th>
-                      <Th>客户</Th>
-                      <Th>日期</Th>
-                      <Th>金额</Th>
-                      <Th>状态</Th>
-                      <Th>操作</Th>
+                      <Th color={mutedTextColor}>订单号</Th>
+                      <Th color={mutedTextColor}>客户</Th>
+                      <Th color={mutedTextColor}>日期</Th>
+                      <Th color={mutedTextColor}>金额</Th>
+                      <Th color={mutedTextColor}>状态</Th>
+                      <Th color={mutedTextColor}>操作</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
                     {orders.length > 0 ? (
                       orders.map((order) => (
                         <Tr key={order.id} _hover={{ bg: hoverBg }}>
-                          <Td fontWeight="medium">{order.orderNumber}</Td>
-                          <Td>{order.customerName}</Td>
-                          <Td>{formatDate(order.createdAt)}</Td>
-                          <Td>{formatAmount(order.amount)}</Td>
+                          <Td fontWeight="medium" color={textColor}>{order.orderNumber}</Td>
+                          <Td color={textColor}>{order.customerName}</Td>
+                          <Td color={textColor}>{formatDate(order.createdAt)}</Td>
+                          <Td color={textColor}>{formatAmount(order.amount)}</Td>
                           <Td>
-                            <Badge colorScheme={statusColors[order.status as keyof typeof statusColors]}>
+                            <Badge 
+                              colorScheme={statusColors[order.status as keyof typeof statusColors]}
+                              {...getBadgeColors(order.status)}
+                            >
                               {statusLabels[order.status as keyof typeof statusLabels]}
                             </Badge>
                           </Td>
@@ -649,7 +772,7 @@ const OrdersPage: React.FC = () => {
                   <option value="20">20</option>
                   <option value="50">50</option>
                 </Select>
-                <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
+                <Text fontSize="sm" color={paginationTextColor}>
                   显示 {orders.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0} - {Math.min(currentPage * itemsPerPage, totalItems)} 条，共 {totalItems} 条
                 </Text>
               </HStack>
@@ -680,82 +803,109 @@ const OrdersPage: React.FC = () => {
 
       {/* 查看订单详情弹窗 */}
       <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} isCentered>
-        <ModalOverlay />
-        <ModalContent borderRadius="16px">
-          <ModalHeader borderBottomWidth="1px">查看订单详情</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay bg={modalOverlayBg} />
+        <ModalContent borderRadius="16px" bg={cardBg} borderColor={borderColor}>
+          <ModalHeader borderBottomWidth="1px" borderColor={borderColor} color={textColor}>查看订单详情</ModalHeader>
+          <ModalCloseButton color={mutedTextColor} _hover={{ bg: hoverBg }} />
           <ModalBody py={4}>
             {selectedOrder && (
               <Stack spacing={4}>
                 <FormControl>
-                  <FormLabel fontWeight="medium">订单编号</FormLabel>
-                  <Text>{selectedOrder.orderNumber}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>订单编号</FormLabel>
+                  <Text color={textColor}>{selectedOrder.orderNumber}</Text>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">客户名称</FormLabel>
-                  <Text>{selectedOrder.customerName}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>客户名称</FormLabel>
+                  <Text color={textColor}>{selectedOrder.customerName}</Text>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">订单金额</FormLabel>
-                  <Text>{formatAmount(selectedOrder.amount)}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>订单金额</FormLabel>
+                  <Text color={textColor}>{formatAmount(selectedOrder.amount)}</Text>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">订单状态</FormLabel>
+                  <FormLabel fontWeight="medium" color={textColor}>订单状态</FormLabel>
                   <Badge colorScheme={statusColors[selectedOrder.status]}>
                     {statusLabels[selectedOrder.status]}
                   </Badge>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">创建时间</FormLabel>
-                  <Text>{selectedOrder.createdAt}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>创建时间</FormLabel>
+                  <Text color={textColor}>{selectedOrder.createdAt}</Text>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">更新时间</FormLabel>
-                  <Text>{selectedOrder.updatedAt}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>更新时间</FormLabel>
+                  <Text color={textColor}>{selectedOrder.updatedAt}</Text>
                 </FormControl>
               </Stack>
             )}
           </ModalBody>
           <ModalFooter>
-            <Button onClick={() => setIsViewModalOpen(false)}>关闭</Button>
+            <Button 
+              onClick={() => setIsViewModalOpen(false)}
+              variant="ghost"
+              color={textColor}
+              _hover={{ bg: hoverBg }}
+            >
+              关闭
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
 
       {/* 处理订单弹窗 */}
       <Modal isOpen={isProcessModalOpen} onClose={() => setIsProcessModalOpen(false)} isCentered>
-        <ModalOverlay />
-        <ModalContent borderRadius="16px">
-          <ModalHeader borderBottomWidth="1px">处理订单</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay bg={modalOverlayBg} />
+        <ModalContent borderRadius="16px" bg={cardBg} borderColor={borderColor}>
+          <ModalHeader borderBottomWidth="1px" borderColor={borderColor} color={textColor}>处理订单</ModalHeader>
+          <ModalCloseButton color={mutedTextColor} _hover={{ bg: hoverBg }} />
           <ModalBody py={4}>
             {selectedOrder && (
               <Stack spacing={4}>
                 <FormControl>
-                  <FormLabel fontWeight="medium">订单编号</FormLabel>
-                  <Text>{selectedOrder.orderNumber}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>订单编号</FormLabel>
+                  <Text color={textColor}>{selectedOrder.orderNumber}</Text>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">客户名称</FormLabel>
-                  <Text>{selectedOrder.customerName}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>客户名称</FormLabel>
+                  <Text color={textColor}>{selectedOrder.customerName}</Text>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">订单金额</FormLabel>
+                  <FormLabel fontWeight="medium" color={textColor}>订单金额</FormLabel>
                   <InputGroup>
-                    <InputLeftElement pointerEvents='none'>¥</InputLeftElement>
+                    <InputLeftElement pointerEvents='none' color={mutedTextColor}>¥</InputLeftElement>
                     <Input 
                       value={editedAmount} 
                       onChange={(e) => setEditedAmount(e.target.value)}
                       type="number"
                       step="0.01"
+                      bg={inputBg}
+                      borderColor={borderColor}
+                      color={textColor}
+                      _hover={{
+                        borderColor: inputHoverBorderColor
+                      }}
+                      _focus={{
+                        borderColor: inputFocusBorderColor,
+                        boxShadow: inputFocusBoxShadow
+                      }}
                     />
                   </InputGroup>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">订单状态</FormLabel>
+                  <FormLabel fontWeight="medium" color={textColor}>订单状态</FormLabel>
                   <Select 
                     value={editedStatus}
                     onChange={(e) => setEditedStatus(e.target.value)}
+                    bg={inputBg}
+                    borderColor={borderColor}
+                    color={textColor}
+                    _hover={{
+                      borderColor: inputHoverBorderColor
+                    }}
+                    _focus={{
+                      borderColor: inputFocusBorderColor,
+                      boxShadow: inputFocusBoxShadow
+                    }}
                   >
                     <option value="pending">待付款</option>
                     <option value="paid">已付款</option>
@@ -766,17 +916,33 @@ const OrdersPage: React.FC = () => {
                   </Select>
                 </FormControl>
                 <FormControl>
-                  <FormLabel fontWeight="medium">创建时间</FormLabel>
-                  <Text>{selectedOrder.createdAt}</Text>
+                  <FormLabel fontWeight="medium" color={textColor}>创建时间</FormLabel>
+                  <Text color={textColor}>{selectedOrder.createdAt}</Text>
                 </FormControl>
               </Stack>
             )}
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={() => setIsProcessModalOpen(false)}>
+            <Button 
+              variant="ghost" 
+              mr={3} 
+              onClick={() => setIsProcessModalOpen(false)}
+              color={textColor}
+              _hover={{ bg: hoverBg }}
+            >
               取消
             </Button>
-            <Button colorScheme="blue" onClick={handleProcessConfirm}>
+            <Button 
+              colorScheme="blue" 
+              onClick={handleProcessConfirm}
+              bg={primaryButtonBg}
+              _hover={{
+                bg: primaryButtonHoverBg
+              }}
+              _active={{
+                bg: primaryButtonActiveBg
+              }}
+            >
               保存
             </Button>
           </ModalFooter>
@@ -785,38 +951,70 @@ const OrdersPage: React.FC = () => {
 
       {/* 创建订单弹窗 */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} isCentered>
-        <ModalOverlay />
-        <ModalContent borderRadius="16px">
-          <ModalHeader borderBottomWidth="1px">创建订单</ModalHeader>
-          <ModalCloseButton />
+        <ModalOverlay bg={modalOverlayBg} />
+        <ModalContent borderRadius="16px" bg={cardBg} borderColor={borderColor}>
+          <ModalHeader borderBottomWidth="1px" borderColor={borderColor} color={textColor}>创建订单</ModalHeader>
+          <ModalCloseButton color={mutedTextColor} _hover={{ bg: hoverBg }} />
           <ModalBody py={4}>
             <Stack spacing={4}>
               <FormControl isRequired>
-                <FormLabel fontWeight="medium">客户名称</FormLabel>
+                <FormLabel fontWeight="medium" color={textColor}>客户名称</FormLabel>
                 <Input 
                   value={newCustomerName} 
                   onChange={(e) => setNewCustomerName(e.target.value)}
                   placeholder="请输入客户名称"
+                  bg={inputBg}
+                  borderColor={borderColor}
+                  color={textColor}
+                  _placeholder={{ color: mutedTextColor }}
+                  _hover={{
+                    borderColor: inputHoverBorderColor
+                  }}
+                  _focus={{
+                    borderColor: inputFocusBorderColor,
+                    boxShadow: inputFocusBoxShadow
+                  }}
                 />
               </FormControl>
               <FormControl isRequired>
-                <FormLabel fontWeight="medium">订单金额</FormLabel>
+                <FormLabel fontWeight="medium" color={textColor}>订单金额</FormLabel>
                 <InputGroup>
-                  <InputLeftElement pointerEvents='none'>¥</InputLeftElement>
+                  <InputLeftElement pointerEvents='none' color={mutedTextColor}>¥</InputLeftElement>
                   <Input 
                     value={newAmount} 
                     onChange={(e) => setNewAmount(e.target.value)}
                     type="number"
                     step="0.01"
                     placeholder="请输入订单金额"
+                    bg={inputBg}
+                    borderColor={borderColor}
+                    color={textColor}
+                    _placeholder={{ color: mutedTextColor }}
+                    _hover={{
+                      borderColor: inputHoverBorderColor
+                    }}
+                    _focus={{
+                      borderColor: inputFocusBorderColor,
+                      boxShadow: inputFocusBoxShadow
+                    }}
                   />
                 </InputGroup>
               </FormControl>
               <FormControl>
-                <FormLabel fontWeight="medium">订单状态</FormLabel>
+                <FormLabel fontWeight="medium" color={textColor}>订单状态</FormLabel>
                 <Select 
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
+                  bg={inputBg}
+                  borderColor={borderColor}
+                  color={textColor}
+                  _hover={{
+                    borderColor: inputHoverBorderColor
+                  }}
+                  _focus={{
+                    borderColor: inputFocusBorderColor,
+                    boxShadow: inputFocusBoxShadow
+                  }}
                 >
                   <option value="pending">待付款</option>
                   <option value="paid">已付款</option>
@@ -828,10 +1026,26 @@ const OrdersPage: React.FC = () => {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={() => setIsCreateModalOpen(false)}>
+            <Button 
+              variant="ghost" 
+              mr={3} 
+              onClick={() => setIsCreateModalOpen(false)}
+              color={textColor}
+              _hover={{ bg: hoverBg }}
+            >
               取消
             </Button>
-            <Button colorScheme="blue" onClick={handleCreateOrder}>
+            <Button 
+              colorScheme="blue" 
+              onClick={handleCreateOrder}
+              bg={primaryButtonBg}
+              _hover={{
+                bg: primaryButtonHoverBg
+              }}
+              _active={{
+                bg: primaryButtonActiveBg
+              }}
+            >
               创建
             </Button>
           </ModalFooter>
@@ -845,21 +1059,38 @@ const OrdersPage: React.FC = () => {
         onClose={() => setIsDeleteAlertOpen(false)}
         isCentered
       >
-        <AlertDialogOverlay>
-          <AlertDialogContent borderRadius="16px">
-            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+        <AlertDialogOverlay bg={modalOverlayBg}>
+          <AlertDialogContent borderRadius="16px" bg={cardBg} borderColor={borderColor}>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold" color={textColor}>
               删除订单
             </AlertDialogHeader>
 
-            <AlertDialogBody>
+            <AlertDialogBody color={textColor}>
               确定要删除订单 <Text as="span" fontWeight="bold">{selectedOrder?.orderNumber}</Text> 吗？此操作不可撤销。
             </AlertDialogBody>
 
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => setIsDeleteAlertOpen(false)}>
+              <Button 
+                ref={cancelRef} 
+                onClick={() => setIsDeleteAlertOpen(false)}
+                variant="ghost"
+                color={textColor}
+                _hover={{ bg: hoverBg }}
+              >
                 取消
               </Button>
-              <Button colorScheme="red" onClick={handleDeleteOrder} ml={3}>
+              <Button 
+                colorScheme="red" 
+                onClick={handleDeleteOrder} 
+                ml={3}
+                bg={redButtonBg}
+                _hover={{
+                  bg: redButtonHoverBg
+                }}
+                _active={{
+                  bg: redButtonActiveBg
+                }}
+              >
                 确认删除
               </Button>
             </AlertDialogFooter>
