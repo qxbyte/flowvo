@@ -1,1 +1,265 @@
-spring.application.name=fileMCP
+# Spring AI MCP Server - 多传输方式支持配置
+spring:
+  application:
+    name: fileMCP
+  ai:
+    mcp:
+      server:
+        # 🔑 启用MCP服务器 - 关键配置
+        enabled: true
+        # MCP服务器核心配置
+        # 重要：base-url配置，解决SSE端点404问题 (参考GitHub issue #2512)
+        base-url: http://localhost:19091
+        sse-endpoint: /sse
+        sse-message-endpoint: /mcp/message
+        
+        # 服务器信息配置
+        name: "File Operations MCP Server"
+        version: "1.0.0"
+        description: "Spring AI MCP Server for File and Directory Operations"
+        capabilities:
+          tools: true
+          resources: true
+          prompts: true
+          logging: true
+        
+        # 连接配置
+        initialized: true
+        protocol-version: "2024-11-05"
+        
+        # 🚨 重要：禁用STDIO，启用SSE传输
+        stdio: false
+        
+        # 工具变更通知
+        tool-change-notification: true
+        
+        # 请求超时配置
+        request-timeout: 60s
+        
+        # SSE传输配置（Spring AI 自动配置）
+        sse:
+          enabled: true
+          # 连接超时时间
+          connection-timeout: 60s
+          # 心跳间隔
+          heartbeat-interval: 30s
+          # 最大连接数
+          max-connections: 100
+          # 连接空闲超时
+          idle-timeout: 600s
+
+  # Web应用配置
+  main:
+    web-application-type: reactive
+    banner-mode: console
+
+  # WebFlux SSE长连接优化配置
+  webflux:
+    # 多部分请求最大内存大小
+    multipart:
+      max-in-memory-size: 50MB
+    # 编解码器配置
+    codecs:
+      max-in-memory-size: 50MB
+
+# 服务器端口和连接优化配置
+server:
+  port: 19091
+  shutdown: graceful
+  
+  # Netty服务器调优 - 针对SSE长连接优化
+  netty:
+    # 连接超时
+    connection-timeout: 60s
+    # 空闲超时 - 重要：避免长连接资源泄露
+    idle-timeout: 600s
+    # 最大连接数 - 根据服务器配置调整
+    max-connections: 1000
+    # 工作线程数 - 通常为CPU核心数的2倍
+    worker-threads: 8
+    # Boss线程数 - 通常1-2个即可
+    boss-threads: 2
+    # 接收缓冲区大小
+    socket:
+      receive-buffer-size: 131072
+      send-buffer-size: 131072
+      # TCP_NODELAY - 减少延迟
+      tcp-nodelay: true
+      # SO_KEEPALIVE - 保持长连接
+      keep-alive: true
+      # SO_REUSEADDR - 允许端口重用
+      reuse-address: true
+  
+  # HTTP/2支持 - 提升多路复用性能
+  http2:
+    enabled: true
+  
+  # 压缩配置 - 减少网络传输
+  compression:
+    enabled: true
+    mime-types: 
+      - application/json
+      - text/plain
+      - text/event-stream
+      - application/javascript
+      - text/css
+    min-response-size: 1024
+  
+  # 错误处理
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# JVM内存优化 - 针对长连接场景
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,httptrace,memory,gc
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+# 文件操作配置
+file:
+  operations:
+    # 基础路径，支持环境变量覆盖
+    base-path: ${FILE_OPERATIONS_BASE_PATH:${user.home}/mcp-files}
+    # 文件大小限制
+    max-file-size: 50MB
+    # 允许的文件扩展名
+    allowed-extensions: >
+      .txt,.md,.json,.xml,.yaml,.yml,.properties,.log,.csv,
+      .pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.rtf,.odt,.ods,.odp,
+      .html,.css,.js,.java,.py,.php,.sql,.sh,.bat,.go,.rs,.ts
+    # 安全配置
+    enable-security-check: true
+    # 并发操作限制
+    max-concurrent-operations: 20
+
+# 日志配置
+logging:
+  level:
+    io.mcp.filemcp: INFO
+    org.springframework.ai: DEBUG
+    org.springframework.ai.mcp: DEBUG
+    org.springframework.web.reactive: INFO
+    org.apache.tika: WARN
+    reactor.netty: INFO
+    reactor.netty.http.server: DEBUG
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# 开发环境配置 - 调试模式
+spring:
+  config:
+    activate:
+      on-profile: dev
+  ai:
+    mcp:
+      server:
+        request-timeout: 30s
+        stdio: false  # 开发环境也使用SSE传输
+        sse:
+          enabled: true
+          max-connections: 50
+          connection-timeout: 30s
+          heartbeat-interval: 15s
+
+server:
+  port: 19091
+  netty:
+    max-connections: 200
+    worker-threads: 4
+
+logging:
+  level:
+    io.mcp.filemcp: DEBUG
+    org.springframework.ai.mcp: DEBUG
+    reactor.netty: DEBUG
+    org.apache.tika: INFO
+
+---
+# 生产环境配置 - 高性能调优
+spring:
+  config:
+    activate:
+      on-profile: prod
+  ai:
+    mcp:
+      server:
+        request-timeout: 60s
+        stdio: false  # 生产环境使用SSE传输
+        sse:
+          enabled: true
+          max-connections: 500
+          connection-timeout: 60s
+          heartbeat-interval: 60s
+          idle-timeout: 600s
+
+server:
+  port: ${PORT:19091}
+  netty:
+    max-connections: 2000
+    worker-threads: ${NETTY_WORKER_THREADS:16}
+    boss-threads: ${NETTY_BOSS_THREADS:4}
+    idle-timeout: 600s
+
+# 生产环境JVM调优建议
+# -Xms2g -Xmx4g
+# -XX:+UseG1GC
+# -XX:MaxGCPauseMillis=200
+# -XX:+HeapDumpOnOutOfMemoryError
+# -XX:HeapDumpPath=/var/log/mcp-server/
+
+logging:
+  level:
+    root: WARN
+    io.mcp.filemcp: INFO
+
+file:
+  operations:
+    max-file-size: 50MB
+    max-concurrent-operations: 50
+
+---
+# STDIO模式配置 - 仅使用STDIO传输
+spring:
+  config:
+    activate:
+      on-profile: stdio-only
+  ai:
+    mcp:
+      server:
+        stdio: true
+        sse:
+          enabled: false
+  main:
+    web-application-type: none
+    banner-mode: off
+
+logging:
+  pattern:
+    console: ""
+
+---
+# SSE模式配置 - 仅使用SSE传输
+spring:
+  config:
+    activate:
+      on-profile: sse-only
+  ai:
+    mcp:
+      server:
+        stdio: false
+        sse:
+          enabled: true
+          max-connections: 1000
+          heartbeat-interval: 30s 

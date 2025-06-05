@@ -63,4 +63,4 @@
 
 /embedding_env/
 
-/core/src/main/resources/application.yml
+/core.old/src/main/resources/application.yml

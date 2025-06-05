@@ -40,7 +40,7 @@ spring:
           password: "milvus"
         database-name: "default"
         collection-name: "doc_chunk"
-        embedding-dimension: 768
+        embedding-dimension: 1536
         index-type: IVF_FLAT
         metric-type: COSINE
         # 启用自动schema初始化，让Spring AI创建默认结构
