@@ -9,6 +9,7 @@ spring:
         enabled: true
         # MCP服务器核心配置
         # 重要：base-url配置，解决SSE端点404问题 (参考GitHub issue #2512)
+        instructions: "暴露文件操作工具"
         base-url: http://localhost:19091
         sse-endpoint: /sse
         sse-message-endpoint: /mcp/message

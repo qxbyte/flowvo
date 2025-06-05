@@ -1,4 +1,125 @@
-# FlowVO 项目更新日志
+# CHANGELOG - 项目更新日志
+
+## 2025-06-05 - v1.4.0 🚀 多服务器动态检测重构
+### 新增功能 ✨
+- **动态服务器检测**: 支持从yml配置中动态遍历所有MCP服务器，不再依赖硬编码服务器名称
+- **智能工具映射**: 增强MultiServerToolManager，支持按客户端智能分组工具到不同服务器
+- **服务器状态监控**: 提供每个服务器的详细连接状态和工具数量统计
+- **客户端映射**: 建立服务器名称到McpSyncClient的映射关系
+
+### 优化改进 🔧
+- **配置灵活性**: 支持任意服务器名称（如server1、server2或file、mysql等）
+- **连接检测**: 增强服务器健康检查，支持多种端点检测（/actuator/health、/health、/sse等）
+- **工具分组策略**: 多种工具分配策略（按客户端分组、平均分配、默认服务器等）
+- **状态追踪**: 详细的服务器连接信息和工具映射状态
+
+### 技术优化 ⚡
+- **循环依赖解决**: 完全解决了SpringAI MCP组件间的循环依赖问题
+- **延迟初始化**: 优化MultiServerToolManager的初始化时机
+- **应用上下文感知**: 通过ApplicationContextAware延迟获取依赖组件
+
+### API增强 📡
+- `getAllServerStatus()`: 获取所有服务器状态
+- `getServerStatus(serverName)`: 获取指定服务器状态  
+- `getClientForServer(serverName)`: 获取服务器对应的客户端
+- `getConfiguredServerNames()`: 获取配置的服务器名称列表
+
+## 2025-06-05 - v1.3.0 🛠️ Spring AI MCP循环依赖修复
+
+## 🔧 [2025-01-08] 修复循环依赖问题和ChatClient.Builder配置
+
+### 🐛 问题修复
+- **循环依赖问题解决**
+  - 修复了`mcpToolCallbacks` Bean的循环依赖错误
+  - 使用`@ConditionalOnMissingBean`避免配置冲突
+  - 简化手动ChatClient配置，移除复杂的MCP工具依赖
+
+- **ChatClient.Builder配置优化**
+  - 添加了OpenAI模型依赖确保ChatClient.Builder自动配置
+  - 创建了备用ChatClient配置作为兜底方案
+  - 只在Spring AI自动配置失败时使用手动配置
+
+### 🔧 技术改进
+- **配置层次优化**
+  - 优先使用Spring AI官方自动配置
+  - 备用配置防止Bean缺失错误
+  - 条件配置避免Bean冲突
+
+- **测试验证服务**
+  - 新增`ChatClientTestService`用于启动时验证配置
+  - 自动检测ChatClient.Builder和ChatClient Bean状态
+  - 提供详细的配置日志输出
+
+### 📚 配置说明
+现在支持两种配置模式：
+1. **自动配置模式**（推荐）：添加OpenAI依赖，Spring AI自动创建ChatClient.Builder
+2. **手动配置模式**（备用）：当自动配置失败时，使用条件配置创建Mock ChatClient
+
+---
+
+## 🛠️ [2025-01-08] 修复Spring AI ChatClient API调用方式
+
+### 🐛 问题修复
+- **ChatClient注入方式修复**
+  - 修正了`ChatClient.Builder`不能直接注入的问题  
+  - 改为注入`ChatClient`并使用正确的API调用方式
+  - 更新了工具调用语法：`chatClient.prompt().user(prompt).tools(tools).call().content()`
+
+- **MCP Schema API兼容性修复**
+  - 修复了`McpSchema.Tool.getName()`方法不存在的问题
+  - 修复了`LoggingMessageNotification`API调用错误
+  - 简化了日志处理逻辑，避免API兼容性问题
+
+### 📚 文档更新
+- 更新了使用指南中的Java代码示例
+- 修正了ChatClient的正确使用方式
+- 提供了符合Spring AI官方文档的API调用示例
+
+---
+
+## 🚀 [2025-01-08] Spring AI MCP 多服务器工具选择功能
+
+### ✨ 新增功能
+- **多服务器工具管理器 (`MultiServerToolManager`)**
+  - 自动工具映射：系统启动时自动将MCP工具按服务器分组
+  - 工具来源追踪：记录每个工具来自哪个服务器
+  - 动态工具发现：支持工具变更时自动重新映射
+  - 灵活工具查询：按服务器获取工具、组合多服务器工具
+
+- **聊天客户端增强服务 (`ChatClientEnhancedService`)**
+  - 单服务器工具聊天：只使用特定服务器的工具
+  - 多服务器组合聊天：组合多个服务器的工具
+  - 智能工具选择：根据提示内容自动选择合适的工具
+  - 全工具模式：使用所有可用工具
+
+- **多服务器工具控制器 (`MultiServerToolController`)**
+  - 完整的REST API接口
+  - 工具映射状态查询
+  - 服务器工具统计
+  - 多种聊天模式支持
+
+- **增强版客户端定制器 (`EnhancedMcpSyncClientCustomizer`)**
+  - 集成多服务器工具管理
+  - 工具变更监听和映射更新
+  - 智能工具分组和追踪
+  - 性能监控和日志记录
+
+### 🎯 核心特性
+- **工具选择性调用**：实现类似 `chatClient.prompt().user(prompt).tools(stockTools, walletTools).call().content()` 的功能
+- **智能工具分组**：根据业务需求自动选择合适的工具组合
+- **性能优化**：避免加载不需要的工具，提高响应速度
+- **易于扩展**：支持轻松添加新的服务器和工具
+
+### 📚 API 端点
+- `GET /api/mcp/multi-server/status` - 工具映射状态
+- `GET /api/mcp/multi-server/servers` - 可用服务器列表
+- `POST /api/mcp/multi-server/chat/server/{serverName}` - 使用指定服务器工具聊天
+- `POST /api/mcp/multi-server/chat/multi-server` - 使用多服务器工具聊天
+- `POST /api/mcp/multi-server/chat/smart` - 智能工具选择聊天
+- `POST /api/mcp/multi-server/chat/all-tools` - 使用所有工具聊天
+- `POST /api/mcp/multi-server/mapping/refresh` - 刷新工具映射
+
+---
 
 ## 2025-06-04
 ### ✨ 新增功能
@@ -1561,3 +1682,61 @@ spring:
 - **连接质量**: 支持EXCELLENT/GOOD/FAIR/POOR四级评估
 
 ---
+
+## 🚀 [2025-01-08] Spring AI MCP 多服务器工具选择功能
+
+### ✨ 新增功能
+- **多服务器工具管理器 (`MultiServerToolManager`)**
+  - 自动工具映射：系统启动时自动将MCP工具按服务器分组
+  - 工具来源追踪：记录每个工具来自哪个服务器
+  - 动态工具发现：支持工具变更时自动重新映射
+  - 灵活工具查询：按服务器获取工具、组合多服务器工具
+
+- **聊天客户端增强服务 (`ChatClientEnhancedService`)**
+  - 单服务器工具聊天：只使用特定服务器的工具
+  - 多服务器组合聊天：组合多个服务器的工具
+  - 智能工具选择：根据提示内容自动选择合适的工具
+  - 全工具模式：使用所有可用工具
+
+- **多服务器工具控制器 (`MultiServerToolController`)**
+  - 完整的REST API接口
+  - 工具映射状态查询
+  - 服务器工具统计
+  - 多种聊天模式支持
+
+- **增强版客户端定制器 (`EnhancedMcpSyncClientCustomizer`)**
+  - 集成多服务器工具管理
+  - 工具变更监听和映射更新
+  - 智能工具分组和追踪
+  - 性能监控和日志记录
+
+### 🎯 核心特性
+- **工具选择性调用**：实现类似 `chatClient.prompt().user(prompt).tools(stockTools, walletTools)` 的功能
+- **智能工具分组**：根据业务需求自动选择合适的工具组合
+- **性能优化**：避免加载不需要的工具，提高响应速度
+- **易于扩展**：支持轻松添加新的服务器和工具
+
+### 📚 API 端点
+- `GET /api/mcp/multi-server/status` - 工具映射状态
+- `GET /api/mcp/multi-server/servers` - 可用服务器列表
+- `POST /api/mcp/multi-server/chat/server/{serverName}` - 指定服务器工具聊天
+- `POST /api/mcp/multi-server/chat/multi-server` - 多服务器工具聊天
+- `POST /api/mcp/multi-server/chat/smart` - 智能工具选择聊天
+- `POST /api/mcp/multi-server/mapping/refresh` - 刷新工具映射
+
+### 🔧 技术实现
+- 基于Spring AI MCP框架
+- 支持同步和异步客户端
+- 完整的错误处理和日志记录
+- 线程安全的工具映射管理
+
+### 📖 文档
+- 新增 `MULTI_SERVER_USAGE_GUIDE.md` 详细使用指南
+- 包含完整的API示例和Java代码示例
+- 涵盖配置、部署和测试说明
+
+---
+
+## 🔧 [2025-01-07] 项目结构优化
+
+### 🎯 改进内容

@@ -21,6 +21,7 @@
         <module>mcp/mcp-mysql</module>
         <module>mcp/fileMCP</module>
         <module>mcp/clientMCP</module>
+        <module>mcp/dateTimeMCP</module>
         <module>core</module>
         <!-- 你有其他子模块可以加在这里 -->
     </modules>

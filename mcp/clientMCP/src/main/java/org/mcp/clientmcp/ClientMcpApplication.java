@@ -1,7 +1,6 @@
 package org.mcp.clientmcp;
 
 import lombok.extern.slf4j.Slf4j;
-import org.mcp.clientmcp.config.McpConnectionManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -33,9 +32,6 @@ public class ClientMcpApplication {
 
     @Autowired
     private Environment environment;
-    
-    @Autowired
-    private McpConnectionManager connectionManager;
 
     public static void main(String[] args) {
         // 设置启动横幅
@@ -60,16 +56,10 @@ public class ClientMcpApplication {
     public void onApplicationReady() {
         String port = environment.getProperty("server.port", "19090");
         String baseUrl = "http://localhost:" + port;
-        String profile = environment.getProperty("spring.profiles.active", "default");
         
         log.info("🎉 MCP客户端启动成功！");
-        log.info("📋 应用程序信息:");
         log.info("   🌐 客户端地址: {}", baseUrl);
-        log.info("   📦 运行环境: {}", profile);
         log.info("");
-        
-        // 显示MCP连接策略说明
-        displayConnectionStrategy();
         
         log.info("🔌 可用端点:");
         log.info("   🧪 测试端点: {}/api/mcp/test", baseUrl);
@@ -83,39 +73,10 @@ public class ClientMcpApplication {
         
         printQuickStartGuide(baseUrl);
         
-        log.info("✅ MCP客户端应用已就绪，异步加载MCP Server，等待API调用...");
+        log.info("✅ MCP客户端应用已就绪");
         log.info("");
     }
-    
-    /**
-     * 显示连接策略说明
-     */
-    private void displayConnectionStrategy() {
-        log.info("🛡️ MCP连接策略:");
-        
-        if (connectionManager.isMcpEnabled()) {
-            // 从配置读取重试次数
-            String maxAttempts = environment.getProperty("spring.ai.mcp.client.sse.connections.file-server.retry.max-attempts", "5");
-            String retryInterval = environment.getProperty("spring.ai.mcp.client.sse.connections.file-server.retry.max-delay", "10s");
-            String healthCheckInterval = environment.getProperty("spring.ai.mcp.client.sse.connections.file-server.connection-timeout", "60s");
-            
-            log.info("   📡 连接模式: 延迟连接 (应用启动后异步连接)");
-            log.info("   🎯 目标服务器: {}", connectionManager.getServerUrl());
-            log.info("   🔄 重试机制: 自动重试，最多{}次，间隔{}", maxAttempts, retryInterval);
-            log.info("   💚 健康检查: 连接超时{}", healthCheckInterval);
-            log.info("");
-            log.info("   📊 当前状态: {}", connectionManager.getConnectionStatus().getDisplayText());
-            
-            if (connectionManager.getConnectionStatus() == McpConnectionManager.ConnectionStatus.DISCONNECTED) {
-                log.info("   🔍 说明: MCP连接初始化正在后台进行...");
-            }
-        } else {
-            log.info("   🚫 MCP客户端已禁用");
-        }
-        
-        log.info("");
-    }
-    
+
     /**
      * 打印快速开始指南
      */
@@ -137,4 +98,4 @@ public class ClientMcpApplication {
         log.info("   • 查看应用日志获取详细的连接状态信息");
         log.info("");
     }
-} 
+}

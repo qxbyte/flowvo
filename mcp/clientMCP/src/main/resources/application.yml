@@ -3,6 +3,23 @@ spring:
   application:
     name: clientMCP
   ai:
+    # === API配置（支持OpenAI和DeepSeek）===
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      #      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        enabled: true
+        options:
+          model: ${OPENAI_MODEL:gpt-3.5-turbo}
+          temperature: 0.7
+          max-tokens: 1000
+      # 网络配置优化
+      timeout: 60s
+      retry:
+        max-attempts: 3
+        delay: 2s
+    
+    # MCP客户端配置
     mcp:
       client:
         # 🔑 启用Spring AI自动配置，获取真实server端tools
@@ -10,16 +27,17 @@ spring:
         # 配置连接到fileMCP服务器
         sse:
           connections:
-            file-server:
+            server1:
               url: http://localhost:19091
               sse-endpoint: /sse
-            mysql-server:
-              url: http://localhost:19091
+            server2:
+              url: http://localhost:19092
               sse-endpoint: /sse
+#        request-timeout: 60s   # 远程调用超时时间
         # 客户端选项
         options:
           request-timeout: 60s
-          connect-timeout: 30s
+          connect-timeout: 30000
           initialized: true
           # 添加调试选项
           logging:
@@ -117,5 +135,11 @@ sse:
     # 优化重试配置
     retry:
       max-attempts: 5
-      initial-delay: 1s # 初始化延迟
+      # 初始化延迟
+      initial-delay: 1s
       max-delay: 10s
+
+# 启用ChatClient自动配置
+chat:
+  client:
+    enabled: true

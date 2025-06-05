@@ -8,11 +8,11 @@
 		<version>3.5.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>io.mcp</groupId>
-	<artifactId>fileMCP</artifactId>
+	<groupId>org.xue</groupId>
+	<artifactId>dateTimeMCP</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>fileMCP</name>
-	<description>Spring AI MCP Server for File and Directory Operations with Multi-Transport Support</description>
+	<name>DateTimeMCP</name>
+	<description>DateTimeMCP</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -26,6 +26,8 @@
 		<tag/>
 		<url/>
 	</scm>
+
+
 	<properties>
 		<java.version>17</java.version>
 		<spring-ai.version>1.0.0</spring-ai.version>
@@ -66,17 +68,6 @@
             <artifactId>spring-ai-starter-mcp-server-webflux</artifactId>
         </dependency>
 
-		<!-- Spring AI Tika Document Reader for parsing various file formats -->
-		<dependency>
-			<groupId>org.springframework.ai</groupId>
-			<artifactId>spring-ai-tika-document-reader</artifactId>
-		</dependency>
-
-		<!-- Spring Boot Actuator for monitoring and health checks -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-actuator</artifactId>
-		</dependency>
 
 		<!-- Lombok for reducing boilerplate code -->
 		<dependency>
@@ -90,19 +81,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-
-		<!-- Apache Commons IO for file operations -->
-		<dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-			<version>2.11.0</version>
-		</dependency>
-
-		<!-- Jackson for JSON processing -->
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>
