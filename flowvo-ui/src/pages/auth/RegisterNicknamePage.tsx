@@ -82,6 +82,7 @@ const RegisterNicknamePage: React.FC = () => {
         email: email,
         password: password,
         name: nickname.trim(),
+        nickname: nickname.trim(),
         username: emailPrefix // 使用邮箱前缀作为用户名
       };
       

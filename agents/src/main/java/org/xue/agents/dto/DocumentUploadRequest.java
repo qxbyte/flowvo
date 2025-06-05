@@ -55,4 +55,5 @@ public class DocumentUploadRequest {
      * 用户ID
      */
     private String userId;
+    private String category;
 } 

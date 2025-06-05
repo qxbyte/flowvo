@@ -2,6 +2,7 @@ package org.xue.agents.service;
 
 import org.xue.agents.dto.DocumentSearchRequest;
 import org.xue.agents.dto.DocumentUploadRequest;
+import org.xue.agents.dto.DocumentWithCategoryDTO;
 import org.xue.agents.dto.SearchResult;
 import org.xue.agents.entity.Document;
 
@@ -52,6 +53,13 @@ public interface DocumentService {
     List<Document> getUserDocuments(String userId);
     
     /**
+     * 获取用户的所有文档（包含分类信息）
+     * @param userId 用户ID
+     * @return 包含分类信息的文档列表
+     */
+    List<DocumentWithCategoryDTO> getUserDocumentsWithCategory(String userId);
+    
+    /**
      * 向量搜索文档
      * @param request 搜索请求
      * @return 搜索结果列表
@@ -65,4 +73,13 @@ public interface DocumentService {
      * @return 处理后的文档实体
      */
     Document reprocessDocument(String documentId, String userId);
+
+    /**
+     * 重新处理文档（使用新文件替换）
+     * @param documentId 文档ID
+     * @param userId 用户ID
+     * @param file 新的文件
+     * @return 处理后的文档实体
+     */
+    Document reprocessDocumentWithFile(String documentId, String userId, org.springframework.web.multipart.MultipartFile file);
 } 

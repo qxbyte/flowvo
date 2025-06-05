@@ -26,6 +26,11 @@ public class OrderDTO {
     private String orderNumber;
     
     /**
+     * 用户ID（订单所属用户）
+     */
+    private String userId;
+    
+    /**
      * 客户名称
      */
     private String customerName;

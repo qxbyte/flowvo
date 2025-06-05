@@ -14,6 +14,8 @@
 **/target/
 /flowvo.git/**
 /flowvo.git/
+/flowvo-ui/dist/
+/flowvo-ui/dist/**
 
 # Java 编译产物
 *.class
@@ -22,14 +24,20 @@
 
 # IDEA、Eclipse 等 IDE
 .idea/
+*.iws
 *.iml
+*.ipr
 *.classpath
 *.project
+
 
 # 日志
 /logs/
 *.log
 *.gz
+/mcp/clientMCP/logs/
+/mcp/mcp-mysql/_logs/
+/pids/
 
 # Generated files
 /out/
@@ -54,4 +62,22 @@
 /models/
 /models/**
 
-/core/src/main/resources/application.yml
+/embedding_env/
+
+
+# 文件筛选
+/core.old/src/main/resources/application.yml
+CHANGELOG.md
+env-config.properties
+IDEA-RUN-CONFIG.md
+MCP_CLIENT_INTEGRATION_GUIDE.md
+MCP_MULTI_SERVER_HEALTH_CHECK.md
+MULTI_SERVER_USAGE_GUIDE.md
+start-client.sh
+start-dev.sh
+start-with-filemcp.sh
+MCP_SERVER_INTEGRATION_GUIDE.md
+start-mcp-server.sh
+start-stdio.sh
+start-dev.sh
+start-with-filemcp.sh

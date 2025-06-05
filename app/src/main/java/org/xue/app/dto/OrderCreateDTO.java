@@ -16,6 +16,11 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class OrderCreateDTO {
     /**
+     * 用户ID（用于用户隔离）
+     */
+    private String userId;
+    
+    /**
      * 客户名称
      */
     private String customerName;

@@ -17,6 +17,17 @@ RESTART_MODE=false
 SKIP_DB_SERVICES=false
 FORCE_RESTART=false
 
+# 单独服务控制
+ONLY_MILVUS=false
+ONLY_EMBEDDING=false
+ONLY_MCP=false
+ONLY_FILEMCP=false
+ONLY_MYSQL_MCP=false
+ONLY_APP=false
+ONLY_AGENTS=false
+ONLY_API_GATEWAY=false
+ONLY_FRONTEND=false
+
 # 日志函数
 log_info() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -54,6 +65,42 @@ parse_args() {
                 FORCE_RESTART=true
                 shift
                 ;;
+            --milvus)
+                ONLY_MILVUS=true
+                shift
+                ;;
+            --embedding)
+                ONLY_EMBEDDING=true
+                shift
+                ;;
+            --mcp)
+                ONLY_MCP=true
+                shift
+                ;;
+            --filemcp)
+                ONLY_FILEMCP=true
+                shift
+                ;;
+            --mysql-mcp)
+                ONLY_MYSQL_MCP=true
+                shift
+                ;;
+            --app)
+                ONLY_APP=true
+                shift
+                ;;
+            --agents)
+                ONLY_AGENTS=true
+                shift
+                ;;
+            --api-gateway)
+                ONLY_API_GATEWAY=true
+                shift
+                ;;
+            --frontend)
+                ONLY_FRONTEND=true
+                shift
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -74,21 +121,50 @@ show_help() {
     echo "用法:"
     echo "  $0 [选项]"
     echo ""
-    echo "选项:"
-    echo "  --restart, -r    重启应用服务（App、Agents、前端）"
+    echo "常规选项:"
+    echo "  --restart, -r    重启应用服务（App、Agents、API Gateway、前端）"
     echo "  --skip-db        跳过数据库和嵌入服务检查"
-    echo "  --force, -f      强制重启所有服务"
+    echo "  --force, -f      强制重启所有服务（包括MCP服务）"
     echo "  --help, -h       显示此帮助信息"
+    echo ""
+    echo "单独服务控制:"
+    echo "  --milvus         仅启动/重启Milvus向量数据库"
+    echo "  --embedding      仅启动/重启嵌入模型服务"
+    echo "  --mcp            启动/重启所有MCP服务（文件MCP和MySQL MCP）"
+    echo "  --filemcp        仅启动/重启文件MCP服务"
+    echo "  --mysql-mcp      仅启动/重启MySQL MCP服务"
+    echo "  --app            仅启动/重启App应用服务"
+    echo "  --agents         仅启动/重启Agents应用服务"
+    echo "  --api-gateway    仅启动/重启API Gateway网关服务"
+    echo "  --frontend       仅启动/重启前端应用"
+    echo ""
+    echo "服务说明:"
+    echo "  • Milvus向量数据库 (端口19530)"
+    echo "  • 嵌入模型服务 (端口8000)"
+    echo "  • 文件MCP服务 (端口8082) - 目前暂时跳过"
+    echo "  • MySQL MCP服务 (端口50941)"
+    echo "  • App应用服务 (端口8080)"
+    echo "  • Agents应用服务 (端口8081)"
+    echo "  • API Gateway网关 (端口9870)"
+    echo "  • 前端应用 (端口5173)"
     echo ""
     echo "示例:"
     echo "  $0               # 常规启动，检查所有服务"
-    echo "  $0 --restart     # 重启应用服务，保持数据库运行"
-    echo "  $0 --skip-db     # 只启动应用服务"
-    echo "  $0 --force       # 强制重启所有服务"
+    echo "  $0 --restart     # 重启应用服务，保持数据库和MCP服务运行"
+    echo "  $0 --skip-db     # 只启动应用服务（跳过Milvus和嵌入服务）"
+    echo "  $0 --force       # 强制重启所有服务，包括数据库和MCP"
+    echo "  $0 --app         # 仅启动/重启App服务"
+    echo "  $0 --frontend    # 仅启动/重启前端应用"
+    echo "  $0 --mcp         # 启动/重启所有MCP服务"
+    echo "  $0 --filemcp     # 仅启动/重启文件MCP服务"
+    echo "  $0 --mysql-mcp   # 仅启动/重启MySQL MCP服务"
     echo ""
     echo "说明:"
     echo "  • 数据库和嵌入服务默认只在检测不到时才启动"
+    echo "  • MCP服务会自动检测端口占用状态并智能启动"
     echo "  • 应用服务支持智能重启，无需手动停止"
+    echo "  • 单独服务选项会强制重启对应服务"
+    echo "  • 查看详细状态：启动完成后会显示所有服务地址"
 }
 
 # 加载环境变量
@@ -246,7 +322,7 @@ start_embedding_service() {
     # 如果端口被占用但健康检查失败，或者需要强制重启，则重启服务
     if check_port 8000; then
         log_warning "嵌入模型服务端口被占用但健康检查失败，重启服务..."
-        stop_service_by_pid "嵌入模型服务" "$PROJECT_ROOT/logs/embedding_service.pid"
+        stop_service_by_pid "嵌入模型服务" "$PROJECT_ROOT/pids/embedding_service.pid"
         # 等待端口释放
         sleep 3
     fi
@@ -271,7 +347,7 @@ start_embedding_service() {
     
     # 后台启动嵌入服务
     nohup uvicorn python.embed_tools_server:app --host 0.0.0.0 --port 8000 > logs/embedding_service.log 2>&1 &
-    echo $! > logs/embedding_service.pid
+    echo $! > pids/embedding_service.pid
     
     # 等待服务启动
     if wait_for_service "http://localhost:8000/health" "嵌入模型服务"; then
@@ -283,37 +359,112 @@ start_embedding_service() {
     fi
 }
 
-# 3. 启动MCP服务
-start_mcp_services() {
-    log_info "启动MCP服务..."
+# 3. 启动文件MCP服务
+start_filemcp_service() {
+    log_info "启动文件MCP服务..."
     
-    # 启动文件MCP服务
-    if [ -d "$PROJECT_ROOT/mcp/fileMCP" ]; then
+    # 启动文件MCP服务 - 暂时跳过（根据用户要求）
+    if false && [ -d "$PROJECT_ROOT/mcp/fileMCP" ]; then
         log_info "启动文件MCP服务..."
-        cd "$PROJECT_ROOT/mcp/fileMCP"
-        # 这里需要根据实际的MCP服务启动方式调整
-        # 假设有启动脚本或者package.json
-        if [ -f "package.json" ]; then
-            nohup npm start > ../../logs/filemcp.log 2>&1 &
-            echo $! > ../../logs/filemcp.pid
+        
+        # 检查端口8082是否已被占用
+        if check_port 8082; then
+            if [ "$RESTART_MODE" = true ] || [ "$FORCE_RESTART" = true ]; then
+                log_info "重启文件MCP服务..."
+                stop_service_by_pid "文件MCP服务" "$PROJECT_ROOT/pids/filemcp.pid"
+                sleep 3
+            else
+                log_success "文件MCP服务已在运行 (端口8082)"
+                return 0
+            fi
         fi
+        
+        if ! check_port 8082; then
+            cd "$PROJECT_ROOT/mcp/fileMCP"
+            if [ -f "mvnw" ]; then
+                log_info "使用Maven Wrapper启动文件MCP服务..."
+                nohup ./mvnw spring-boot:run -Dserver.port=8082 > ../../logs/filemcp.log 2>&1 &
+                echo $! > ../../pids/filemcp.pid
+            elif command -v mvn > /dev/null 2>&1; then
+                log_info "使用系统Maven启动文件MCP服务..."
+                nohup mvn spring-boot:run -Dserver.port=8082 > ../../logs/filemcp.log 2>&1 &
+                echo $! > ../../pids/filemcp.pid
+            else
+                log_warning "文件MCP服务启动失败：找不到Maven"
+                return 1
+            fi
+        fi
+        
+        # 等待服务启动
+        sleep 3
+        if check_port 8082; then
+            log_success "文件MCP服务启动成功 (端口8082)"
+        else
+            log_warning "文件MCP服务启动可能失败，请检查日志"
+        fi
+    else
+        log_info "跳过文件MCP服务（按用户要求暂时不启动）"
     fi
+}
+
+# 4. 启动MySQL MCP服务
+start_mysql_mcp_service() {
+    log_info "启动MySQL MCP服务..."
     
     # 启动MySQL MCP服务
     if [ -d "$PROJECT_ROOT/mcp/mcp-mysql" ]; then
-        log_info "启动MySQL MCP服务..."
-        cd "$PROJECT_ROOT/mcp/mcp-mysql"
-        # 这里需要根据实际的MCP服务启动方式调整
-        if [ -f "package.json" ]; then
-            nohup npm start > ../../logs/mcp-mysql.log 2>&1 &
-            echo $! > ../../logs/mcp-mysql.pid
+        # 检查端口50941是否已被占用
+        if check_port 50941; then
+            if [ "$RESTART_MODE" = true ] || [ "$FORCE_RESTART" = true ]; then
+                log_info "重启MySQL MCP服务..."
+                stop_service_by_pid "MySQL MCP服务" "$PROJECT_ROOT/pids/mcp-mysql.pid"
+                sleep 3
+            else
+                log_success "MySQL MCP服务已在运行 (端口50941)"
+                return 0
+            fi
         fi
+        
+        if ! check_port 50941; then
+            cd "$PROJECT_ROOT/mcp/mcp-mysql"
+            if [ -f "mvnw" ]; then
+                log_info "使用Maven Wrapper启动MySQL MCP服务..."
+                nohup ./mvnw spring-boot:run > ../../logs/mcp-mysql.log 2>&1 &
+                echo $! > ../../pids/mcp-mysql.pid
+            elif command -v mvn > /dev/null 2>&1; then
+                log_info "使用系统Maven启动MySQL MCP服务..."
+                nohup mvn spring-boot:run > ../../logs/mcp-mysql.log 2>&1 &
+                echo $! > ../../pids/mcp-mysql.pid
+            else
+                log_warning "MySQL MCP服务启动失败：找不到Maven"
+                return 1
+            fi
+        fi
+        
+        # 等待服务启动
+        sleep 3
+        if check_port 50941; then
+            log_success "MySQL MCP服务启动成功 (端口50941)"
+        else
+            log_warning "MySQL MCP服务启动可能失败，请检查日志"
+        fi
+    else
+        log_warning "MySQL MCP目录不存在: $PROJECT_ROOT/mcp/mcp-mysql"
+        return 1
     fi
+}
+
+# 5. 启动所有MCP服务
+start_mcp_services() {
+    log_info "启动所有MCP服务..."
+    
+    start_filemcp_service
+    start_mysql_mcp_service
     
     log_success "MCP服务启动完成"
 }
 
-# 4. 启动App应用
+# 6. 启动App应用
 start_app_service() {
     log_info "检查App应用服务..."
     
@@ -321,7 +472,7 @@ start_app_service() {
     if check_port 8080 && check_service_health "http://localhost:8080/api/health" 5; then
         if [ "$RESTART_MODE" = true ] || [ "$FORCE_RESTART" = true ]; then
             log_info "重启App应用服务..."
-            stop_service_by_pid "App应用" "$PROJECT_ROOT/logs/app.pid"
+            stop_service_by_pid "App应用" "$PROJECT_ROOT/pids/app.pid"
             # 等待端口释放
             sleep 3
         else
@@ -330,7 +481,7 @@ start_app_service() {
         fi
     elif check_port 8080; then
         log_warning "App服务端口被占用但健康检查失败，重启服务..."
-        stop_service_by_pid "App应用" "$PROJECT_ROOT/logs/app.pid"
+        stop_service_by_pid "App应用" "$PROJECT_ROOT/pids/app.pid"
         sleep 3
     fi
     
@@ -341,18 +492,18 @@ start_app_service() {
     if [ -f "mvnw" ]; then
         log_info "使用Maven Wrapper启动App服务..."
         nohup ./mvnw spring-boot:run > ../logs/app.log 2>&1 &
-        echo $! > ../logs/app.pid
+        echo $! > ../pids/app.pid
     elif command -v mvn > /dev/null 2>&1; then
         log_info "使用系统Maven启动App服务..."
         nohup mvn spring-boot:run > ../logs/app.log 2>&1 &
-        echo $! > ../logs/app.pid
+        echo $! > ../pids/app.pid
     elif [ -f "target/app-*.jar" ]; then
         log_info "使用jar包启动App服务..."
         jar_file=$(ls target/app-*.jar | head -1)
         # 切换到项目根目录再启动jar包，确保静态资源路径正确
         cd "$PROJECT_ROOT"
         nohup java -jar "app/$jar_file" > logs/app.log 2>&1 &
-        echo $! > logs/app.pid
+        echo $! > pids/app.pid
     else
         log_error "无法启动App应用：既没有Maven Wrapper、Maven命令，也没有可执行的jar包"
         log_info "请先安装maven或构建项目"
@@ -369,7 +520,7 @@ start_app_service() {
     fi
 }
 
-# 5. 启动Agents应用
+# 7. 启动Agents应用
 start_agents_service() {
     log_info "检查Agents应用服务..."
     
@@ -377,7 +528,7 @@ start_agents_service() {
     if check_port 8081 && check_service_health "http://localhost:8081/api/health" 5; then
         if [ "$RESTART_MODE" = true ] || [ "$FORCE_RESTART" = true ]; then
             log_info "重启Agents应用服务..."
-            stop_service_by_pid "Agents应用" "$PROJECT_ROOT/logs/agents.pid"
+            stop_service_by_pid "Agents应用" "$PROJECT_ROOT/pids/agents.pid"
             # 等待端口释放
             sleep 3
         else
@@ -386,7 +537,7 @@ start_agents_service() {
         fi
     elif check_port 8081; then
         log_warning "Agents服务端口被占用但健康检查失败，重启服务..."
-        stop_service_by_pid "Agents应用" "$PROJECT_ROOT/logs/agents.pid"
+        stop_service_by_pid "Agents应用" "$PROJECT_ROOT/pids/agents.pid"
         sleep 3
     fi
     
@@ -397,18 +548,18 @@ start_agents_service() {
     if [ -f "mvnw" ]; then
         log_info "使用Maven Wrapper启动Agents服务..."
         nohup ./mvnw spring-boot:run > ../logs/agents.log 2>&1 &
-        echo $! > ../logs/agents.pid
+        echo $! > ../pids/agents.pid
     elif command -v mvn > /dev/null 2>&1; then
         log_info "使用系统Maven启动Agents服务..."
         nohup mvn spring-boot:run > ../logs/agents.log 2>&1 &
-        echo $! > ../logs/agents.pid
+        echo $! > ../pids/agents.pid
     elif [ -f "target/agents-*.jar" ]; then
         log_info "使用jar包启动Agents服务..."
         jar_file=$(ls target/agents-*.jar | head -1)
         # 切换到项目根目录再启动jar包，确保静态资源路径正确
         cd "$PROJECT_ROOT"
         nohup java -jar "agents/$jar_file" > logs/agents.log 2>&1 &
-        echo $! > logs/agents.pid
+        echo $! > pids/agents.pid
     else
         log_error "无法启动Agents应用：既没有Maven Wrapper、Maven命令，也没有可执行的jar包"
         log_info "请先安装maven或构建项目"
@@ -425,7 +576,64 @@ start_agents_service() {
     fi
 }
 
-# 6. 启动前端应用
+# 8. 启动API Gateway
+start_api_gateway() {
+    log_info "检查API Gateway服务..."
+    
+    # 检查API Gateway服务是否已经运行且健康
+    if check_port 9870 && check_service_health "http://localhost:9870/actuator/health" 5; then
+        if [ "$RESTART_MODE" = true ] || [ "$FORCE_RESTART" = true ]; then
+            log_info "重启API Gateway服务..."
+            stop_service_by_pid "API Gateway" "$PROJECT_ROOT/pids/api-gateway.pid"
+            # 等待端口释放
+            sleep 3
+        else
+            log_success "API Gateway服务已在运行且健康 (端口9870)"
+            return 0
+        fi
+    elif check_port 9870; then
+        log_warning "API Gateway服务端口被占用但健康检查失败，重启服务..."
+        stop_service_by_pid "API Gateway" "$PROJECT_ROOT/pids/api-gateway.pid"
+        sleep 3
+    fi
+    
+    log_info "启动API Gateway..."
+    cd "$PROJECT_ROOT/api-gateway"
+    
+    # 优先使用mvnw，如果没有再使用mvn命令
+    if [ -f "mvnw" ]; then
+        log_info "使用Maven Wrapper启动API Gateway服务..."
+        nohup ./mvnw spring-boot:run > ../logs/api-gateway.log 2>&1 &
+        echo $! > ../pids/api-gateway.pid
+    elif command -v mvn > /dev/null 2>&1; then
+        log_info "使用系统Maven启动API Gateway服务..."
+        nohup mvn spring-boot:run > ../logs/api-gateway.log 2>&1 &
+        echo $! > ../pids/api-gateway.pid
+    elif [ -f "target/api-gateway-*.jar" ]; then
+        log_info "使用jar包启动API Gateway服务..."
+        jar_file=$(ls target/api-gateway-*.jar | head -1)
+        # 切换到项目根目录再启动jar包，确保静态资源路径正确
+        cd "$PROJECT_ROOT"
+        nohup java -jar "api-gateway/$jar_file" > logs/api-gateway.log 2>&1 &
+        echo $! > pids/api-gateway.pid
+    else
+        log_error "无法启动API Gateway：既没有Maven Wrapper、Maven命令，也没有可执行的jar包"
+        log_info "请先安装maven或构建项目"
+        return 1
+    fi
+    
+    # 等待服务启动
+    if wait_for_service "http://localhost:9870/actuator/health" "API Gateway"; then
+        log_success "API Gateway启动成功"
+        log_info "API Gateway健康检查: http://localhost:9870/actuator/health"
+        log_info "API Gateway网关地址: http://localhost:9870"
+    else
+        log_error "API Gateway启动失败"
+        exit 1
+    fi
+}
+
+# 9. 启动前端应用
 start_frontend() {
     log_info "检查前端应用..."
     
@@ -433,7 +641,7 @@ start_frontend() {
     if check_port 5173; then
         if [ "$RESTART_MODE" = true ] || [ "$FORCE_RESTART" = true ]; then
             log_info "重启前端应用..."
-            stop_service_by_pid "前端应用" "$PROJECT_ROOT/logs/frontend.pid"
+            stop_service_by_pid "前端应用" "$PROJECT_ROOT/pids/frontend.pid"
             # 等待端口释放
             sleep 3
         else
@@ -459,7 +667,7 @@ start_frontend() {
     
     # 后台启动前端服务
     nohup npm run dev > ../logs/frontend.log 2>&1 &
-    echo $! > ../logs/frontend.pid
+    echo $! > ../pids/frontend.pid
     
     # 等待前端服务启动
     sleep 5
@@ -479,6 +687,7 @@ show_service_status() {
     
     echo "📊 核心服务："
     echo "  • 前端应用: http://localhost:5173"
+    echo "  • API Gateway网关: http://localhost:9870"
     echo "  • App服务: http://localhost:8080"
     echo "  • Agents服务: http://localhost:8081"
     echo ""
@@ -494,13 +703,20 @@ show_service_status() {
     echo "  • 嵌入模型健康检查: http://localhost:8000/health"
     echo ""
     
+    echo "🔌 MCP服务："
+    echo "  • 文件MCP服务: http://localhost:8082"
+    echo "  • MySQL MCP服务: http://localhost:50941"
+    echo ""
+    
     echo "💚 健康检查端点："
+    echo "  • API Gateway健康检查: http://localhost:9870/actuator/health"
     echo "  • App服务健康检查: http://localhost:8080/api/health"
     echo "  • Agents服务健康检查: http://localhost:8081/api/health"
     echo ""
     
     echo "📝 管理命令："
     echo "  • 查看所有日志: tail -f logs/*.log"
+    echo "  • 查看所有PID: ls -la pids/"
     echo "  • 停止所有服务: ./stop.sh"
     echo "  • 重启应用服务: ./start.sh --restart"
     echo "  • 强制重启所有: ./start.sh --force"
@@ -515,8 +731,19 @@ main() {
     # 解析命令行参数
     parse_args "$@"
     
+    # 检查是否选择了单独服务启动
+    local single_service_mode=false
+    if [ "$ONLY_MILVUS" = true ] || [ "$ONLY_EMBEDDING" = true ] || [ "$ONLY_MCP" = true ] || \
+       [ "$ONLY_FILEMCP" = true ] || [ "$ONLY_MYSQL_MCP" = true ] || \
+       [ "$ONLY_APP" = true ] || [ "$ONLY_AGENTS" = true ] || [ "$ONLY_API_GATEWAY" = true ] || \
+       [ "$ONLY_FRONTEND" = true ]; then
+        single_service_mode=true
+    fi
+    
     # 显示启动模式
-    if [ "$FORCE_RESTART" = true ]; then
+    if [ "$single_service_mode" = true ]; then
+        log_info "单独服务模式：仅启动选定的服务"
+    elif [ "$FORCE_RESTART" = true ]; then
         log_warning "强制重启模式：将重启所有服务"
     elif [ "$RESTART_MODE" = true ]; then
         log_info "重启模式：将重启应用服务，保持数据库服务运行"
@@ -529,21 +756,58 @@ main() {
     # 加载环境变量
     load_env_file
     
-    # 创建日志目录
+    # 创建必要的目录
     mkdir -p "$PROJECT_ROOT/logs"
+    mkdir -p "$PROJECT_ROOT/pids"
     
-    # 按顺序启动服务
-    start_milvus
-    start_embedding_service
-    start_mcp_services
-    start_app_service
-    start_agents_service
-    start_frontend
+    # 根据模式启动服务
+    if [ "$single_service_mode" = true ]; then
+        # 单独服务模式 - 强制重启选定的服务
+        if [ "$ONLY_MILVUS" = true ]; then
+            FORCE_RESTART=true start_milvus
+        fi
+        if [ "$ONLY_EMBEDDING" = true ]; then
+            FORCE_RESTART=true start_embedding_service
+        fi
+        if [ "$ONLY_MCP" = true ]; then
+            FORCE_RESTART=true start_mcp_services
+        fi
+        if [ "$ONLY_FILEMCP" = true ]; then
+            FORCE_RESTART=true start_filemcp_service
+        fi
+        if [ "$ONLY_MYSQL_MCP" = true ]; then
+            FORCE_RESTART=true start_mysql_mcp_service
+        fi
+        if [ "$ONLY_APP" = true ]; then
+            FORCE_RESTART=true start_app_service
+        fi
+        if [ "$ONLY_AGENTS" = true ]; then
+            FORCE_RESTART=true start_agents_service
+        fi
+        if [ "$ONLY_API_GATEWAY" = true ]; then
+            FORCE_RESTART=true start_api_gateway
+        fi
+        if [ "$ONLY_FRONTEND" = true ]; then
+            FORCE_RESTART=true start_frontend
+        fi
+        
+        log_success "选定服务启动完成！"
+    else
+        # 按顺序启动所有服务
+        start_milvus
+        start_embedding_service
+        start_mcp_services
+        start_app_service
+        start_agents_service
+        start_api_gateway
+        start_frontend
+        
+        # 显示服务状态
+        show_service_status
+        
+        log_success "FlowVO 平台启动完成！"
+    fi
     
-    # 显示服务状态
-    show_service_status
-    
-    log_success "FlowVO 平台启动完成！"
     echo ""
 }
 

@@ -76,6 +76,11 @@ public class Document {
     private String userId;
     
     /**
+     * 文档分类ID
+     */
+    private String category;
+    
+    /**
      * 处理状态
      */
     @Enumerated(EnumType.STRING)

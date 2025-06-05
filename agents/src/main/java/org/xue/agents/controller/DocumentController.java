@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.xue.agents.dto.DocumentSearchRequest;
 import org.xue.agents.dto.DocumentUploadRequest;
+import org.xue.agents.dto.DocumentWithCategoryDTO;
 import org.xue.agents.dto.SearchResult;
 import org.xue.agents.entity.Document;
 import org.xue.agents.parse.DocumentParserService;
@@ -59,7 +60,8 @@ public class DocumentController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("userId") String userId,
             @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "tags", required = false) String[] tags) {
+            @RequestParam(value = "tags", required = false) String[] tags,
+            @RequestParam(value = "category", required = false) String category) {
         
         try {
             // 1. 验证文件
@@ -70,7 +72,7 @@ public class DocumentController {
             String fileName = file.getOriginalFilename();
             String mimeType = file.getContentType();
             
-            log.info("接收到文件上传请求: fileName={}, mimeType={}, size={}", fileName, mimeType, file.getSize());
+            log.info("接收到文件上传请求: fileName={}, mimeType={}, size={}, category={}", fileName, mimeType, file.getSize(), category);
             
             // 2. 检查文件类型是否支持
             if (!documentParserService.isSupported(fileName, mimeType)) {
@@ -98,6 +100,7 @@ public class DocumentController {
                     .userId(userId)
                     .description(description)
                     .tags(tags != null ? Arrays.asList(tags) : List.of())
+                    .category(category)  // 添加分类参数
                     .filePath("uploads/" + UUID.randomUUID() + "/" + fileName) // 虚拟路径
                     .build();
             
@@ -110,21 +113,6 @@ public class DocumentController {
             log.error("文件上传处理失败: {}", file.getOriginalFilename(), e);
             return ResponseEntity.internalServerError().body("文件上传失败: " + e.getMessage());
         }
-    }
-
-    /**
-     * 上传文件（multipart格式）- v1版本接口
-     * 兼容app模块的调用路径 /api/v1/documents/upload
-     */
-    @PostMapping("/v1/upload")
-    public ResponseEntity<?> uploadFileV1(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("userId") String userId,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestParam(value = "tags", required = false) String[] tags) {
-        
-        // 直接调用现有的upload-file逻辑
-        return uploadFile(file, userId, description, tags);
     }
 
     /**
@@ -142,21 +130,13 @@ public class DocumentController {
     }
 
     /**
-     * 获取支持的文件类型 - v1版本
-     */
-    @GetMapping("/v1/supported-types")
-    public ResponseEntity<List<String>> getSupportedTypesV1() {
-        return getSupportedTypes();
-    }
-
-    /**
      * 提取文件扩展名
      */
     private String getFileExtension(String fileName) {
         if (fileName == null || !fileName.contains(".")) {
             return "unknown";
         }
-        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toUpperCase();
     }
 
     /**
@@ -235,11 +215,17 @@ public class DocumentController {
     }
 
     /**
-     * 获取用户的所有文档 - v1版本
+     * 获取用户的所有文档（包含分类信息）
      */
-    @GetMapping("/v1/user/{userId}")
-    public ResponseEntity<List<Document>> getUserDocumentsV1(@PathVariable String userId) {
-        return getUserDocuments(userId);
+    @GetMapping("/user/{userId}/with-category")
+    public ResponseEntity<List<DocumentWithCategoryDTO>> getUserDocumentsWithCategory(@PathVariable String userId) {
+        try {
+            List<DocumentWithCategoryDTO> documents = documentService.getUserDocumentsWithCategory(userId);
+            return ResponseEntity.ok(documents);
+        } catch (Exception e) {
+            log.error("获取用户文档（含分类信息）失败", e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     /**
@@ -265,6 +251,34 @@ public class DocumentController {
             @RequestParam String userId) {
         try {
             Document document = documentService.reprocessDocument(documentId, userId);
+            if (document != null) {
+                return ResponseEntity.ok(document);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("重新处理文档失败", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * 重新处理文档（包含新文件上传）
+     */
+    @PostMapping("/{documentId}/reprocess-with-file")
+    public ResponseEntity<Document> reprocessDocumentWithFile(
+            @PathVariable String documentId,
+            @RequestParam String userId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            log.info("开始重新处理文档: {} (用户: {}, 新文件: {})", documentId, userId, file.getOriginalFilename());
+            
+            if (file.isEmpty()) {
+                log.warn("上传的文件为空");
+                return ResponseEntity.badRequest().build();
+            }
+            
+            Document document = documentService.reprocessDocumentWithFile(documentId, userId, file);
             if (document != null) {
                 return ResponseEntity.ok(document);
             } else {

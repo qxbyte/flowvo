@@ -18,8 +18,10 @@ import { Spinner, Center, VStack, Text } from '@chakra-ui/react';
 import { useAuth } from './hooks/useAuth';
 
 // 使用懒加载延迟导入可能存在路径问题的组件
-const DashboardPage = lazy(() => import('./pages/business/DashboardPage'));
+const DashboardPage = lazy(() => import('./pages/dashboard/DashboardPage'));
 const OrdersPage = lazy(() => import('./pages/business/OrdersPage'));
+const SearchSettingsPage = lazy(() => import('./pages/business/knowledge/SearchSettingsPage'));
+const CategoryManagementPage = lazy(() => import('./pages/business/knowledge/CategoryManagementPage'));
 
 // 加载中占位组件
 const LoadingFallback = () => (
@@ -95,6 +97,24 @@ const App: React.FC = () => {
         element={renderBusinessPage(
           <Suspense fallback={<LoadingFallback />}>
             <OrdersPage />
+          </Suspense>
+        )} 
+      />
+      
+      {/* 知识库管理路由 */}
+      <Route 
+        path="/business/knowledge/search-settings" 
+        element={renderBusinessPage(
+          <Suspense fallback={<LoadingFallback />}>
+            <SearchSettingsPage />
+          </Suspense>
+        )} 
+      />
+      <Route 
+        path="/business/knowledge/categories" 
+        element={renderBusinessPage(
+          <Suspense fallback={<LoadingFallback />}>
+            <CategoryManagementPage />
           </Suspense>
         )} 
       />

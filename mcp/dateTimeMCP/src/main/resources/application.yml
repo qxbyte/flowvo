@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: datetime-mcp-server
+
+  ai:
+    mcp:
+      server:
+        name: datetime-mcp-server
+        version: 1.0.0
+        type: ASYNC                        # 使用响应式（推荐 SSE 场景）
+        instructions: "暴露日期工具"
+        sse-message-endpoint: /mcp/messages # SSE 推送端点
+        sse-endpoint: /sse
+        capabilities:
+          tool: true                       # 仅暴露 Tool 能力
+
+server:
+  port: 19092

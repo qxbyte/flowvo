@@ -1,0 +1,145 @@
+# Spring AI MCP Client 配置文件 - 恢复Spring AI标准配置
+spring:
+  application:
+    name: clientMCP
+  ai:
+    # === API配置（支持OpenAI和DeepSeek）===
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      #      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
+      chat:
+        enabled: true
+        options:
+          model: ${OPENAI_MODEL:gpt-3.5-turbo}
+          temperature: 0.7
+          max-tokens: 1000
+      # 网络配置优化
+      timeout: 60s
+      retry:
+        max-attempts: 3
+        delay: 2s
+    
+    # MCP客户端配置
+    mcp:
+      client:
+        # 🔑 启用Spring AI自动配置，获取真实server端tools
+        enabled: true
+        # 配置连接到fileMCP服务器
+        sse:
+          connections:
+            server1:
+              url: http://localhost:19091
+              sse-endpoint: /sse
+            server2:
+              url: http://localhost:19092
+              sse-endpoint: /sse
+#        request-timeout: 60s   # 远程调用超时时间
+        # 客户端选项
+        options:
+          request-timeout: 60s
+          connect-timeout: 30000
+          initialized: true
+          # 添加调试选项
+          logging:
+            enabled: true
+          # 增加请求体大小限制
+          max-request-size: 50MB
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,mcpstatus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      status:
+        order: "UP,UNKNOWN,DOWN"
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+  health:
+    defaults:
+      enabled: false
+    mcp:
+      enabled: true
+      timeout: 10s
+
+# 服务器配置
+server:
+  port: 19090
+  shutdown: graceful
+  
+  tomcat:
+    max-http-form-post-size: 50MB    # 增加表单数据大小限制
+    max-swallow-size: 50MB           # 增加请求正文最大吞吐限制
+    connection-timeout: 60000        # 增加连接超时
+    max-connections: 200             # 增加最大连接数
+
+# 日志配置优化
+logging:
+  level:
+    root: INFO
+    org.mcp.clientmcp: DEBUG
+    org.springframework.ai.mcp: DEBUG
+    org.springframework.web.reactive: WARN
+    reactor.netty: INFO
+    io.netty: WARN
+    org.springframework.ai.mcp.client: DEBUG
+    io.modelcontextprotocol: DEBUG    # 增加MCP协议日志
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5level [%15.15thread] %-50.50logger{49} : %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5level [%15.15thread] %-50.50logger{49} : %msg%n"
+
+  file:
+    name: logs/mcp-client.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7
+
+# 应用信息
+info:
+  app:
+    name: Spring AI MCP Client
+    description: MCP客户端应用程序 - Spring AI标准配置
+    version: 2.3-spring-ai-standard
+    encoding: UTF-8
+    java.version: ${java.version}
+  mcp:
+    protocol-version: "1.0.0"
+    architecture: "spring-ai-standard"
+    fault-tolerance: "enabled"
+    features:
+      - "Spring AI自动装配"
+      - "真实server端tools获取"
+      - "SSE连接"
+      - "协议握手"
+      - "工具发现"
+      - "功能调用"
+      - "持久连接"
+      - "自动重试"
+
+sse:
+  server:
+    # 增加连接配置超时时间
+    connection-timeout: 60s
+    request-timeout: 60s
+    # 优化重试配置
+    retry:
+      max-attempts: 5
+      # 初始化延迟
+      initial-delay: 1s
+      max-delay: 10s
+
+# 启用ChatClient自动配置
+chat:
+  client:
+    enabled: true

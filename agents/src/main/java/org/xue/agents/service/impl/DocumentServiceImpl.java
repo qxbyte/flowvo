@@ -11,13 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.xue.agents.config.EmbeddingConfig;
 import org.xue.agents.dto.DocumentSearchRequest;
 import org.xue.agents.dto.DocumentUploadRequest;
+import org.xue.agents.dto.DocumentWithCategoryDTO;
 import org.xue.agents.dto.SearchResult;
-import org.xue.agents.embed.EmbeddingClient;
 import org.xue.agents.entity.Document;
+import org.xue.agents.entity.DocumentCategory;
+import org.xue.agents.repository.DocumentCategoryRepository;
 import org.xue.agents.repository.DocumentRepository;
+import org.xue.agents.parse.DocumentParserService;
 import org.xue.agents.service.DocumentService;
+import org.xue.agents.embed.EmbeddingClient;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -34,17 +40,22 @@ public class DocumentServiceImpl implements DocumentService {
     private final TextSplitter textSplitter;
     private final EmbeddingClient embeddingClient; // 可选依赖
     private final DocumentRepository documentRepository;
+    private final DocumentParserService documentParserService;
+    private final DocumentCategoryRepository categoryRepository;
 
     @Autowired
-    public DocumentServiceImpl(VectorStore vectorStore, 
-                              EmbeddingConfig embeddingConfig,
-                              DocumentRepository documentRepository,
-                              @Autowired(required = false) EmbeddingClient embeddingClient) {
+    public DocumentServiceImpl(VectorStore vectorStore,
+                               EmbeddingConfig embeddingConfig,
+                               DocumentRepository documentRepository,
+                               DocumentParserService documentParserService,
+                               @Autowired(required = false) EmbeddingClient embeddingClient, DocumentCategoryRepository categoryRepository) {
         this.vectorStore = vectorStore;
         this.embeddingConfig = embeddingConfig;
         this.documentRepository = documentRepository;
+        this.documentParserService = documentParserService;
         this.embeddingClient = embeddingClient;
-        
+        this.categoryRepository = categoryRepository;
+
         // 根据配置创建文本切分器
         EmbeddingConfig.ExternalService external = embeddingConfig.getExternal();
         this.textSplitter = new TokenTextSplitter(external.getChunkSize(), external.getChunkOverlap(), 0, 10000, false);
@@ -172,6 +183,7 @@ public class DocumentServiceImpl implements DocumentService {
                     .description(request.getDescription())
                     .filePath(request.getFilePath())
                     .userId(request.getUserId())
+                    .category(request.getCategory())
                     .status(Document.Status.PROCESSING)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
@@ -317,6 +329,9 @@ public class DocumentServiceImpl implements DocumentService {
         if (request.getDescription() != null) {
             metadata.put("description", request.getDescription());
         }
+        if (request.getCategory() != null) {
+            metadata.put("category", request.getCategory());
+        }
         
         return metadata;
     }
@@ -381,6 +396,9 @@ public class DocumentServiceImpl implements DocumentService {
         if (updatedDocument.getDescription() != null) {
             existingDocument.setDescription(updatedDocument.getDescription());
         }
+        if (updatedDocument.getCategory() != null) {
+            existingDocument.setCategory(updatedDocument.getCategory());
+        }
         existingDocument.setUpdatedAt(LocalDateTime.now());
         
         // 如果内容发生变化，需要重新向量化
@@ -408,6 +426,75 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public List<Document> getUserDocuments(String userId) {
         return documentRepository.findByUserIdOrderByUpdatedAtDesc(userId);
+    }
+
+    @Override
+    public List<DocumentWithCategoryDTO> getUserDocumentsWithCategory(String userId) {
+        // 获取用户的所有文档
+        List<Document> documents = documentRepository.findByUserIdOrderByUpdatedAtDesc(userId);
+        
+        // 转换为DocumentWithCategoryDTO
+        return documents.stream().map(document -> {
+            DocumentWithCategoryDTO dto = DocumentWithCategoryDTO.builder()
+                .id(document.getId())
+                .name(document.getName())
+                .content(document.getContent())
+                .size(document.getSize())
+                .type(document.getType())
+                .tags(document.getTags())
+                .description(document.getDescription())
+                .filePath(document.getFilePath())
+                .userId(document.getUserId())
+                .categoryId(document.getCategory())
+                .categoryName(getCategoryNameById(document.getCategory())) // 通过分类ID获取分类名称
+                .categoryIcon(getCategoryIconById(document.getCategory())) // 通过分类ID获取分类图标
+                .status(document.getStatus() != null ? document.getStatus().toString() : "UNKNOWN")
+                .chunkCount(document.getChunkCount())
+                .createdAt(document.getCreatedAt())
+                .updatedAt(document.getUpdatedAt())
+                .build();
+            return dto;
+        }).collect(java.util.stream.Collectors.toList());
+    }
+    
+    /**
+     * 根据分类ID获取分类名称
+     */
+    private String getCategoryNameById(String categoryId) {
+        if (categoryId == null || categoryId.trim().isEmpty()) {
+            return "未分类";
+        }
+
+        Optional<DocumentCategory> category = categoryRepository.findById(categoryId);
+
+        if (category.isPresent()) {
+            DocumentCategory docCategory = category.get();
+            // 使用 docCategory 做后续逻辑
+            return docCategory.getName();
+        } else {
+            // 没有找到对应 ID 的记录
+            return "未分类";
+        }
+    }
+    
+    /**
+     * 根据分类ID获取分类图标
+     */
+    private String getCategoryIconById(String categoryId) {
+        if (categoryId == null || categoryId.trim().isEmpty()) {
+            return "folder";
+        }
+        
+        // 为简化起见，先使用固定的映射
+        switch (categoryId) {
+            case "cat_user_manual": return "book";
+            case "cat_technical_doc": return "code";
+            case "cat_training_material": return "graduation-cap";
+            case "cat_faq": return "help-circle";
+            case "cat_policy": return "shield";
+            case "cat_other": return "file";
+            default: return "folder";
+        }
     }
 
     @Override
@@ -480,6 +567,7 @@ public class DocumentServiceImpl implements DocumentService {
             request.setDescription(document.getDescription());
             request.setFilePath(document.getFilePath());
             request.setUserId(document.getUserId());
+            request.setCategory(document.getCategory());
             
             return uploadDocument(request);
             
@@ -490,5 +578,108 @@ public class DocumentServiceImpl implements DocumentService {
             documentRepository.save(document);
             return document;
         }
+    }
+
+    @Override
+    public Document reprocessDocumentWithFile(String documentId, String userId, MultipartFile file) {
+        log.info("使用新文件重新处理文档: {} (用户: {}, 新文件: {})", documentId, userId, file.getOriginalFilename());
+        
+        Document document = documentRepository.findById(documentId).orElse(null);
+        if (document == null || !document.getUserId().equals(userId)) {
+            log.warn("文档不存在或无权限处理: {}", documentId);
+            return null;
+        }
+        
+        try {
+            // 1. 删除旧的向量数据（保留文档记录但删除向量存储）
+            log.info("删除文档 {} 的旧向量数据", documentId);
+            List<String> vectorIds = new ArrayList<>();
+            for (int i = 0; i < document.getChunkCount(); i++) {
+                vectorIds.add(documentId + "_chunk_" + i);
+            }
+            
+            if (!vectorIds.isEmpty()) {
+                vectorStore.delete(vectorIds);
+                log.info("已删除 {} 个向量块", vectorIds.size());
+            }
+            
+            // 2. 解析新文件内容
+            String content;
+            String originalFilename = file.getOriginalFilename();
+            String contentType = file.getContentType();
+            
+            try (InputStream inputStream = file.getInputStream()) {
+                content = documentParserService.parseDocument(inputStream, originalFilename, contentType);
+                if (content == null || content.trim().isEmpty()) {
+                    throw new RuntimeException("文件解析失败或内容为空");
+                }
+            }
+            
+            // 3. 更新文档信息
+            document.setName(originalFilename);
+            document.setContent(content);
+            document.setSize(file.getSize());
+            document.setType(getFileExtension(originalFilename));
+            document.setStatus(Document.Status.PROCESSING);
+            document.setUpdatedAt(LocalDateTime.now());
+            
+            // 4. 重新向量化处理
+            DocumentUploadRequest request = new DocumentUploadRequest();
+            request.setName(originalFilename);
+            request.setContent(content);
+            request.setSize(file.getSize());
+            request.setType(getFileExtension(originalFilename));
+            request.setTags(document.getTags());
+            request.setDescription(document.getDescription());
+            request.setFilePath(document.getFilePath());
+            request.setUserId(document.getUserId());
+            request.setCategory(document.getCategory());
+            
+            // 5. 进行向量化处理（使用原文档ID）
+            List<org.springframework.ai.document.Document> vectorDocuments;
+            
+            // 根据配置选择处理方式
+            if (embeddingConfig.getType() == EmbeddingConfig.ServiceType.EXTERNAL && embeddingClient != null) {
+                // 使用外部向量化服务
+                vectorDocuments = processWithExternalService(documentId, request);
+            } else {
+                // 使用Spring AI内置服务
+                vectorDocuments = processWithSpringAI(documentId, request);
+            }
+            
+            // 6. 存储到向量数据库
+            vectorStore.add(vectorDocuments);
+            
+            // 7. 更新文档状态和块数量
+            document.setStatus(Document.Status.COMPLETED);
+            document.setChunkCount(vectorDocuments.size());
+            document.setUpdatedAt(LocalDateTime.now());
+            
+            // 8. 保存更新的文档信息
+            document = documentRepository.save(document);
+            
+            log.info("文档 {} 重新处理完成，新文件: {}, 向量块数: {}", 
+                    documentId, originalFilename, vectorDocuments.size());
+            
+            return document;
+            
+        } catch (Exception e) {
+            log.error("重新处理文档失败: {}", documentId, e);
+            document.setStatus(Document.Status.FAILED);
+            document.setUpdatedAt(LocalDateTime.now());
+            documentRepository.save(document);
+            throw new RuntimeException("重新处理文档失败: " + e.getMessage(), e);
+        }
+    }
+
+    private String getFileExtension(String filename) {
+        if (filename == null || !filename.contains(".")) {
+            return "unknown";
+        }
+        int dotIndex = filename.lastIndexOf('.');
+        if (dotIndex > 0 && dotIndex < filename.length() - 1) {
+            return filename.substring(dotIndex + 1).toUpperCase();
+        }
+        return "unknown";
     }
 } 

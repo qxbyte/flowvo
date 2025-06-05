@@ -3,6 +3,8 @@ package org.xue.app.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.xue.app.dto.OrderCreateDTO;
 import org.xue.app.dto.OrderDTO;
@@ -24,61 +26,114 @@ public class OrderController {
     private OrderService orderService;
     
     /**
-     * 创建订单
+     * 获取当前用户ID
+     */
+    private String getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
+            throw new RuntimeException("用户未登录");
+        }
+        return authentication.getName(); // 返回用户名作为用户ID
+    }
+    
+    /**
+     * 创建订单（仅当前用户）
      */
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(@RequestBody OrderCreateDTO orderCreateDTO) {
+        String currentUserId = getCurrentUserId();
+        // 强制设置为当前登录用户
+        orderCreateDTO.setUserId(currentUserId);
+        
         OrderDTO createdOrder = orderService.createOrder(orderCreateDTO);
         return ResponseEntity.ok(createdOrder);
     }
     
     /**
-     * 更新订单
+     * 更新订单（仅当前用户的订单）
      */
     @PutMapping("/{id}")
     public ResponseEntity<OrderDTO> updateOrder(@PathVariable String id, @RequestBody OrderUpdateDTO orderUpdateDTO) {
+        String currentUserId = getCurrentUserId();
+        
+        // 首先验证订单是否属于当前用户
+        OrderDTO existingOrder = orderService.getOrderById(id);
+        if (!currentUserId.equals(existingOrder.getUserId())) {
+            throw new RuntimeException("无权访问此订单");
+        }
+        
         OrderDTO updatedOrder = orderService.updateOrder(id, orderUpdateDTO);
         return ResponseEntity.ok(updatedOrder);
     }
     
     /**
-     * 取消订单
+     * 取消订单（仅当前用户的订单）
      */
     @PutMapping("/{id}/cancel")
     public ResponseEntity<OrderDTO> cancelOrder(@PathVariable String id) {
+        String currentUserId = getCurrentUserId();
+        
+        // 首先验证订单是否属于当前用户
+        OrderDTO existingOrder = orderService.getOrderById(id);
+        if (!currentUserId.equals(existingOrder.getUserId())) {
+            throw new RuntimeException("无权访问此订单");
+        }
+        
         OrderDTO canceledOrder = orderService.cancelOrder(id);
         return ResponseEntity.ok(canceledOrder);
     }
     
     /**
-     * 删除订单
+     * 删除订单（仅当前用户的订单）
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
+        String currentUserId = getCurrentUserId();
+        
+        // 首先验证订单是否属于当前用户
+        OrderDTO existingOrder = orderService.getOrderById(id);
+        if (!currentUserId.equals(existingOrder.getUserId())) {
+            throw new RuntimeException("无权访问此订单");
+        }
+        
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }
     
     /**
-     * 根据ID获取订单
+     * 根据ID获取订单（仅当前用户的订单）
      */
     @GetMapping("/{id}")
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable String id) {
+        String currentUserId = getCurrentUserId();
         OrderDTO order = orderService.getOrderById(id);
+        
+        // 验证订单是否属于当前用户
+        if (!currentUserId.equals(order.getUserId())) {
+            throw new RuntimeException("无权访问此订单");
+        }
+        
         return ResponseEntity.ok(order);
     }
     
     /**
-     * 根据订单号获取订单
+     * 根据订单号获取订单（仅当前用户的订单）
      */
     @GetMapping("/number/{orderNumber}")
     public ResponseEntity<OrderDTO> getOrderByOrderNumber(@PathVariable String orderNumber) {
+        String currentUserId = getCurrentUserId();
         OrderDTO order = orderService.getOrderByOrderNumber(orderNumber);
+        
+        // 验证订单是否属于当前用户
+        if (!currentUserId.equals(order.getUserId())) {
+            throw new RuntimeException("无权访问此订单");
+        }
+        
         return ResponseEntity.ok(order);
     }
     
     /**
-     * 分页查询订单列表
+     * 分页查询订单列表（仅当前用户的订单）
      */
     @GetMapping
     public ResponseEntity<PageResponseDTO<OrderDTO>> getOrderList(
@@ -92,8 +147,15 @@ public class OrderController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         
-        PageResponseDTO<OrderDTO> orderList = orderService.getOrderList(
+        String currentUserId = getCurrentUserId();
+        
+        // 获取所有订单，然后过滤出属于当前用户的订单
+        PageResponseDTO<OrderDTO> allOrders = orderService.getOrderList(
                 keyword, orderNumber, customerName, amount, status, startTime, endTime, page, size);
-        return ResponseEntity.ok(orderList);
+        
+        // 过滤出属于当前用户的订单
+        allOrders.getItems().removeIf(order -> !currentUserId.equals(order.getUserId()));
+        
+        return ResponseEntity.ok(allOrders);
     }
 } 

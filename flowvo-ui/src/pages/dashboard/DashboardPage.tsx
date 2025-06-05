@@ -42,8 +42,13 @@ import {
 import MainLayout from '../../layouts/MainLayout';
 
 const DashboardPage: React.FC = () => {
-  const cardBg = useColorModeValue('white', '#171A24');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  // 统一颜色配置 - 遵循知识库页面的颜色规范
+  const cardBg = useColorModeValue('white', '#2D3748');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const hoverBg = useColorModeValue('gray.50', 'gray.600');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
+  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
+  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
 
   // 模拟数据
   const stats = [
@@ -65,8 +70,17 @@ const DashboardPage: React.FC = () => {
     <MainLayout>
       <Box p={6}>
         <Flex justify="space-between" align="center" mb={6}>
-          <Heading size="lg">管理控制台</Heading>
-          <Button leftIcon={<Icon as={FiSettings} />} variant="outline">
+          <Heading size="lg" color={textColor}>管理控制台</Heading>
+          <Button 
+            leftIcon={<Icon as={FiSettings} />} 
+            variant="outline"
+            borderColor={borderColor}
+            color={textColor}
+            _hover={{
+              bg: hoverBg,
+              borderColor: useColorModeValue('blue.300', 'blue.500')
+            }}
+          >
             设置
           </Button>
         </Flex>
@@ -80,16 +94,16 @@ const DashboardPage: React.FC = () => {
                   <Box 
                     p={3} 
                     borderRadius="full" 
-                    bg={stat.color} 
+                    bg={useColorModeValue(stat.color, `${stat.color.split('.')[0]}.600`)} 
                     color="white" 
                     mr={4}
                   >
                     <Icon as={stat.icon} boxSize={5} />
                   </Box>
                   <Stat>
-                    <StatLabel color="gray.500">{stat.label}</StatLabel>
-                    <StatNumber>{stat.value}</StatNumber>
-                    <StatHelpText color={stat.change.startsWith('+') ? 'green.500' : 'red.500'}>
+                    <StatLabel color={mutedTextColor}>{stat.label}</StatLabel>
+                    <StatNumber color={textColor}>{stat.value}</StatNumber>
+                    <StatHelpText color={stat.change.startsWith('+') ? useColorModeValue('green.500', 'green.300') : useColorModeValue('red.500', 'red.300')}>
                       {stat.change}
                     </StatHelpText>
                   </Stat>
@@ -101,41 +115,50 @@ const DashboardPage: React.FC = () => {
 
         {/* 标签页内容 */}
         <Tabs colorScheme="blue" variant="enclosed" mb={8}>
-          <TabList>
-            <Tab>对话</Tab>
-            <Tab>用户</Tab>
-            <Tab>API使用</Tab>
-            <Tab>系统日志</Tab>
+          <TabList borderColor={borderColor}>
+            <Tab color={mutedTextColor} _selected={{ color: useColorModeValue('blue.600', 'blue.300'), borderColor: useColorModeValue('blue.600', 'blue.300') }}>对话</Tab>
+            <Tab color={mutedTextColor} _selected={{ color: useColorModeValue('blue.600', 'blue.300'), borderColor: useColorModeValue('blue.600', 'blue.300') }}>用户</Tab>
+            <Tab color={mutedTextColor} _selected={{ color: useColorModeValue('blue.600', 'blue.300'), borderColor: useColorModeValue('blue.600', 'blue.300') }}>API使用</Tab>
+            <Tab color={mutedTextColor} _selected={{ color: useColorModeValue('blue.600', 'blue.300'), borderColor: useColorModeValue('blue.600', 'blue.300') }}>系统日志</Tab>
           </TabList>
           <TabPanels>
             <TabPanel p={0} pt={4}>
               <Card bg={cardBg} boxShadow="sm" borderRadius="lg" borderColor={borderColor} borderWidth="1px">
                 <CardHeader pb={0}>
-                  <Heading size="md">最近对话</Heading>
+                  <Heading size="md" color={textColor}>最近对话</Heading>
                 </CardHeader>
                 <CardBody>
                   <Box overflowX="auto">
                     <Table variant="simple">
-                      <Thead>
+                      <Thead bg={tableHeaderBg}>
                         <Tr>
-                          <Th>ID</Th>
-                          <Th>用户</Th>
-                          <Th>主题</Th>
-                          <Th isNumeric>消息数</Th>
-                          <Th>日期</Th>
-                          <Th>操作</Th>
+                          <Th color={mutedTextColor}>ID</Th>
+                          <Th color={mutedTextColor}>用户</Th>
+                          <Th color={mutedTextColor}>主题</Th>
+                          <Th isNumeric color={mutedTextColor}>消息数</Th>
+                          <Th color={mutedTextColor}>日期</Th>
+                          <Th color={mutedTextColor}>操作</Th>
                         </Tr>
                       </Thead>
                       <Tbody>
                         {recentConversations.map((conv) => (
-                          <Tr key={conv.id}>
-                            <Td>{conv.id}</Td>
-                            <Td>{conv.user}</Td>
-                            <Td>{conv.topic}</Td>
-                            <Td isNumeric>{conv.messages}</Td>
-                            <Td>{conv.date}</Td>
+                          <Tr key={conv.id} _hover={{ bg: hoverBg }}>
+                            <Td color={textColor}>{conv.id}</Td>
+                            <Td color={textColor}>{conv.user}</Td>
+                            <Td color={textColor}>{conv.topic}</Td>
+                            <Td isNumeric color={textColor}>{conv.messages}</Td>
+                            <Td color={textColor}>{conv.date}</Td>
                             <Td>
-                              <Button size="sm" colorScheme="blue" variant="ghost">
+                              <Button 
+                                size="sm" 
+                                colorScheme="blue" 
+                                variant="ghost"
+                                bg="transparent"
+                                color={useColorModeValue('blue.600', 'blue.300')}
+                                _hover={{
+                                  bg: useColorModeValue('blue.50', 'blue.800')
+                                }}
+                              >
                                 查看
                               </Button>
                             </Td>
@@ -150,30 +173,30 @@ const DashboardPage: React.FC = () => {
             <TabPanel p={0} pt={4}>
               <Card bg={cardBg} boxShadow="sm" borderRadius="lg" borderColor={borderColor} borderWidth="1px">
                 <CardHeader pb={0}>
-                  <Heading size="md">用户管理</Heading>
+                  <Heading size="md" color={textColor}>用户管理</Heading>
                 </CardHeader>
                 <CardBody>
-                  <Text>用户管理内容将在这里显示</Text>
+                  <Text color={mutedTextColor}>用户管理内容将在这里显示</Text>
                 </CardBody>
               </Card>
             </TabPanel>
             <TabPanel p={0} pt={4}>
               <Card bg={cardBg} boxShadow="sm" borderRadius="lg" borderColor={borderColor} borderWidth="1px">
                 <CardHeader pb={0}>
-                  <Heading size="md">API使用统计</Heading>
+                  <Heading size="md" color={textColor}>API使用统计</Heading>
                 </CardHeader>
                 <CardBody>
-                  <Text>API使用统计内容将在这里显示</Text>
+                  <Text color={mutedTextColor}>API使用统计内容将在这里显示</Text>
                 </CardBody>
               </Card>
             </TabPanel>
             <TabPanel p={0} pt={4}>
               <Card bg={cardBg} boxShadow="sm" borderRadius="lg" borderColor={borderColor} borderWidth="1px">
                 <CardHeader pb={0}>
-                  <Heading size="md">系统日志</Heading>
+                  <Heading size="md" color={textColor}>系统日志</Heading>
                 </CardHeader>
                 <CardBody>
-                  <Text>系统日志内容将在这里显示</Text>
+                  <Text color={mutedTextColor}>系统日志内容将在这里显示</Text>
                 </CardBody>
               </Card>
             </TabPanel>
@@ -185,11 +208,11 @@ const DashboardPage: React.FC = () => {
           <GridItem>
             <Card bg={cardBg} boxShadow="sm" borderRadius="lg" borderColor={borderColor} borderWidth="1px">
               <CardHeader pb={0}>
-                <Heading size="md">系统性能</Heading>
+                <Heading size="md" color={textColor}>系统性能</Heading>
               </CardHeader>
               <CardBody>
                 <Box height="200px" display="flex" alignItems="center" justifyContent="center">
-                  <Text>这里将显示性能图表</Text>
+                  <Text color={mutedTextColor}>这里将显示性能图表</Text>
                 </Box>
               </CardBody>
             </Card>
@@ -197,7 +220,7 @@ const DashboardPage: React.FC = () => {
           <GridItem>
             <Card bg={cardBg} boxShadow="sm" borderRadius="lg" borderColor={borderColor} borderWidth="1px">
               <CardHeader pb={0}>
-                <Heading size="md">系统通知</Heading>
+                <Heading size="md" color={textColor}>系统通知</Heading>
               </CardHeader>
               <CardBody>
                 <Flex align="center" color="orange.500" mb={3}>

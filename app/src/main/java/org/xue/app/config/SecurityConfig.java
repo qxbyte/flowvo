@@ -72,6 +72,7 @@ public class SecurityConfig {
                     "/api/auth/logout",
                     "/api/auth/me",
                     "/api/auth/check-email",
+                    "/api/health",
                     "/api/user/login",
                     "/api/user/register",
                     "/api/user/check",

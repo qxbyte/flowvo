@@ -31,7 +31,7 @@ import { Link as RouterLink } from 'react-router-dom';
 const businessModules = [
   {
     id: 1,
-    title: '仪表盘',
+    title: '首页',
     description: '查看业务概览、统计数据和关键指标',
     icon: FiBarChart2,
     path: '/business/dashboard',
@@ -80,20 +80,23 @@ const businessModules = [
 ];
 
 const BusinessPage: React.FC = () => {
-  const moduleCardBg = useColorModeValue('white', '#171A24');
-  const mainCardBg = useColorModeValue('white', '#171A24');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const hoverBg = useColorModeValue('gray.50', '#1a1f28');
+  // 统一颜色配置 - 遵循知识库页面的颜色规范
+  const cardBg = useColorModeValue('white', '#2D3748');
+  const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const hoverBg = useColorModeValue('gray.50', 'gray.600');
+  const textColor = useColorModeValue('gray.700', 'gray.200');
+  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
+  const pageBg = useColorModeValue('gray.50', '#1B212C');
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={useColorModeValue('gray.50', '#1B212C')}>
-      <Box flex="1" maxW="1600px" mx="auto" w="100%">
-        <Card bg={mainCardBg} boxShadow="sm" borderRadius="16px" overflow="hidden">
+    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
+      <Box flex="1" maxW="1200px" mx="auto" w="100%">
+        <Card bg={cardBg} boxShadow="sm" borderRadius="16px" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
           <CardBody p={8}>
             <VStack spacing={8} align="stretch">
               <Box>
-                <Heading size="lg" mb={2}>业务系统</Heading>
-                <Text color={useColorModeValue('gray.500', 'gray.400')}>选择以下业务功能模块进行管理和操作</Text>
+                <Heading size="lg" mb={2} color={textColor}>业务系统</Heading>
+                <Text color={mutedTextColor}>选择以下业务功能模块进行管理和操作</Text>
               </Box>
               
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
@@ -102,7 +105,7 @@ const BusinessPage: React.FC = () => {
                     key={module.id} 
                     as={RouterLink}
                     to={module.path}
-                    bg={moduleCardBg} 
+                    bg={cardBg} 
                     boxShadow="sm" 
                     borderRadius="16px" 
                     borderColor={borderColor} 
@@ -110,7 +113,8 @@ const BusinessPage: React.FC = () => {
                     _hover={{
                       transform: 'translateY(-4px)',
                       boxShadow: 'md',
-                      borderColor: module.color,
+                      borderColor: useColorModeValue('blue.300', 'blue.500'),
+                      bg: hoverBg,
                       transition: 'all 0.2s'
                     }}
                     cursor="pointer"
@@ -122,25 +126,25 @@ const BusinessPage: React.FC = () => {
                           <Box 
                             p={3} 
                             borderRadius="md" 
-                            bg={`${module.color}20`} 
+                            bg={useColorModeValue(`${module.color}20`, `${module.color}30`)} 
                             mr={4}
                           >
                             <Icon as={module.icon} boxSize={6} color={module.color} />
                           </Box>
                           <Heading 
                             size="md" 
-                            color={useColorModeValue('gray.700', 'gray.200')}
-                            _hover={{ color: useColorModeValue('gray.700', 'gray.100') }}
+                            color={textColor}
+                            _hover={{ color: useColorModeValue('blue.600', 'blue.300') }}
                           >
                             {module.title}
                           </Heading>
                         </Flex>
                         
-                        <Text color={useColorModeValue('gray.500', 'gray.400')} flex="1" mb={4}>
+                        <Text color={mutedTextColor} flex="1" mb={4}>
                           {module.description}
                         </Text>
                         
-                        <HStack color={module.color} mt="auto" fontWeight="medium">
+                        <HStack color={useColorModeValue('blue.600', 'blue.300')} mt="auto" fontWeight="medium">
                           <Text>进入</Text>
                           <Icon as={FiArrowRight} />
                         </HStack>
@@ -151,18 +155,66 @@ const BusinessPage: React.FC = () => {
               </SimpleGrid>
               
               <Box mt={8}>
-                <Heading size="md" mb={4}>快速操作</Heading>
+                <Heading size="md" mb={4} color={textColor}>快速操作</Heading>
                 <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
-                  <Button leftIcon={<FiFileText />} variant="outline" size="md" justifyContent="flex-start" py={6}>
+                  <Button 
+                    leftIcon={<FiFileText />} 
+                    variant="outline" 
+                    size="md" 
+                    justifyContent="flex-start" 
+                    py={6}
+                    borderColor={borderColor}
+                    color={textColor}
+                    _hover={{
+                      bg: hoverBg,
+                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                    }}
+                  >
                     生成报表
                   </Button>
-                  <Button leftIcon={<FiUsers />} variant="outline" size="md" justifyContent="flex-start" py={6}>
+                  <Button 
+                    leftIcon={<FiUsers />} 
+                    variant="outline" 
+                    size="md" 
+                    justifyContent="flex-start" 
+                    py={6}
+                    borderColor={borderColor}
+                    color={textColor}
+                    _hover={{
+                      bg: hoverBg,
+                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                    }}
+                  >
                     客户管理
                   </Button>
-                  <Button leftIcon={<FiSettings />} variant="outline" size="md" justifyContent="flex-start" py={6}>
+                  <Button 
+                    leftIcon={<FiSettings />} 
+                    variant="outline" 
+                    size="md" 
+                    justifyContent="flex-start" 
+                    py={6}
+                    borderColor={borderColor}
+                    color={textColor}
+                    _hover={{
+                      bg: hoverBg,
+                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                    }}
+                  >
                     系统设置
                   </Button>
-                  <Button leftIcon={<FiList />} variant="outline" size="md" justifyContent="flex-start" py={6}>
+                  <Button 
+                    leftIcon={<FiList />} 
+                    variant="outline" 
+                    size="md" 
+                    justifyContent="flex-start" 
+                    py={6}
+                    borderColor={borderColor}
+                    color={textColor}
+                    _hover={{
+                      bg: hoverBg,
+                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                    }}
+                  >
                     操作日志
                   </Button>
                 </SimpleGrid>
