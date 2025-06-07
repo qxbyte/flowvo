@@ -97,7 +97,7 @@ import { documentApi } from '../../utils/api';
 const DocumentsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [selectedDocument, setSelectedDocument] = useState<DocumentWithCategory | null>(null);
-  const [editMode, setEditMode] = useState(false);
+
   const [editForm, setEditForm] = useState({ 
     name: '', 
     description: '', 
@@ -132,51 +132,63 @@ const DocumentsPage: React.FC = () => {
   const toast = useToast();
   const cancelRef = useRef<HTMLButtonElement>(null);
   
-  // 统一颜色配置 - 遵循知识库页面的颜色规范
-  const cardBg = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.600');
-  const activeBg = useColorModeValue('gray.100', 'gray.500');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
-  const searchResultBg = useColorModeValue('blue.50', 'blue.900');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  // 按钮颜色配置
+  const primaryBtnBg = useColorModeValue(primaryColor, primaryColor);
+  const primaryBtnHoverBg = useColorModeValue('#3bcc47', '#52e658');
+  const primaryBtnText = useColorModeValue('black', 'black');
+  
+  const secondaryBtnBg = useColorModeValue('transparent', 'transparent');
+  const secondaryBtnBorder = useColorModeValue(primaryColor, primaryColor);
+  const secondaryBtnText = useColorModeValue(primaryColor, primaryColor);
+  const secondaryBtnHoverBg = useColorModeValue(primaryColor, primaryColor);
+  const secondaryBtnHoverText = useColorModeValue('black', 'black');
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const activeBg = useColorModeValue('gray.100', '#404040');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  const inputBg = useColorModeValue('white', '#19191c');
+  const tableHeaderBg = useColorModeValue('gray.50', '#303033');
+  const searchResultBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
   
   // 主背景色
-  const mainBg = useColorModeValue('gray.50', '#1B212C');
-  
-  // 按钮颜色
-  const buttonBg = useColorModeValue('#1a73e8', 'blue.500');
-  const buttonHoverBg = useColorModeValue('#1557b0', 'blue.400');
-  const buttonActiveBg = useColorModeValue('#1046a3', 'blue.600');
+  const mainBg = bgColor;
   
   // 输入框交互色
-  const inputHoverBorder = useColorModeValue('blue.300', 'blue.500');
-  const inputFocusBorder = useColorModeValue('blue.500', 'blue.400');
-  const inputFocusShadow = useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400');
+  const inputHoverBorder = useColorModeValue(primaryColor, primaryColor);
+  const inputFocusBorder = useColorModeValue(primaryColor, primaryColor);
+  const inputFocusShadow = `0 0 0 1px ${primaryColor}`;
   
   // 列表和网格视图按钮背景
-  const listViewBg = viewMode === 'list' ? buttonBg : 'transparent';
-  const listViewHoverBg = viewMode === 'list' ? buttonHoverBg : hoverBg;
-  const gridViewBg = viewMode === 'grid' ? buttonBg : 'transparent';
-  const gridViewHoverBg = viewMode === 'grid' ? buttonHoverBg : hoverBg;
+  const listViewBg = viewMode === 'list' ? primaryBtnBg : 'transparent';
+  const listViewHoverBg = viewMode === 'list' ? primaryBtnHoverBg : hoverBg;
+  const gridViewBg = viewMode === 'grid' ? primaryBtnBg : 'transparent';
+  const gridViewHoverBg = viewMode === 'grid' ? primaryBtnHoverBg : hoverBg;
   
   // 加载器颜色
-  const spinnerColor = useColorModeValue('blue.500', 'blue.300');
+  const spinnerColor = primaryColor;
   
   // 模态框覆盖层
-  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.600');
+  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.800');
   
-  // 徽章颜色
-  const purpleBadgeBg = useColorModeValue('purple.100', 'purple.800');
-  const purpleBadgeColor = useColorModeValue('purple.700', 'purple.200');
-  const blueBadgeBg = useColorModeValue('blue.100', 'blue.800');
-  const blueBadgeColor = useColorModeValue('blue.700', 'blue.200');
+  // 徽章颜色 - 使用Junie绿色系
+  const statusBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const statusBadgeColor = useColorModeValue(primaryColor, primaryColor);
   
-  // 标签颜色（编辑模态框中的标签）
-  const tagBg = useColorModeValue('blue.100', 'blue.800');
-  const tagColor = useColorModeValue('blue.700', 'blue.200');
+  // 标签颜色
+  const tagBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const tagColor = useColorModeValue(primaryColor, primaryColor);
   
   // 删除按钮颜色
   const deleteBtnBg = useColorModeValue('red.500', 'red.400');
@@ -609,8 +621,8 @@ const DocumentsPage: React.FC = () => {
   );
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={mainBg}>
-      <Box flex="1" maxW="1600px" mx="auto" w="100%">
+    <Box w="100%" p={0} minH="100%" display="flex" flexDirection="column" bg={mainBg}>
+      <Box flex="1" maxW="1600px" mx="auto" w="100%" p={6}>
         <Card bg={cardBg} boxShadow="sm" borderRadius="16px" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
           <CardBody p={8}>
             {/* 页面头部 */}
@@ -625,12 +637,13 @@ const DocumentsPage: React.FC = () => {
                 leftIcon={<FiFilePlus />} 
                 colorScheme="blue" 
                 onClick={onUploadOpen}
-                bg={buttonBg}
+                bg={primaryBtnBg}
+                color={primaryBtnText}
                 _hover={{
-                  bg: buttonHoverBg
+                  bg: primaryBtnHoverBg
                 }}
                 _active={{
-                  bg: buttonActiveBg
+                  bg: primaryBtnHoverBg
                 }}
               >
                 上传文档
@@ -739,12 +752,13 @@ const DocumentsPage: React.FC = () => {
                     </Text>
                     {!searchQuery && (
                       <Button leftIcon={<FiFilePlus />} colorScheme="blue" onClick={onUploadOpen}
-                        bg={buttonBg}
+                        bg={primaryBtnBg}
+                        color={primaryBtnText}
                         _hover={{
-                          bg: buttonHoverBg
+                          bg: primaryBtnHoverBg
                         }}
                         _active={{
-                          bg: buttonActiveBg
+                          bg: primaryBtnHoverBg
                         }}
                       >
                         上传第一个文档
@@ -796,8 +810,8 @@ const DocumentsPage: React.FC = () => {
                       <Text fontSize="sm" color={mutedTextColor}>分类</Text>
                       {selectedDocument.categoryId ? (
                         <Badge colorScheme="purple" variant="subtle"
-                          bg={purpleBadgeBg}
-                          color={purpleBadgeColor}
+                          bg={statusBadgeBg}
+                          color={statusBadgeColor}
                         >
                           {getCategoryName(selectedDocument)}
                         </Badge>
@@ -821,8 +835,8 @@ const DocumentsPage: React.FC = () => {
                       <HStack spacing={2} flexWrap="wrap">
                         {selectedDocument.tags.map((tag, index) => (
                           <Tag key={index} size="sm" colorScheme="blue"
-                            bg={blueBadgeBg}
-                            color={blueBadgeColor}
+                            bg={statusBadgeBg}
+                            color={statusBadgeColor}
                           >
                             {tag}
                           </Tag>
@@ -950,9 +964,10 @@ const DocumentsPage: React.FC = () => {
                       }}
                     />
                     <Button onClick={addTag} size="sm" colorScheme="blue"
-                      bg={buttonBg}
+                      bg={primaryBtnBg}
+                      color={primaryBtnText}
                       _hover={{
-                        bg: buttonHoverBg
+                        bg: primaryBtnHoverBg
                       }}
                     >
                       添加
@@ -974,12 +989,13 @@ const DocumentsPage: React.FC = () => {
               <Button 
                 colorScheme="blue" 
                 onClick={handleSaveEdit}
-                bg={buttonBg}
+                bg={primaryBtnBg}
+                color={primaryBtnText}
                 _hover={{
-                  bg: buttonHoverBg
+                  bg: primaryBtnHoverBg
                 }}
                 _active={{
-                  bg: buttonActiveBg
+                  bg: primaryBtnHoverBg
                 }}
               >
                 保存

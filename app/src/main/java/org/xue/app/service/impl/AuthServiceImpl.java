@@ -204,6 +204,20 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.failure("用户不存在");
     }
 
+
+    @Override
+    public String getCurrentUserId(String username) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+
+            return String.valueOf(user.getId());
+        }
+
+        return "";
+    }
+
     @Override
     public AuthResponse checkEmail(String email) {
         if (email == null || email.trim().isEmpty()) {

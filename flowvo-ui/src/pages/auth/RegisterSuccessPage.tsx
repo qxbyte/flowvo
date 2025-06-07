@@ -12,12 +12,14 @@ import { useNavigate } from 'react-router-dom';
 const RegisterSuccessPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const bgGradient = useColorModeValue(
-    'linear(to-br, #f8e8f0, #e8f0f8)',
-    'linear(to-br, #0F1218, #1F203D)'
-  );
-  const cardBg = useColorModeValue('white', '#000019FF');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
   const textColor = useColorModeValue('gray.800', 'white');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
 
   const handleEnterAccount = () => {
     navigate('/');
@@ -26,7 +28,7 @@ const RegisterSuccessPage: React.FC = () => {
   return (
     <Box
       minH="100vh"
-      bgGradient={bgGradient}
+      bg={bgColor}
       display="flex"
       flexDirection="column"
       alignItems="center"
@@ -98,7 +100,7 @@ const RegisterSuccessPage: React.FC = () => {
             您都准备好了！
           </Heading>
           <Text
-            color="gray.500"
+            color={subTextColor}
             fontSize="sm"
             maxW="320px"
             lineHeight="1.6"
@@ -110,16 +112,16 @@ const RegisterSuccessPage: React.FC = () => {
         {/* 进入账户按钮 */}
         <Button
           onClick={handleEnterAccount}
-          colorScheme="blue"
+          colorScheme={primaryColor}
           size="lg"
           w="full"
           h="52px"
           borderRadius="12px"
           fontSize="16px"
           fontWeight="600"
-          bg="#2099F5"
+          bg={primaryColor}
           _hover={{
-            bg: '#1a85d9'
+            bg: '#3cc543'
           }}
         >
           进入我的账户

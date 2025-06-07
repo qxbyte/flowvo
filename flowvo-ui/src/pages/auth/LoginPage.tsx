@@ -22,13 +22,17 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const bgGradient = useColorModeValue(
-    'linear(to-br, #f8e8f0, #e8f0f8)',
-    'linear(to-br, #0F1218, #1F203D)'
-  );
-  const cardBg = useColorModeValue('white', '#000019FF');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
   const textColor = useColorModeValue('gray.800', 'white');
-  const inputBg = useColorModeValue('white', 'gray.700');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
+  const inputBg = useColorModeValue('white', '#19191c');
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
 
   const handleSubmit = async () => {
     if (!email.trim()) {
@@ -79,7 +83,7 @@ const LoginPage: React.FC = () => {
   return (
     <Box
       minH="100vh"
-      bgGradient={bgGradient}
+      bgColor={bgColor}
       display="flex"
       flexDirection="column"
       alignItems="center"
@@ -151,7 +155,7 @@ const LoginPage: React.FC = () => {
             嗨，您好！
           </Heading>
           <Text
-            color="gray.500"
+            color={subTextColor}
             fontSize="sm"
             maxW="300px"
           >
@@ -174,14 +178,14 @@ const LoginPage: React.FC = () => {
               size="lg"
               borderRadius="12px"
               border="2px solid"
-              borderColor="gray.200"
+              borderColor={borderColor}
               bg={inputBg}
               _hover={{
-                borderColor: '#2099F5'
+                borderColor: primaryColor
               }}
               _focus={{
-                borderColor: '#2099F5',
-                boxShadow: '0 0 0 1px #2099F5'
+                borderColor: primaryColor,
+                boxShadow: `0 0 0 1px ${primaryFog}`
               }}
               fontSize="16px"
               h="52px"
@@ -192,16 +196,16 @@ const LoginPage: React.FC = () => {
           <Button
             onClick={handleSubmit}
             isLoading={isLoading}
-            colorScheme="blue"
             size="lg"
             w="full"
             h="52px"
             borderRadius="12px"
             fontSize="16px"
             fontWeight="600"
-            bg="#2099F5"
+            bg={primaryColor}
+            color="black"
             _hover={{
-              bg: '#1a85d9'
+              bg: '#3bcc47'
             }}
             spinner={<Spinner size="sm" />}
           >

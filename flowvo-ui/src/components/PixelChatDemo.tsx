@@ -23,7 +23,7 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
 
-  // 预处理文本，为每个字符分配颜色
+  // 预处理文本，为每个字符分配颜色 - Junie风格
   const preprocessText = (content: string) => {
     const chars: Array<{char: string, color: string}> = [];
     
@@ -32,9 +32,9 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
       const parts = content.split('```');
       parts.forEach((part, index) => {
         if (index % 2 === 0) {
-          // 普通文本
+          // 普通文本 - 使用Junie的浅色文本
           for (let i = 0; i < part.length; i++) {
-            chars.push({ char: part[i], color: '#B8A9FF' });
+            chars.push({ char: part[i], color: '#ffffff' });
           }
         } else {
           // 代码部分
@@ -47,16 +47,16 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
       const codeChars = preprocessCode(content);
       chars.push(...codeChars);
     } else {
-      // 普通文本
+      // 普通文本 - 使用白色
       for (let i = 0; i < content.length; i++) {
-        chars.push({ char: content[i], color: '#B8A9FF' });
+        chars.push({ char: content[i], color: '#ffffff' });
       }
     }
     
     return chars;
   };
 
-  // 预处理代码，为每个字符分配颜色
+  // 预处理代码，为每个字符分配颜色 - Junie风格配色
   const preprocessCode = (code: string) => {
     const chars: Array<{char: string, color: string}> = [];
     let remaining = code;
@@ -67,13 +67,13 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
       // 检查注释
       const commentMatch = remaining.match(/^(#.*?)(\n|$)/);
       if (commentMatch) {
-        // 注释部分
+        // 注释部分 - 使用灰色
         for (let i = 0; i < commentMatch[1].length; i++) {
-          chars.push({ char: commentMatch[1][i], color: '#666' });
+          chars.push({ char: commentMatch[1][i], color: '#8A8A8A' });
         }
         // 换行符
         if (commentMatch[2]) {
-          chars.push({ char: commentMatch[2], color: '#B8A9FF' });
+          chars.push({ char: commentMatch[2], color: '#ffffff' });
         }
         remaining = remaining.slice(commentMatch[0].length);
         matched = true;
@@ -83,8 +83,9 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
       // 检查字符串
       const stringMatch = remaining.match(/^(".*?")/);
       if (stringMatch) {
+        // 字符串 - 使用Junie绿色
         for (let i = 0; i < stringMatch[1].length; i++) {
-          chars.push({ char: stringMatch[1][i], color: '#00ff88' });
+          chars.push({ char: stringMatch[1][i], color: '#47e054' });
         }
         remaining = remaining.slice(stringMatch[1].length);
         matched = true;
@@ -94,8 +95,9 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
       // 检查关键字
       const keywordMatch = remaining.match(/^(class|def|if|__name__|__main__)\b/);
       if (keywordMatch) {
+        // 关键字 - 使用蓝色
         for (let i = 0; i < keywordMatch[1].length; i++) {
-          chars.push({ char: keywordMatch[1][i], color: '#ff6b9d' });
+          chars.push({ char: keywordMatch[1][i], color: '#569CD6' });
         }
         remaining = remaining.slice(keywordMatch[1].length);
         matched = true;
@@ -105,8 +107,9 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
       // 检查函数名
       const functionMatch = remaining.match(/^(print|greet)\b/);
       if (functionMatch) {
+        // 函数名 - 使用黄色
         for (let i = 0; i < functionMatch[1].length; i++) {
-          chars.push({ char: functionMatch[1][i], color: '#87CEEB' });
+          chars.push({ char: functionMatch[1][i], color: '#DCDCAA' });
         }
         remaining = remaining.slice(functionMatch[1].length);
         matched = true;
@@ -115,7 +118,7 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
 
       // 检查冒号
       if (remaining[0] === ':') {
-        chars.push({ char: ':', color: '#ff9f43' });
+        chars.push({ char: ':', color: '#ffffff' });
         remaining = remaining.slice(1);
         matched = true;
         continue;
@@ -123,7 +126,7 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
 
       // 普通字符
       if (!matched) {
-        chars.push({ char: remaining[0], color: '#B8A9FF' });
+        chars.push({ char: remaining[0], color: '#ffffff' });
         remaining = remaining.slice(1);
       }
     }
@@ -161,15 +164,17 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
             // 结束代码块
             result.push(
               <div key={`code-${result.length}`} style={{
-                backgroundColor: '#0A061D',
-                padding: '8px',
-                borderRadius: '4px',
+                backgroundColor: '#19191c', // Junie深色背景
+                padding: '12px',
+                borderRadius: '8px',
                 marginTop: '8px',
                 marginBottom: '8px',
-                fontFamily: 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace',
-                fontSize: '12px',
-                lineHeight: '1.4',
-                display: 'inline-block'
+                fontFamily: '"JetBrains Mono", "SF Mono", Monaco, Menlo, "Fira Code", Courier, monospace',
+                fontSize: '13px',
+                lineHeight: '1.5',
+                display: 'block',
+                border: '1px solid #303033', // Junie边框色
+                boxShadow: '0 2px 8px rgba(71, 224, 84, 0.1)' // 绿色阴影
               }}>
                 {currentBlock.map((c, i) => (
                   <span key={i} style={{ color: c.color }}>{c.char}</span>
@@ -202,15 +207,17 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
         if (inCodeBlock) {
           result.push(
             <div key={`code-${result.length}`} style={{
-              backgroundColor: '#0A061D',
-              padding: '8px',
-              borderRadius: '4px',
+              backgroundColor: '#19191c',
+              padding: '12px',
+              borderRadius: '8px',
               marginTop: '8px',
               marginBottom: '8px',
-              fontFamily: 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace',
-              fontSize: '12px',
-              lineHeight: '1.4',
-              display: 'inline-block'
+              fontFamily: '"JetBrains Mono", "SF Mono", Monaco, Menlo, "Fira Code", Courier, monospace',
+              fontSize: '13px',
+              lineHeight: '1.5',
+              display: 'block',
+              border: '1px solid #303033',
+              boxShadow: '0 2px 8px rgba(71, 224, 84, 0.1)'
             }}>
               {currentBlock.map((c, i) => (
                 <span key={i} style={{ color: c.color }}>{c.char}</span>
@@ -228,17 +235,11 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
         }
       }
       
-      return result;
+      return <div style={{ whiteSpace: 'pre-wrap' }}>{result}</div>;
     } else {
-      // 纯代码或普通文本
-      const isCode = text.includes('class ') || text.includes('def ') || text.includes('print(');
+      // 简单内容直接渲染
       return (
-        <span style={{
-          fontFamily: isCode ? 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace' : 'inherit',
-          fontSize: isCode ? '12px' : 'inherit',
-          lineHeight: isCode ? '1.4' : 'inherit',
-          whiteSpace: 'pre'
-        }}>
+        <span style={{ whiteSpace: 'pre-wrap' }}>
           {displayedChars.map((charObj, index) => (
             <span key={index} style={{ color: charObj.color }}>
               {charObj.char}
@@ -249,44 +250,33 @@ const TypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () =
     }
   };
 
-  return (
-    <div style={{ whiteSpace: 'pre-wrap' }}>
-      {renderContent()}
-    </div>
-  );
+  return <div style={{ whiteSpace: 'pre-wrap' }}>{renderContent()}</div>;
 };
 
-// 代码语法高亮组件
+// 简化的语法高亮组件 - Junie风格
 const SyntaxHighlight: React.FC<{ code: string }> = ({ code }) => {
   const highlightCode = (code: string) => {
-    // 简化的Python语法高亮，避免复杂的正则表达式冲突
-    let highlighted = code
-      // 首先处理注释（避免其他规则影响注释）
-      .replace(/(#.*$)/gm, '<span style="color: #666">$1</span>')
-      // Python关键字（简化版本）
-      .replace(/\b(class|def|if|__name__|__main__)\b/g, '<span style="color: #ff6b9d">$1</span>')
-      // 字符串
-      .replace(/(".*?")/g, '<span style="color: #00ff88">$1</span>')
-      // 函数调用
-      .replace(/\b(print|greet)\b(?=\()/g, '<span style="color: #87CEEB">$1</span>')
-      // 冒号
-      .replace(/:/g, '<span style="color: #ff9f43">:</span>');
-    
-    return highlighted;
+    return code
+      .replace(/(class|def|if|__name__|__main__)/g, '<span style="color: #569CD6">$1</span>')
+      .replace(/(print|greet)/g, '<span style="color: #DCDCAA">$1</span>')
+      .replace(/(".*?")/g, '<span style="color: #47e054">$1</span>')
+      .replace(/(#.*$)/gm, '<span style="color: #8A8A8A">$1</span>');
   };
 
-  const highlightedCode = highlightCode(code);
-  
   return (
-    <div 
-      style={{ 
-        fontFamily: 'SF Mono, Monaco, Menlo, JetBrains Mono, Fira Code, Courier New, monospace',
-        fontSize: '12px',
-        lineHeight: '1.4',
-        color: '#B8A9FF' // 默认文本颜色
-      }}
-      dangerouslySetInnerHTML={{ __html: highlightedCode }}
-    />
+    <pre style={{
+      backgroundColor: '#19191c',
+      padding: '12px',
+      borderRadius: '8px',
+      fontFamily: '"JetBrains Mono", "SF Mono", Monaco, Menlo, "Fira Code", Courier, monospace',
+      fontSize: '13px',
+      lineHeight: '1.5',
+      border: '1px solid #303033',
+      boxShadow: '0 2px 8px rgba(71, 224, 84, 0.1)',
+      overflow: 'auto'
+    }}>
+      <code dangerouslySetInnerHTML={{ __html: highlightCode(code) }} />
+    </pre>
   );
 };
 
@@ -313,11 +303,7 @@ const PixelChatDemo: React.FC<PixelChatDemoProps> = ({ width = '100%', height = 
 \`\`\`# hello_world.py
 class Greeter:
     def greet(self):
-        print("Hello, World!")
-
-if __name__ == "__main__":
-    greeter = Greeter()
-    greeter.greet()\`\`\``,
+        print("Hello, World!")\`\`\``,
       isCode: true,
       visible: false
     }
@@ -325,22 +311,25 @@ if __name__ == "__main__":
 
   const infoCards = [
     {
-      id: 'github',
-      title: 'GitHub Integration',
-      description: 'Jules imports your repos, branches changes, and helps you create a PR.',
+      id: 'ai',
+      title: 'AI Assistant',
+      description: 'Intelligent coding companion that understands your project context.',
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" x="0" y="0" version="1.1" viewBox="0 0 24 24" shapeRendering="crispEdges" className="w-8 h-8" style={{ color: '#DB39A1' }}>
-          <path fill="currentColor" d="M21 5V4h-1V3H4v1H3v1H2v12h1v1h1v1h4v1h1v1h1v1h1v1h2v-1h1v-1h1v-1h1v-1h4v-1h1v-1h1V5zM7 15v-1h5v1zm10-3H7v-1h10zm0-3H7V8h10z"></path>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: '#47e054' }}>
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
         </svg>
       )
     },
     {
-      id: 'vm',
-      title: 'Virtual Machine',
-      description: 'Jules clones your code in a Cloud VM and verifies the changes work.',
+      id: 'code',
+      title: 'Code Generation',
+      description: 'Generate high-quality code snippets and complete functions.',
       icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" xmlSpace="preserve" x="0" y="0" version="1.1" viewBox="0 0 24 24" shapeRendering="crispEdges" className="w-8 h-8" style={{ color: '#F4B300' }}>
-          <path fill="currentColor" d="M21 5V4h-1V3H4v1H3v1H2v14h1v1h1v1h16v-1h1v-1h1V5zM9 12H8v1H6v-1h1v-1h1v-1H7V9H6V8h2v1h1v1h1v1H9zm7 3h-6v-1h6z"></path>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" style={{ color: '#47e054' }}>
+          <polyline points="16,18 22,12 16,6"/>
+          <polyline points="8,6 2,12 8,18"/>
         </svg>
       )
     }
@@ -408,95 +397,106 @@ if __name__ == "__main__":
 
   return (
     <div style={{
-      width: '750px', // 调宽到750px
+      width: '750px', // 固定宽度
+      maxWidth: '100%', // 响应式限制
       height: height,
-      flexShrink: 0,
-      backgroundColor: '#1E0444',
-      border: '3px solid #4A2F6A',
-      borderRadius: '0',
-      fontFamily: 'monospace',
-      fontSize: '12px',
+      backgroundColor: '#000000', // Junie黑色背景
+      borderRadius: '16px', // 更现代的圆角
+      fontFamily: '"JetBrains Sans", Inter, system-ui, -apple-system, sans-serif',
+      fontSize: '14px',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      border: '1px solid #303033', // Junie边框色
+      boxShadow: '0 8px 32px rgba(71, 224, 84, 0.1)', // 绿色阴影
+      margin: '0 auto', // 居中显示
     }}>
-      {/* 像素边框装饰 */}
-      <div style={{
-        position: 'absolute',
-        top: '10px',
-        left: '10px',
-        right: '10px',
-        bottom: '10px',
-        border: '1px dotted #8E44AD',
-        pointerEvents: 'none',
-        opacity: 0.3
-      }} />
       
-      {/* 顶部状态栏 */}
+      {/* 顶部状态栏 - Junie风格 */}
       <div style={{
-        backgroundColor: '#1E0444',
-        color: '#B8A9FF',
-        padding: '8px 12px',
-        borderBottom: '2px solid #4A2F6A',
+        backgroundColor: '#19191c', // 稍浅的背景
+        color: '#ffffff',
+        padding: '12px 16px',
+        borderBottom: '1px solid #303033',
         display: 'flex',
         alignItems: 'center',
-        gap: '8px',
-        fontSize: '10px',
+        gap: '12px',
+        fontSize: '13px',
+        fontWeight: '500',
         flexShrink: 0
       }}>
-        <div style={{ width: '8px', height: '8px', backgroundColor: '#ff0000', border: '1px solid #000' }}></div>
-        <div style={{ width: '8px', height: '8px', backgroundColor: '#ffff00', border: '1px solid #000' }}></div>
-        <div style={{ width: '8px', height: '8px', backgroundColor: '#00aa00', border: '1px solid #000' }}></div>
-        <span style={{ marginLeft: '8px' }}>Pixel AI Assistant</span>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px' 
+        }}>
+          <div style={{ 
+            width: '12px', 
+            height: '12px', 
+            backgroundColor: '#ff5f57', 
+            borderRadius: '50%' 
+          }}></div>
+          <div style={{ 
+            width: '12px', 
+            height: '12px', 
+            backgroundColor: '#ffbd2e', 
+            borderRadius: '50%' 
+          }}></div>
+          <div style={{ 
+            width: '12px', 
+            height: '12px', 
+            backgroundColor: '#47e054', // Junie绿色
+            borderRadius: '50%' 
+          }}></div>
+        </div>
+        <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: '600' }}>
+          Pixel AI Assistant
+        </span>
       </div>
 
       {/* 消息区域 */}
       <div style={{
         flex: 1,
-        padding: '12px 6px',
+        padding: '20px 20px 80px 20px', // 增加底部padding避免被遮挡
         display: 'flex',
         flexDirection: 'column',
-        gap: '8px',
-        backgroundColor: '#1E0444',
-        overflow: 'hidden',
+        gap: '16px',
+        backgroundColor: '#000000',
+        overflowY: 'auto', // 允许滚动
         position: 'relative'
       }}>
         {/* 信息卡片展示 */}
         <div style={{
           position: 'absolute',
           top: '50%',
-          left: '37%',
+          left: '50%',
           transform: 'translate(-50%, -50%)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
+          gap: '20px',
           width: '100%',
-          maxWidth: '100%',
+          maxWidth: '90%',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '0 20px',
           zIndex: 10
         }}>
           {/* 第一个卡片 */}
           {showFirstCard && (
             <div
               style={{
-                backgroundColor: '#2D1B69',
-                borderRadius: '16px',
-                padding: '20px 18px',
+                backgroundColor: '#19191c',
+                borderRadius: '12px',
+                padding: '20px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px',
-                maxWidth: '400px',
+                gap: '16px',
                 width: '100%',
-                minHeight: '80px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                border: '1px solid #4A2F6A',
+                boxShadow: '0 4px 20px rgba(71, 224, 84, 0.15)',
+                border: '1px solid #303033',
                 opacity: showFirstCard ? 1 : 0,
                 transform: showFirstCard ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
-                transition: 'all 0.6s ease-out',
-                boxSizing: 'border-box'
+                transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div style={{
@@ -505,33 +505,27 @@ if __name__ == "__main__":
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#1E0444',
-                borderRadius: '10px',
+                backgroundColor: '#000000',
+                borderRadius: '8px',
                 flexShrink: 0
               }}>
                 {infoCards[0].icon}
               </div>
-              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+              <div style={{ flex: 1 }}>
                 <div style={{
-                  color: '#FFFFFF',
+                  color: '#ffffff',
                   fontSize: '16px',
-                  fontWeight: 'bold',
+                  fontWeight: '600',
                   marginBottom: '6px',
-                  fontFamily: 'monospace',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  fontFamily: '"JetBrains Sans", sans-serif',
                 }}>
                   {infoCards[0].title}
                 </div>
                 <div style={{
-                  color: '#B8A9FF',
-                  fontSize: '13px',
-                  lineHeight: '1.4',
-                  fontFamily: 'monospace',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  hyphens: 'auto'
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  fontFamily: '"JetBrains Sans", sans-serif',
                 }}>
                   {infoCards[0].description}
                 </div>
@@ -543,21 +537,18 @@ if __name__ == "__main__":
           {showSecondCard && (
             <div
               style={{
-                backgroundColor: '#2D1B69',
-                borderRadius: '16px',
-                padding: '20px 18px',
+                backgroundColor: '#19191c',
+                borderRadius: '12px',
+                padding: '20px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '14px',
-                maxWidth: '400px',
+                gap: '16px',
                 width: '100%',
-                minHeight: '80px',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)',
-                border: '1px solid #4A2F6A',
+                boxShadow: '0 4px 20px rgba(71, 224, 84, 0.15)',
+                border: '1px solid #303033',
                 opacity: showSecondCard ? 1 : 0,
                 transform: showSecondCard ? 'translateY(0) scale(1)' : 'translateY(20px) scale(0.95)',
-                transition: 'all 0.6s ease-out',
-                boxSizing: 'border-box'
+                transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div style={{
@@ -566,33 +557,27 @@ if __name__ == "__main__":
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#1E0444',
-                borderRadius: '10px',
+                backgroundColor: '#000000',
+                borderRadius: '8px',
                 flexShrink: 0
               }}>
                 {infoCards[1].icon}
               </div>
-              <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+              <div style={{ flex: 1 }}>
                 <div style={{
-                  color: '#FFFFFF',
+                  color: '#ffffff',
                   fontSize: '16px',
-                  fontWeight: 'bold',
+                  fontWeight: '600',
                   marginBottom: '6px',
-                  fontFamily: 'monospace',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis'
+                  fontFamily: '"JetBrains Sans", sans-serif',
                 }}>
                   {infoCards[1].title}
                 </div>
                 <div style={{
-                  color: '#B8A9FF',
-                  fontSize: '13px',
-                  lineHeight: '1.4',
-                  fontFamily: 'monospace',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word',
-                  hyphens: 'auto'
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: '14px',
+                  lineHeight: '1.5',
+                  fontFamily: '"JetBrains Sans", sans-serif',
                 }}>
                   {infoCards[1].description}
                 </div>
@@ -602,163 +587,139 @@ if __name__ == "__main__":
         </div>
 
         {/* 对话消息 */}
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            style={{
-              display: 'flex',
-              justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
-              paddingRight: message.role === 'user' ? '200px' : '0',
-              paddingLeft: message.role === 'assistant' ? '20px' : '0',
-              paddingTop: message.role === 'assistant' ? '10px' : '0',
-              opacity: message.visible ? 1 : 0,
-              transform: message.visible ? 'translateY(0)' : 'translateY(200px)',
-              transition: 'all 0.5s ease-out'
-            }}
-          >
-            <div style={{
-              maxWidth: '500px', // 调整最大宽度适应750px窗口
-              minWidth: '120px',
-              width: 'fit-content',
-              padding: '8px 12px',
-              backgroundColor: message.role === 'user' ? '#4D2788' : '#16082C',
-              color: message.role === 'user' ? '#E8D5FF' : '#B8A9FF',
-              position: 'relative',
-              clipPath: 'polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px)',
-              boxShadow: message.role === 'user' 
-                ? 'inset -1px -1px 0px rgba(0,0,0,0.3), inset 1px 1px 0px rgba(255,255,255,0.1)' 
-                : 'inset -1px -1px 0px rgba(0,0,0,0.4), inset 1px 1px 0px rgba(255,255,255,0.1)',
-              boxSizing: 'border-box'
-            }}>
-              {/* 四角装饰 */}
-              <div style={{
-                position: 'absolute', top: '0px', left: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              <div style={{
-                position: 'absolute', top: '0px', right: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              <div style={{
-                position: 'absolute', bottom: '0px', left: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              <div style={{
-                position: 'absolute', bottom: '0px', right: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              
-              {/* 消息内容 */}
-              <div style={{
-                fontSize: '10px',
-                opacity: 0.7,
-                marginBottom: '4px'
-              }}>
-                01:35:14
-              </div>
-              
-              <div style={{
-                wordBreak: 'break-word',
-                lineHeight: '1.3',
-                fontSize: '11px'
-              }}>
-                {message.role === 'assistant' && isTyping && message.id === '2' ? (
-                  <TypewriterText 
-                    text={message.content}
-                    speed={message.isCode ? 15 : 40}
-                  />
-                ) : (
-                  <span style={{ color: '#B8A9FF' }}>{message.content}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {/* 思考状态 */}
-        {isThinking && (
+        {messages.length > 0 && (
           <div style={{
             display: 'flex',
-            justifyContent: 'flex-start',
-            opacity: 1,
-            transform: 'translateY(0)',
-            transition: 'all 0.5s ease-out'
+            flexDirection: 'column',
+            gap: '16px',
+            opacity: showFirstCard || showSecondCard ? 0 : 1,
+            transition: 'opacity 0.3s ease'
           }}>
-            <div style={{
-              backgroundColor: '#16082C',
-              color: '#B8A9FF',
-              padding: '8px 12px',
-              maxWidth: '200px',
-              minWidth: '120px',
-              width: 'fit-content',
-              position: 'relative',
-              clipPath: 'polygon(12px 0%, 100% 0%, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0% 100%, 0% 12px)',
-              boxShadow: 'inset -1px -1px 0px rgba(0,0,0,0.4), inset 1px 1px 0px rgba(255,255,255,0.1)'
-            }}>
-              {/* 四角装饰 */}
-              <div style={{
-                position: 'absolute', top: '0px', left: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              <div style={{
-                position: 'absolute', top: '0px', right: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              <div style={{
-                position: 'absolute', bottom: '0px', left: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              <div style={{
-                position: 'absolute', bottom: '0px', right: '0px',
-                width: '12px', height: '12px', backgroundColor: '#1E0444'
-              }} />
-              
-              <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '4px'}}>
-                Thinking...
+                         {messages.map((message, index) => (
+               <div key={message.id} style={{
+                 display: 'flex',
+                 flexDirection: 'column',
+                 gap: '4px',
+                 alignItems: message.role === 'user' ? 'flex-end' : 'flex-start'
+               }}>
+                 {/* 时间戳 - 在气泡上方 */}
+                 <div style={{
+                   fontSize: '11px',
+                   color: 'rgba(255,255,255,0.4)',
+                   fontFamily: '"JetBrains Mono", monospace',
+                   marginBottom: '4px'
+                 }}>
+                   01:35:14
+                 </div>
+                 
+                 {/* 消息内容 */}
+                 <div style={{
+                   backgroundColor: message.role === 'user' ? '#303033' : '#19191c',
+                   padding: '12px 16px',
+                   borderRadius: '18px',
+                   color: '#ffffff',
+                   border: '1px solid #303033',
+                   fontSize: '14px',
+                   lineHeight: '1.5',
+                   fontFamily: '"JetBrains Sans", sans-serif',
+                   maxWidth: message.role === 'user' ? '80%' : '85%',
+                   whiteSpace: 'pre-wrap', // 保留换行和空格
+                   wordWrap: 'break-word', // 长单词换行
+                   overflowWrap: 'break-word' // 确保内容不溢出
+                 }}>
+                   {message.role === 'assistant' && isTyping && index === messages.length - 1 ? (
+                     <TypewriterText text={message.content} speed={30} />
+                   ) : (
+                     message.content.includes('```') ? (
+                       <div 
+                         style={{ whiteSpace: 'pre-wrap' }}
+                         dangerouslySetInnerHTML={{
+                           __html: message.content
+                             .replace(/\n/g, '<br/>') // 将换行符转换为HTML换行
+                             .replace(/```(.*?)```/gs, (match, code) => 
+                               `<div style="background-color: #19191c; padding: 12px; border-radius: 8px; margin: 8px 0; font-family: 'JetBrains Mono', monospace; font-size: 13px; border: 1px solid #303033; box-shadow: 0 2px 8px rgba(71, 224, 84, 0.1); white-space: pre-wrap;">${code.trim()}</div>`
+                             )
+                         }} 
+                       />
+                     ) : (
+                       <div style={{ whiteSpace: 'pre-wrap' }}>
+                         {message.content}
+                       </div>
+                     )
+                   )}
+                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '3px' }}>
+            ))}
+            
+                         {/* 思考状态 */}
+             {isThinking && (
+               <div style={{
+                 display: 'flex',
+                 flexDirection: 'column',
+                 gap: '4px',
+                 alignItems: 'flex-start'
+               }}>
+                 {/* 时间戳 */}
+                 <div style={{
+                   fontSize: '11px',
+                   color: 'rgba(255,255,255,0.4)',
+                   fontFamily: '"JetBrains Mono", monospace',
+                   marginBottom: '4px'
+                 }}>
+                   01:35:14
+                 </div>
+                 
+                 <div style={{
+                   backgroundColor: '#19191c',
+                   padding: '12px 16px',
+                   borderRadius: '18px',
+                   color: 'rgba(255,255,255,0.7)',
+                   border: '1px solid #303033',
+                   fontSize: '14px',
+                   fontFamily: '"JetBrains Sans", sans-serif',
+                   display: 'flex',
+                   alignItems: 'center',
+                   gap: '12px',
+                   maxWidth: '160px' // 限制thinking气泡宽度
+                 }}>
                 <div style={{
-                  width: '6px', height: '6px', backgroundColor: '#00cc66',
-                  animation: 'pulse 1.4s infinite ease-in-out'
-                }}></div>
-                <div style={{
-                  width: '6px', height: '6px', backgroundColor: '#00cc66',
-                  animation: 'pulse 1.4s infinite ease-in-out 0.2s'
-                }}></div>
-                <div style={{
-                  width: '6px', height: '6px', backgroundColor: '#00cc66',
-                  animation: 'pulse 1.4s infinite ease-in-out 0.4s'
-                }}></div>
-              </div>
-            </div>
-          </div>
-        )}
+                  width: '16px',
+                  height: '16px',
+                  border: '2px solid #47e054',
+                  borderTop: '2px solid transparent',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite'
+                }} />
+                                   <span>Thinking...</span>
+                   <style>{`
+                     @keyframes spin {
+                       0% { transform: rotate(0deg); }
+                       100% { transform: rotate(360deg); }
+                     }
+                   `}</style>
+                 </div>
+               </div>
+             )}
+           </div>
+         )}
       </div>
-
-      {/* 底部标签栏 */}
+      
+      {/* 底部状态栏 */}
       <div style={{
-        backgroundColor: '#1E0444',
-        borderTop: '2px solid #4A2F6A',
-        padding: '6px 12px',
+        backgroundColor: '#19191c',
+        color: 'rgba(255,255,255,0.5)',
+        padding: '12px 16px',
+        borderTop: '1px solid #303033',
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        fontSize: '9px',
-        color: '#8E44AD',
+        alignItems: 'center',
+        fontSize: '12px',
+        fontFamily: '"JetBrains Mono", monospace',
         flexShrink: 0
       }}>
         <span>Pixel Chat Demo</span>
-        <span style={{
-        paddingRight: '200px',
-      }}>Messages: {messages.length}</span>
+        <span>Messages: {messages.length}</span>
       </div>
-
-      <style>{`
-        @keyframes pulse {
-          0%, 80%, 100% { opacity: 0; }
-          40% { opacity: 1; }
-        }
-      `}</style>
     </div>
   );
 };

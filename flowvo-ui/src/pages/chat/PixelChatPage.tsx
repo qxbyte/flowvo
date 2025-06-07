@@ -1678,7 +1678,7 @@ const PixelChatPage: React.FC = () => {
       <div style={{
         height: "100vh",
         display: "flex",
-        backgroundColor: "#1a1a2e",
+        backgroundColor: "#000000",
         fontFamily: "monospace",
         position: "relative",
         overflow: "hidden"

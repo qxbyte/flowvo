@@ -61,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
                 .customerName(order.getCustomerName())
                 .amount(order.getAmount())
                 .status(order.getStatus())
+                .userId(order.getUserId())
                 .createdAt(order.getCreatedAt().format(FORMATTER))
                 .updatedAt(order.getUpdatedAt().format(FORMATTER))
                 .build();

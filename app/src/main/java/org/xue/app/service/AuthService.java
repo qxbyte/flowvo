@@ -41,4 +41,5 @@ public interface AuthService {
      * @return 检查结果响应
      */
     AuthResponse checkEmail(String email);
+    String getCurrentUserId(String username);
 } 

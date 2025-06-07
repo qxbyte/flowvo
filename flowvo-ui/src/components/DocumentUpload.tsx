@@ -62,10 +62,21 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
   const { uploadDocument, loading, uploadProgress, error, supportedTypes, resetUploadState, clearError } = useDocumentStore();
   const toast = useToast();
   
-  const borderColor = useColorModeValue('gray.300', 'gray.600');
-  const hoverBorderColor = useColorModeValue('blue.400', 'blue.300');
-  const bgColor = useColorModeValue('gray.50', 'gray.700');
-  const hoverBgColor = useColorModeValue('blue.50', 'blue.900');
+  // Junie风格的颜色配置
+  const primaryColor = '#47e054';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const borderColor = useColorModeValue('gray.300', '#303033');
+  const hoverBorderColor = useColorModeValue(primaryColor, primaryColor);
+  const bgColor = useColorModeValue('gray.50', '#19191c');
+  const hoverBgColor = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
+  
+  // Modal相关颜色
+  const modalBg = useColorModeValue('white', '#19191c');
+  const modalBorderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  const inputBg = useColorModeValue('white', '#19191c');
 
   // 组件挂载时清理上传状态和加载分类
   useEffect(() => {
@@ -199,10 +210,10 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
 
   return (
     <Modal isOpen={isOpen || false} onClose={onClose || (() => {})}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>上传文档</ModalHeader>
-        <ModalCloseButton />
+      <ModalOverlay bg={useColorModeValue('blackAlpha.300', 'blackAlpha.600')} />
+      <ModalContent bg={modalBg} borderColor={modalBorderColor} borderWidth="1px">
+        <ModalHeader color={textColor}>上传文档</ModalHeader>
+        <ModalCloseButton color={mutedTextColor} _hover={{ bg: useColorModeValue('gray.100', '#303033') }} />
         <ModalBody>
           <VStack spacing={6} align="stretch">
             {/* 错误提示 */}
@@ -237,16 +248,16 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
                 <input {...getInputProps()} />
                 <VStack spacing={4}>
                   <Icon as={FiUpload} w={12} h={12} color={useColorModeValue('gray.400', 'gray.500')} />
-                  <Text fontSize="lg" fontWeight="medium">
+                  <Text fontSize="lg" fontWeight="medium" color={textColor}>
                     {isDragActive ? '放开以上传文件' : '拖拽文件到此处或点击选择'}
                   </Text>
-                  <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.400')}>
+                  <Text fontSize="sm" color={mutedTextColor}>
                     支持 PDF, Word, Excel, PowerPoint, 文本文件等
                   </Text>
                   {supportedTypes.length > 0 && (
                     <HStack wrap="wrap" spacing={1} justify="center">
                       {supportedTypes.slice(0, 8).map((type) => (
-                        <Badge key={type} variant="outline" colorScheme="blue" fontSize="xs">
+                        <Badge key={type} variant="outline" colorScheme="green" fontSize="xs">
                           {type.toUpperCase()}
                         </Badge>
                       ))}
@@ -269,10 +280,10 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
               >
                 <HStack justify="space-between">
                   <HStack>
-                    <Icon as={FiFile} color="blue.500" />
+                    <Icon as={FiFile} color={primaryColor} />
                     <VStack align="start" spacing={0}>
-                      <Text fontSize="sm" fontWeight="medium">{selectedFile.name}</Text>
-                      <Text fontSize="xs" color={useColorModeValue('gray.500', 'gray.400')}>
+                      <Text fontSize="sm" fontWeight="medium" color={textColor}>{selectedFile.name}</Text>
+                      <Text fontSize="xs" color={mutedTextColor}>
                         {formatFileSize(selectedFile.size)}
                       </Text>
                     </VStack>
@@ -286,7 +297,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
 
             {/* 标签输入 */}
             <VStack align="stretch" spacing={3}>
-              <Text fontSize="sm" fontWeight="medium">标签（可选）</Text>
+              <Text fontSize="sm" fontWeight="medium" color={textColor}>标签（可选）</Text>
               <HStack>
                 <Input
                   placeholder="添加标签"
@@ -294,17 +305,27 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyPress={handleKeyPress}
                   size="sm"
+                  bg={inputBg}
+                  borderColor={modalBorderColor}
+                  color={textColor}
+                  _hover={{
+                    borderColor: primaryColor
+                  }}
+                  _focus={{
+                    borderColor: primaryColor,
+                    boxShadow: `0 0 0 1px ${primaryColor}`
+                  }}
                 />
                 <Button 
                   size="sm" 
                   onClick={addTag} 
-                  colorScheme="blue" 
+                  colorScheme="green" 
                   variant="outline"
-                  borderColor={useColorModeValue('blue.500', 'blue.300')}
-                  color={useColorModeValue('blue.500', 'blue.300')}
+                  borderColor={useColorModeValue(primaryColor, primaryColor)}
+                  color={useColorModeValue(primaryColor, primaryColor)}
                   _hover={{
-                    bg: useColorModeValue('blue.50', 'blue.900'),
-                    borderColor: useColorModeValue('blue.600', 'blue.200')
+                    bg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)'),
+                    borderColor: useColorModeValue('#3bcc47', '#52e658')
                   }}
                 >
                   添加
@@ -313,7 +334,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
               {tags.length > 0 && (
                 <HStack wrap="wrap" spacing={2}>
                   {tags.map((tag) => (
-                    <Tag key={tag} size="sm" colorScheme="blue" variant="solid">
+                    <Tag key={tag} size="sm" colorScheme="green" variant="solid">
                       <TagLabel>{tag}</TagLabel>
                       <TagCloseButton onClick={() => removeTag(tag)} />
                     </Tag>
@@ -324,23 +345,43 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
 
             {/* 描述输入 */}
             <VStack align="stretch" spacing={3}>
-              <Text fontSize="sm" fontWeight="medium">描述（可选）</Text>
+              <Text fontSize="sm" fontWeight="medium" color={textColor}>描述（可选）</Text>
               <Textarea
                 placeholder="为文档添加描述..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 size="sm"
                 rows={3}
+                bg={inputBg}
+                borderColor={modalBorderColor}
+                color={textColor}
+                _hover={{
+                  borderColor: primaryColor
+                }}
+                _focus={{
+                  borderColor: primaryColor,
+                  boxShadow: `0 0 0 1px ${primaryColor}`
+                }}
               />
             </VStack>
 
             {/* 分类选择 */}
             <VStack align="stretch" spacing={3}>
-              <Text fontSize="sm" fontWeight="medium">分类（可选）</Text>
+              <Text fontSize="sm" fontWeight="medium" color={textColor}>分类（可选）</Text>
               <Select
                 placeholder="选择分类"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
+                bg={inputBg}
+                borderColor={modalBorderColor}
+                color={textColor}
+                _hover={{
+                  borderColor: primaryColor
+                }}
+                _focus={{
+                  borderColor: primaryColor,
+                  boxShadow: `0 0 0 1px ${primaryColor}`
+                }}
               >
                 {defaultCategories.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -353,8 +394,8 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
             {/* 上传进度 */}
             {loading && uploadProgress > 0 && (
               <VStack align="stretch" spacing={2}>
-                <Text fontSize="sm">上传中...</Text>
-                <Progress value={uploadProgress} colorScheme="blue" borderRadius="full" />
+                <Text fontSize="sm" color={textColor}>上传中...</Text>
+                <Progress value={uploadProgress} colorScheme="green" borderRadius="full" />
               </VStack>
             )}
 
@@ -364,27 +405,27 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ isOpen, onUploadComplet
                 <Button 
                   variant="ghost" 
                   onClick={onClose}
-                  color={useColorModeValue('gray.600', 'gray.300')}
+                  color={mutedTextColor}
                   _hover={{
-                    bg: useColorModeValue('gray.100', 'gray.600')
+                    bg: useColorModeValue('gray.100', '#303033')
                   }}
                 >
                   取消
                 </Button>
               )}
               <Button
-                colorScheme="blue"
+                colorScheme="green"
                 onClick={handleUpload}
                 isLoading={loading}
                 loadingText="上传中"
                 isDisabled={!selectedFile}
-                bg={useColorModeValue('blue.500', 'blue.600')}
-                color="white"
+                bg={primaryColor}
+                color="black"
                 _hover={{
-                  bg: useColorModeValue('blue.600', 'blue.500')
+                  bg: '#3bcc47'
                 }}
                 _active={{
-                  bg: useColorModeValue('blue.700', 'blue.400')
+                  bg: '#2eb83a'
                 }}
               >
                 上传文档

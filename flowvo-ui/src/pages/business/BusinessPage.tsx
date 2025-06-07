@@ -80,17 +80,25 @@ const businessModules = [
 ];
 
 const BusinessPage: React.FC = () => {
-  // 统一颜色配置 - 遵循知识库页面的颜色规范
-  const cardBg = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.600');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const pageBg = useColorModeValue('gray.50', '#1B212C');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryDim = 'rgba(71, 224, 84, 0.8)';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  const pageBg = bgColor;
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
-      <Box flex="1" maxW="1200px" mx="auto" w="100%">
+    <Box w="100%" p={0} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
+      <Box flex="1" maxW="1200px" mx="auto" w="100%" p={6}>
         <Card bg={cardBg} boxShadow="sm" borderRadius="16px" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
           <CardBody p={8}>
             <VStack spacing={8} align="stretch">
@@ -113,7 +121,7 @@ const BusinessPage: React.FC = () => {
                     _hover={{
                       transform: 'translateY(-4px)',
                       boxShadow: 'md',
-                      borderColor: useColorModeValue('blue.300', 'blue.500'),
+                      borderColor: primaryColor,
                       bg: hoverBg,
                       transition: 'all 0.2s'
                     }}
@@ -134,7 +142,7 @@ const BusinessPage: React.FC = () => {
                           <Heading 
                             size="md" 
                             color={textColor}
-                            _hover={{ color: useColorModeValue('blue.600', 'blue.300') }}
+                            _hover={{ color: primaryColor }}
                           >
                             {module.title}
                           </Heading>
@@ -144,7 +152,7 @@ const BusinessPage: React.FC = () => {
                           {module.description}
                         </Text>
                         
-                        <HStack color={useColorModeValue('blue.600', 'blue.300')} mt="auto" fontWeight="medium">
+                        <HStack color={primaryColor} mt="auto" fontWeight="medium">
                           <Text>进入</Text>
                           <Icon as={FiArrowRight} />
                         </HStack>
@@ -167,7 +175,7 @@ const BusinessPage: React.FC = () => {
                     color={textColor}
                     _hover={{
                       bg: hoverBg,
-                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                      borderColor: primaryColor
                     }}
                   >
                     生成报表
@@ -182,7 +190,7 @@ const BusinessPage: React.FC = () => {
                     color={textColor}
                     _hover={{
                       bg: hoverBg,
-                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                      borderColor: primaryColor
                     }}
                   >
                     客户管理
@@ -197,7 +205,7 @@ const BusinessPage: React.FC = () => {
                     color={textColor}
                     _hover={{
                       bg: hoverBg,
-                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                      borderColor: primaryColor
                     }}
                   >
                     系统设置
@@ -212,7 +220,7 @@ const BusinessPage: React.FC = () => {
                     color={textColor}
                     _hover={{
                       bg: hoverBg,
-                      borderColor: useColorModeValue('blue.300', 'blue.500')
+                      borderColor: primaryColor
                     }}
                   >
                     操作日志

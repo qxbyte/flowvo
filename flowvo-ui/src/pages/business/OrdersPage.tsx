@@ -57,6 +57,7 @@ import {
   FiCalendar,
 } from 'react-icons/fi';
 import { orderApi } from '../../utils/api';
+import { useAuth } from '../../hooks/useAuth';
 
 // 订单状态映射
 const statusLabels: Record<string, string> = {
@@ -118,6 +119,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 const OrdersPage: React.FC = () => {
+  const { userInfo } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,46 +144,54 @@ const OrdersPage: React.FC = () => {
   const cancelRef = useRef<HTMLButtonElement>(null);
   const toast = useToast();
   
-  // 统一颜色配置 - 遵循知识库页面的颜色规范
-  const cardBg = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.600');
-  const activeBg = useColorModeValue('gray.100', 'gray.500');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = useColorModeValue('gray.50', '#1B212C');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
   
-  // 统计卡片背景色
-  const blueStatBg = useColorModeValue('blue.100', 'blue.800');
-  const greenStatBg = useColorModeValue('green.100', 'green.800');
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryDim = 'rgba(71, 224, 84, 0.8)';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const activeBg = useColorModeValue('gray.100', '#404040');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  const inputBg = useColorModeValue('white', '#19191c');
+  const tableHeaderBg = useColorModeValue('gray.50', '#303033');
+  const pageBg = bgColor;
+  
+  // 统计卡片背景色 - 使用Junie绿色系
+  const primaryStatBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const greenStatBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
   const orangeStatBg = useColorModeValue('orange.100', 'orange.800');
   const redStatBg = useColorModeValue('red.100', 'red.800');
   
   // 图标颜色
-  const blueIconColor = useColorModeValue('blue.500', 'blue.300');
-  const greenIconColor = useColorModeValue('green.500', 'green.300');
+  const primaryIconColor = primaryColor;
+  const greenIconColor = primaryColor;
   const orangeIconColor = useColorModeValue('orange.500', 'orange.300');
   const redIconColor = useColorModeValue('red.500', 'red.300');
   
   // 按钮颜色
-  const primaryButtonBg = useColorModeValue('#1a73e8', 'blue.500');
-  const primaryButtonHoverBg = useColorModeValue('#1557b0', 'blue.400');
-  const primaryButtonActiveBg = useColorModeValue('#1046a3', 'blue.600');
+  const primaryButtonBg = primaryColor;
+  const primaryButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
+  const primaryButtonActiveBg = useColorModeValue('#3bcc47', '#52e658');
   const redButtonBg = useColorModeValue('red.500', 'red.400');
   const redButtonHoverBg = useColorModeValue('red.600', 'red.500');
   const redButtonActiveBg = useColorModeValue('red.700', 'red.600');
   
   // 输入框颜色
-  const inputHoverBorderColor = useColorModeValue('blue.300', 'blue.500');
-  const inputFocusBorderColor = useColorModeValue('blue.500', 'blue.400');
-  const inputFocusBoxShadow = useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400');
+  const inputHoverBorderColor = primaryColor;
+  const inputFocusBorderColor = primaryColor;
+  const inputFocusBoxShadow = `0 0 0 1px ${primaryColor}`;
   
   // 模态框和其他UI颜色
-  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.600');
-  const spinnerColor = useColorModeValue('blue.500', 'blue.300');
-  const paginationTextColor = useColorModeValue('gray.500', 'gray.400');
+  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.800');
+  const spinnerColor = primaryColor;
+  const paginationTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
   
   // 预计算所有状态的Badge颜色
   const badgeColors = {
@@ -230,7 +240,8 @@ const OrdersPage: React.FC = () => {
       // 构建查询参数
       const params: any = {
         page: currentPage,
-        size: itemsPerPage
+        size: itemsPerPage,
+        userId: userInfo?.username // 传递username，与后端getCurrentUserId()保持一致
       };
       
       if (debouncedSearchQuery) {
@@ -326,7 +337,7 @@ const OrdersPage: React.FC = () => {
     if (selectedOrder) {
       try {
         // 使用API工具类删除订单
-        await orderApi.deleteOrder(selectedOrder.id);
+        await orderApi.deleteOrder(selectedOrder.id, userInfo?.username);
         
         toast({
           title: `订单已删除`,
@@ -360,7 +371,8 @@ const OrdersPage: React.FC = () => {
         // 使用API工具类更新订单
         await orderApi.updateOrder(selectedOrder.id, {
           amount: parseFloat(editedAmount),
-          status: editedStatus
+          status: editedStatus,
+          userId: userInfo?.username // 传递username，与后端getCurrentUserId()保持一致
         });
         
         toast({
@@ -407,7 +419,8 @@ const OrdersPage: React.FC = () => {
       await orderApi.createOrder({
         customerName: newCustomerName,
         amount: parseFloat(newAmount),
-        status: newStatus
+        status: newStatus,
+        userId: userInfo?.username // 传递username，与后端getCurrentUserId()保持一致
       });
       
       toast({
@@ -456,8 +469,7 @@ const OrdersPage: React.FC = () => {
   return (
     <Box 
       w="100%" 
-      py={6} 
-      px={6} 
+      p={0} 
       minH="100%" 
       display="flex" 
       flexDirection="column" 
@@ -472,6 +484,7 @@ const OrdersPage: React.FC = () => {
         mx="auto" 
         w="100%"
         overflowX="hidden"
+        p={6}
       >
         <Card 
           bg={cardBg} 
@@ -513,8 +526,8 @@ const OrdersPage: React.FC = () => {
             <SimpleGrid columns={{ base: 1, sm: 2, lg: 4 }} spacing={6} mb={6}>
               <Card bg={cardBg} p={4} boxShadow="sm" borderRadius="lg" borderWidth="1px" borderColor={borderColor}>
                 <Flex align="center">
-                  <Box bg={blueStatBg} p={3} borderRadius="full" mr={4}>
-                    <Icon as={FiShoppingCart} color={blueIconColor} />
+                                  <Box bg={primaryStatBg} p={3} borderRadius="full" mr={4}>
+                  <Icon as={FiShoppingCart} color={primaryIconColor} />
                   </Box>
                   <Box>
                     <Text fontSize="sm" color={mutedTextColor}>总订单数</Text>

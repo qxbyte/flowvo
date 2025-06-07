@@ -122,20 +122,29 @@ const KnowledgePage: React.FC = () => {
   const [feedbackRating, setFeedbackRating] = useState<number>(5);
   const [feedbackComment, setFeedbackComment] = useState('');
   
-  const cardBg = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const highlightBg = useColorModeValue('blue.50', 'blue.900');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const answerBg = useColorModeValue('gray.50', 'gray.700');
-  const sourceBg = useColorModeValue('gray.50', 'gray.700');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
   
-  const hoverBg = useColorModeValue('gray.50', 'gray.600');
-  const activeBg = useColorModeValue('gray.100', 'gray.500');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const buttonHoverBg = useColorModeValue('blue.600', 'blue.400');
-  const cardHoverBg = useColorModeValue('blue.25', 'blue.800');
-  const successColor = useColorModeValue('green.500', 'green.300');
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryDim = 'rgba(71, 224, 84, 0.8)';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const highlightBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
+  const inputBg = useColorModeValue('white', '#19191c');
+  const answerBg = useColorModeValue('gray.50', '#303033');
+  const sourceBg = useColorModeValue('gray.50', '#303033');
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const activeBg = useColorModeValue('gray.100', '#404040');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  const buttonHoverBg = useColorModeValue('#3bcc47', '#52e658');
+  const cardHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
+  const successColor = useColorModeValue(primaryColor, primaryColor);
   const warningColor = useColorModeValue('orange.500', 'orange.300');
   const errorColor = useColorModeValue('red.500', 'red.300');
   
@@ -174,108 +183,108 @@ const KnowledgePage: React.FC = () => {
   const abortButtonBg = useColorModeValue('red.500', 'red.400');
   const abortButtonHoverBg = useColorModeValue('red.600', 'red.500');
   
-  const primaryButtonBg = useColorModeValue('#1a73e8', 'blue.500');
-  const primaryButtonHoverBg = useColorModeValue('#1557b0', 'blue.400');
-  const primaryButtonActiveBg = useColorModeValue('#1046a3', 'blue.600');
+  const primaryButtonBg = useColorModeValue(primaryColor, primaryColor);
+  const primaryButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
+  const primaryButtonActiveBg = useColorModeValue('#3bcc47', '#52e658');
   
-  const categoryBadgeBg = useColorModeValue('blue.100', 'blue.800');
-  const categoryBadgeColor = useColorModeValue('blue.700', 'blue.200');
-  const categoryBadgeHoverBg = useColorModeValue('blue.200', 'blue.700');
-  const categoryBadgeHoverColor = useColorModeValue('blue.800', 'blue.100');
+  const categoryBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const categoryBadgeColor = useColorModeValue(primaryColor, primaryColor);
+  const categoryBadgeHoverBg = useColorModeValue(primaryDim, 'rgba(71, 224, 84, 0.3)');
+  const categoryBadgeHoverColor = useColorModeValue('black', 'white');
   
-  const clockColor = useColorModeValue('#3182ce', '#63b3ed');
-  const streamModeTextColor = useColorModeValue('blue.600', 'blue.300');
+  const clockColor = useColorModeValue(primaryColor, primaryColor);
+  const streamModeTextColor = useColorModeValue(primaryColor, primaryColor);
   
   const resultCardShadow = useColorModeValue('sm', 'dark-lg');
-  const spinnerColor = useColorModeValue('blue.500', 'blue.300');
+  const spinnerColor = useColorModeValue(primaryColor, primaryColor);
   
-  const questionHeadingColor = useColorModeValue('blue.600', 'blue.300');
-  const answerBadgeBg = useColorModeValue('green.100', 'green.800');
-  const answerBadgeColor = useColorModeValue('green.700', 'green.200');
+  const questionHeadingColor = useColorModeValue(primaryColor, primaryColor);
+  const answerBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const answerBadgeColor = useColorModeValue(primaryColor, primaryColor);
   
-  const aiAnswerHeadingColor = useColorModeValue('green.600', 'green.300');
+  const aiAnswerHeadingColor = useColorModeValue(primaryColor, primaryColor);
   
-  const thumbsUpBorder = useColorModeValue('green.300', 'green.600');
-  const thumbsUpColor = useColorModeValue('green.600', 'green.300');
-  const thumbsUpHoverBg = useColorModeValue('green.50', 'green.800');
-  const thumbsUpHoverBorder = useColorModeValue('green.400', 'green.500');
+  const thumbsUpBorder = useColorModeValue(primaryColor, primaryColor);
+  const thumbsUpColor = useColorModeValue(primaryColor, primaryColor);
+  const thumbsUpHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
+  const thumbsUpHoverBorder = useColorModeValue(primaryDim, primaryDim);
   
-  const thumbsDownBorder = useColorModeValue('green.300', 'green.600');
-  const thumbsDownColor = useColorModeValue('green.600', 'green.300');
-  const thumbsDownHoverBg = useColorModeValue('green.50', 'green.800');
-  const thumbsDownHoverBorder = useColorModeValue('green.400', 'green.500');
+  const thumbsDownBorder = useColorModeValue('red.300', 'red.600');
+  const thumbsDownColor = useColorModeValue('red.600', 'red.300');
+  const thumbsDownHoverBg = useColorModeValue('red.50', 'red.800');
+  const thumbsDownHoverBorder = useColorModeValue('red.400', 'red.500');
   
-  const sourceHeadingColor = useColorModeValue('purple.600', 'purple.300');
-  const sourceCardHoverBorder = useColorModeValue('blue.300', 'blue.500');
-  const sourceCardHoverBg = useColorModeValue('blue.25', 'blue.800');
+  const sourceHeadingColor = useColorModeValue(primaryColor, primaryColor);
+  const sourceCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
+  const sourceCardHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
   const sourceCardShadow = useColorModeValue('md', 'dark-lg');
   
   const fileIconColor = useColorModeValue('#6B7280', '#9CA3AF');
-  const sourceBadgeBg = useColorModeValue('green.100', 'green.800');
-  const sourceBadgeColor = useColorModeValue('green.700', 'green.200');
-  const categorySourceBadgeBg = useColorModeValue('blue.100', 'blue.800');
-  const categorySourceBadgeColor = useColorModeValue('blue.700', 'blue.200');
+  const sourceBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const sourceBadgeColor = useColorModeValue(primaryColor, primaryColor);
+  const categorySourceBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const categorySourceBadgeColor = useColorModeValue(primaryColor, primaryColor);
   
-  const streamAnswerHeadingColor = useColorModeValue('green.600', 'green.300');
-  const streamAnswerTextColor = useColorModeValue('blue.500', 'blue.300');
+  const streamAnswerHeadingColor = useColorModeValue(primaryColor, primaryColor);
+  const streamAnswerTextColor = useColorModeValue(primaryColor, primaryColor);
   
-  const tabSelectedColor = useColorModeValue('blue.600', 'blue.300');
-  const tabSelectedBorder = useColorModeValue('blue.600', 'blue.300');
+  const tabSelectedColor = useColorModeValue(primaryColor, primaryColor);
+  const tabSelectedBorder = useColorModeValue(primaryColor, primaryColor);
   
-  const recentCardHoverBorder = useColorModeValue('blue.300', 'blue.500');
-  const recentQuestionColor = useColorModeValue('blue.600', 'blue.300');
-  const recentCategoryBadgeBg = useColorModeValue('purple.100', 'purple.800');
-  const recentCategoryBadgeColor = useColorModeValue('purple.700', 'purple.200');
+  const recentCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
+  const recentQuestionColor = useColorModeValue(primaryColor, primaryColor);
+  const recentCategoryBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const recentCategoryBadgeColor = useColorModeValue(primaryColor, primaryColor);
   
   const starColor = useColorModeValue('#ECC94B', '#F6E05E');
   
-  const hotCardHoverBorder = useColorModeValue('blue.300', 'blue.500');
+  const hotCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
   const hotRankBadgeBg = useColorModeValue('red.100', 'red.800');
   const hotRankBadgeColor = useColorModeValue('red.700', 'red.200');
-  const hotQuestionHoverColor = useColorModeValue('blue.600', 'blue.300');
+  const hotQuestionHoverColor = useColorModeValue(primaryColor, primaryColor);
   const hotIconColor = useColorModeValue('#6B7280', '#9CA3AF');
-  const hotBadgeBg = useColorModeValue('blue.100', 'blue.800');
-  const hotBadgeColor = useColorModeValue('blue.700', 'blue.200');
+  const hotBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
+  const hotBadgeColor = useColorModeValue(primaryColor, primaryColor);
   
-  const statCardHoverBorder = useColorModeValue('blue.300', 'blue.500');
+  const statCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
   const folderIconColor = useColorModeValue('#6B7280', '#9CA3AF');
-  const statButtonBg = useColorModeValue('blue.500', 'blue.600');
-  const statButtonHoverBg = useColorModeValue('blue.600', 'blue.500');
+  const statButtonBg = useColorModeValue(primaryColor, primaryColor);
+  const statButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
   
   // 进度条颜色
   const progressBg = useColorModeValue('gray.200', 'gray.600');
   
   // Modal 相关颜色
-  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.600');
-  const modalButtonBg = useColorModeValue('#1a73e8', 'blue.600');
-  const modalButtonHoverBg = useColorModeValue('#1557b0', 'blue.500');
-  const greenButtonBorder = useColorModeValue('green.300', 'green.600');
-  const greenButtonColor = useColorModeValue('green.600', 'green.300');
-  const greenButtonHoverBg = useColorModeValue('green.50', 'green.800');
-  const greenButtonHoverBorder = useColorModeValue('green.400', 'green.500');
+  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.800');
+  const modalButtonBg = useColorModeValue(primaryColor, primaryColor);
+  const modalButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
+  const greenButtonBorder = useColorModeValue(primaryColor, primaryColor);
+  const greenButtonColor = useColorModeValue(primaryColor, primaryColor);
+  const greenButtonHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
+  const greenButtonHoverBorder = useColorModeValue(primaryDim, primaryDim);
   
   // 表格相关颜色
-  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
+  const tableHeaderBg = useColorModeValue('gray.50', '#303033');
   
   // 输入框交互颜色
-  const inputHoverBorder = useColorModeValue('blue.300', 'blue.500');
-  const inputFocusBorder = useColorModeValue('blue.500', 'blue.400');
-  const inputFocusShadow = useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400');
+  const inputHoverBorder = useColorModeValue(primaryColor, primaryColor);
+  const inputFocusBorder = useColorModeValue(primaryColor, primaryColor);
+  const inputFocusShadow = `0 0 0 1px ${primaryColor}`;
   
   // Badge颜色预定义映射表 - 修复Hooks调用顺序问题
   const badgeColorMap = useColorModeValue(
     {
-      'green': { bg: 'green.100', color: 'green.700' },
+      'green': { bg: primaryFog, color: primaryColor },
       'yellow': { bg: 'yellow.100', color: 'yellow.700' },
       'red': { bg: 'red.100', color: 'red.700' },
-      'blue': { bg: 'blue.100', color: 'blue.700' },
+      'blue': { bg: primaryFog, color: primaryColor },
       'gray': { bg: 'gray.100', color: 'gray.700' }
     },
     {
-      'green': { bg: 'green.800', color: 'green.200' },
+      'green': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
       'yellow': { bg: 'yellow.800', color: 'yellow.200' },
       'red': { bg: 'red.800', color: 'red.200' },
-      'blue': { bg: 'blue.800', color: 'blue.200' },
+      'blue': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
       'gray': { bg: 'gray.800', color: 'gray.200' }
     }
   );
@@ -585,8 +594,8 @@ const KnowledgePage: React.FC = () => {
   };
 
   return (
-    <Box minH="100%" height="100%" py={6} display="flex" flexDirection="column">
-      <Container maxW="container.xl" flex="1">
+    <Box minH="100%" height="100%" p={0} display="flex" flexDirection="column" bg={bgColor}>
+      <Container maxW="container.xl" flex="1" py={6}>
         <Heading size="lg" mb={6} color={textColor}>知识库问答</Heading>
 
         {/* 搜索区域 */}
@@ -678,25 +687,26 @@ const KnowledgePage: React.FC = () => {
               {/* 输入框 */}
                   <Input
                     ref={inputRef}
-                placeholder="向知识库提问..."
+                    placeholder="向知识库提问..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                bg="transparent"
-                border="none"
-                borderRadius="full"
-                pl="120px"
-                pr="140px"
-                h="44px"
-                fontSize="16px"
-                color={searchInputColor}
-                _placeholder={{
-                  color: searchInputPlaceholder
-                }}
+                    bg="transparent"
+                    border="none"
+                    borderRadius="full"
+                    pl="120px"
+                    pr="160px"
+                    h="44px"
+                    fontSize="16px"
+                    color={searchInputColor}
+                    _placeholder={{
+                      color: searchInputPlaceholder
+                    }}
                     _focus={{
-                  outline: 'none',
-                  boxShadow: 'none'
-                }}
-              />
+                      outline: 'none',
+                      boxShadow: 'none'
+                    }}
+                    pointerEvents="auto"
+                  />
 
               {/* 右侧按钮区域 */}
               <Box
@@ -707,6 +717,8 @@ const KnowledgePage: React.FC = () => {
                 display="flex"
                 alignItems="center"
                 gap={2}
+                pointerEvents="auto"
+                zIndex={3}
               >
                 {/* 流式模式切换图标 - 优化颜色 */}
                 <Tooltip label="流式回答模式" bg={tooltipBg} color={tooltipColor}>
@@ -730,9 +742,9 @@ const KnowledgePage: React.FC = () => {
 
                 {/* 搜索按钮 - 优化颜色 */}
                 {(isLoading || isStreaming) ? (
-                    <Button
+                  <Button
                     colorScheme="red"
-                      size="sm"
+                    size="sm"
                     h="32px"
                     borderRadius="full"
                     onClick={isStreaming ? handleAbortStream : undefined}
@@ -742,18 +754,23 @@ const KnowledgePage: React.FC = () => {
                     _hover={{
                       bg: abortButtonHoverBg
                     }}
+                    pointerEvents="auto"
                   >
                     终止
                   </Button>
                 ) : (
                   <Button
                     type="submit"
-                      colorScheme="blue"
+                    colorScheme="blue"
                     size="sm"
                     h="32px"
                     borderRadius="full"
                     isLoading={isLoading || isStreaming}
-                      onClick={handleSearch}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSearch(e);
+                    }}
                     px={4}
                     rightIcon={<FiSend />}
                     bg={primaryButtonBg}
@@ -763,9 +780,11 @@ const KnowledgePage: React.FC = () => {
                     _active={{
                       bg: primaryButtonActiveBg
                     }}
-                    >
-                      搜索
-                    </Button>
+                    pointerEvents="auto"
+                    cursor="pointer"
+                  >
+                    搜索
+                  </Button>
                 )}
               </Box>
             </Box>
@@ -880,7 +899,41 @@ const KnowledgePage: React.FC = () => {
                 />
                       </HStack>
               </Flex>
-                    <Box p={4} bg={sourceBg} borderRadius="md" color={textColor}>
+                    <Box 
+                      p={4} 
+                      bg={sourceBg} 
+                      borderRadius="md" 
+                      color={textColor}
+                      overflow="hidden"
+                      wordBreak="break-word"
+                      css={{
+                        '& ol, & ul': {
+                          paddingLeft: '1.5rem',
+                          marginBottom: '1rem'
+                        },
+                        '& li': {
+                          marginBottom: '0.5rem',
+                          lineHeight: '1.6'
+                        },
+                        '& p': {
+                          marginBottom: '1rem',
+                          lineHeight: '1.6'
+                        },
+                        '& pre': {
+                          overflowX: 'auto',
+                          backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
+                          padding: '1rem',
+                          borderRadius: '0.375rem',
+                          marginBottom: '1rem'
+                        },
+                        '& code': {
+                          backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
+                          padding: '0.125rem 0.25rem',
+                          borderRadius: '0.25rem',
+                          fontSize: '0.875rem'
+                        }
+                      }}
+                    >
                       <ReactMarkdown>{qaResult.answer}</ReactMarkdown>
                     </Box>
                   </Box>
@@ -940,7 +993,41 @@ const KnowledgePage: React.FC = () => {
               {currentAnswer && !qaResult && (
                 <Box>
                   <Heading size="sm" mb={3} color={streamAnswerHeadingColor}>AI回答 (实时)</Heading>
-                  <Box p={4} bg={sourceBg} borderRadius="md" color={textColor}>
+                  <Box 
+                    p={4} 
+                    bg={sourceBg} 
+                    borderRadius="md" 
+                    color={textColor}
+                    overflow="hidden"
+                    wordBreak="break-word"
+                    css={{
+                      '& ol, & ul': {
+                        paddingLeft: '1.5rem',
+                        marginBottom: '1rem'
+                      },
+                      '& li': {
+                        marginBottom: '0.5rem',
+                        lineHeight: '1.6'
+                      },
+                      '& p': {
+                        marginBottom: '1rem',
+                        lineHeight: '1.6'
+                      },
+                      '& pre': {
+                        overflowX: 'auto',
+                        backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
+                        padding: '1rem',
+                        borderRadius: '0.375rem',
+                        marginBottom: '1rem'
+                      },
+                      '& code': {
+                        backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
+                        padding: '0.125rem 0.25rem',
+                        borderRadius: '0.25rem',
+                        fontSize: '0.875rem'
+                      }
+                    }}
+                  >
                     <ReactMarkdown>{currentAnswer}</ReactMarkdown>
                     {isStreaming && (
                       <Text 
@@ -956,8 +1043,8 @@ const KnowledgePage: React.FC = () => {
                         }}
                       >
                         ▊
-                          </Text>
-                        )}
+                      </Text>
+                    )}
                   </Box>
                 </Box>
               )}
