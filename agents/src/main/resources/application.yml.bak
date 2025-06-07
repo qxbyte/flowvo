@@ -45,7 +45,7 @@ spring:
       embedding:
         options:
           model: ${ZHIPU_EMBEDDING_MODEL:embedding-3}
-          dimensions: 2048 # 踩坑：openAI千万别写嵌入模型的向量为度
+          dimensions: 2048 # 踩坑：openAI千万别写嵌入模型的向量为度 
 
 #    vectorstore:
 #      milvus:
