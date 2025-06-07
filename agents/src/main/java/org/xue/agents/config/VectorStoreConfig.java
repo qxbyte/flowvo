@@ -107,8 +107,6 @@ public class VectorStoreConfig {
         log.info("选中的嵌入模型: {}", selectedModel.getClass().getSimpleName());
         
         // 使用MilvusVectorStore的builder方法
-//        return MilvusVectorStore.builder(milvusServiceClient, selectedModel)
-//                .build();
         MilvusVectorStore.Builder builder = MilvusVectorStore.builder(milvusServiceClient, selectedModel)
 				.databaseName("default")
 				.indexType(IndexType.IVF_FLAT)
@@ -133,8 +131,7 @@ public class VectorStoreConfig {
                 break;
 
             default:
-                builder.collectionName("doc_chunk");
-                builder.embeddingDimension(1536);
+                break;
         }
 
         return builder.build();
