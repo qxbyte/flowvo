@@ -117,8 +117,17 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   
-  const bgColor = useColorModeValue('white', '#171A24');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const inputBg = useColorModeValue('white', '#19191c');
   
   const [loading, setLoading] = useState(false);
   
@@ -877,7 +886,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                       <Flex 
                         p={2} 
                         cursor="pointer" 
-                        _hover={{ bg: "gray.100" }}
+                        _hover={{ bg: hoverBg }}
                         align="center"
                         onClick={handleCreateConversation}
             borderBottomWidth="1px"
@@ -892,15 +901,15 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                     {loading && conversations.length === 0 ? (
                       <Flex justify="center" py={4}>
                         <Spinner size="sm" />
-                        <Text ml={2} fontSize="sm" color="gray.500">加载对话列表...</Text>
+                        <Text ml={2} fontSize="sm" color={subTextColor}>加载对话列表...</Text>
                       </Flex>
                     ) : null}
                     
                     {/* 对话列表为空提示 */}
                     {!loading && conversations.length === 0 ? (
                       <Flex direction="column" align="center" justify="center" py={4} px={2} textAlign="center">
-                        <Text fontSize="sm" color="gray.500">没有对话记录</Text>
-                        <Text fontSize="xs" color="gray.400" mt={1}>点击"新建对话"创建您的第一个对话</Text>
+                                        <Text fontSize="sm" color={subTextColor}>没有对话记录</Text>
+                <Text fontSize="xs" color={subTextColor} mt={1}>点击"新建对话"创建您的第一个对话</Text>
             </Flex>
                     ) : null}
                     
@@ -910,8 +919,8 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                     key={conv.id}
                     p={2}
                         cursor="pointer"
-                    bg={currentConversation?.id === conv.id ? 'blue.50' : 'transparent'}
-                        _hover={{ bg: currentConversation?.id === conv.id ? 'blue.50' : 'gray.100' }}
+                                    bg={currentConversation?.id === conv.id ? primaryFog : 'transparent'}
+                _hover={{ bg: currentConversation?.id === conv.id ? primaryFog : hoverBg }}
                         align="center"
                     justify="space-between"
                         borderBottomWidth="1px"
@@ -1032,12 +1041,12 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                   align="center" 
                   justify="center" 
                   h="100%" 
-                  color="gray.500"
+                  color={subTextColor}
                   pt={8}
                   gap={2}
                 >
                   <Text fontSize="sm" fontWeight="medium">您当前未登录，但可以尝试使用AI对话功能</Text>
-                  <Text fontSize="xs" color="gray.400">登录后可以保存您的对话历史</Text>
+                  <Text fontSize="xs" color={subTextColor}>登录后可以保存您的对话历史</Text>
                   <Button 
                     size="sm" 
                     colorScheme="blue" 
@@ -1052,7 +1061,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                   align="center" 
                   justify="center" 
                   h="100%" 
-                  color="gray.500"
+                  color={subTextColor}
                   pt={8}
                 >
                   <Text fontSize="sm">欢迎使用AI对话，开始输入您的问题吧！</Text>
@@ -1090,14 +1099,14 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
             py={3}
             h="32px"
             minH="32px"
-            bg={useColorModeValue('gray.100', 'gray.700')}
+            bg={inputBg}
             _hover={{
-              bg: useColorModeValue('gray.200', 'gray.600')
+              bg: hoverBg
             }}
             _focus={{
-              bg: useColorModeValue('white', '#171A24'),
-              borderColor: 'blue.300',
-              boxShadow: '0 0 0 1px rgba(66, 153, 225, 0.6)'
+              bg: inputBg,
+              borderColor: primaryColor,
+              boxShadow: `0 0 0 1px ${primaryColor}`
             }}
             isDisabled={false}
             sx={{
@@ -1114,9 +1123,9 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
             borderRadius="full"
                   size="xs"
                   variant="ghost"
-                  color={useColorModeValue('blue.500', 'blue.300')}
+                  color={primaryColor}
                   _hover={{
-                    bg: useColorModeValue('blue.50', 'blue.900'),
+                    bg: primaryFog,
                     transform: 'translateX(2px)'
                   }}
                   transition="all 0.2s"

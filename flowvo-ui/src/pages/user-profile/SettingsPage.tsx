@@ -53,25 +53,32 @@ const SettingsPage: React.FC = () => {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // 颜色配置
-  const bgColor = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const inputBg = useColorModeValue('white', 'gray.700');
+  // Junie风格的颜色配置
+  const mainBgColor = useColorModeValue('#f4f4f4', '#000000');
+  const bgColor = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryDim = 'rgba(71, 224, 84, 0.8)';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  const inputBg = useColorModeValue('white', '#19191c');
   
   // 新增颜色变量
-  const mainBgColor = useColorModeValue('gray.50', '#1B212C');
-  const tabSelectedColor = useColorModeValue('blue.600', 'blue.300');
-  const tabSelectedBg = useColorModeValue('white', 'gray.600');
-  const inputHoverBorder = useColorModeValue('blue.300', 'blue.500');
-  const inputFocusBorder = useColorModeValue('blue.500', 'blue.400');
-  const inputFocusShadow = useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400');
-  const buttonBg = useColorModeValue('blue.500', 'blue.600');
-  const buttonHoverBg = useColorModeValue('blue.600', 'blue.500');
-  const avatarBg = useColorModeValue('gray.100', 'gray.600');
-  const uploadButtonBg = useColorModeValue('teal.500', 'teal.600');
-  const uploadButtonHoverBg = useColorModeValue('teal.600', 'teal.500');
+  const tabSelectedColor = primaryColor;
+  const tabSelectedBg = useColorModeValue('white', '#303033');
+  const inputHoverBorder = primaryColor;
+  const inputFocusBorder = primaryColor;
+  const inputFocusShadow = `0 0 0 1px ${primaryColor}`;
+  const buttonBg = primaryColor;
+  const buttonHoverBg = useColorModeValue('#3bcc47', '#52e658');
+  const avatarBg = useColorModeValue('gray.100', '#303033');
+  const uploadButtonBg = primaryColor;
+  const uploadButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
 
   // 页面加载时获取用户设置
   useEffect(() => {
@@ -394,8 +401,9 @@ const SettingsPage: React.FC = () => {
   }
 
   return (
-    <Box p={8} maxWidth="800px" mx="auto" bg={mainBgColor} minH="100vh">
-      <Box bg={bgColor} p={8} borderRadius="xl" boxShadow="lg" borderWidth="1px" borderColor={borderColor}>
+    <Box p={0} maxWidth="100%" mx="auto" bg={mainBgColor} minH="100vh">
+      <Box maxWidth="800px" mx="auto" p={8}>
+        <Box bg={bgColor} p={8} borderRadius="xl" boxShadow="lg" borderWidth="1px" borderColor={borderColor}>
         <Heading as="h1" size="xl" mb={8} textAlign="center" color={textColor}>
           用户设置
         </Heading>
@@ -592,6 +600,7 @@ const SettingsPage: React.FC = () => {
 
           </TabPanels>
         </Tabs>
+        </Box>
       </Box>
     </Box>
   );

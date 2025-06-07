@@ -87,31 +87,37 @@ const CategoryManagementPage: React.FC = () => {
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   
-  // 统一颜色配置
-  const cardBg = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.600');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const tableHeaderBg = useColorModeValue('gray.50', 'gray.700');
-  const pageBg = useColorModeValue('gray.50', '#1B212C');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
   
-  // 表单和按钮颜色
-  const inputHoverBorderColor = useColorModeValue('blue.300', 'blue.500');
-  const inputFocusBorderColor = useColorModeValue('blue.500', 'blue.400');
-  const inputFocusBoxShadow = useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400');
-  const primaryButtonBg = useColorModeValue('#1a73e8', 'blue.500');
-  const primaryButtonHoverBg = useColorModeValue('#1557b0', 'blue.400');
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const inputBg = useColorModeValue('white', '#19191c');
+  const tableHeaderBg = useColorModeValue('gray.50', '#303033');
+  const pageBg = bgColor;
+  
+  // 表单和按钮颜色 - 使用绿色主题
+  const inputHoverBorderColor = useColorModeValue(primaryColor, primaryColor);
+  const inputFocusBorderColor = useColorModeValue(primaryColor, primaryColor);
+  const inputFocusBoxShadow = useColorModeValue(`0 0 0 1px ${primaryColor}`, `0 0 0 1px ${primaryColor}`);
+  const primaryButtonBg = useColorModeValue(primaryColor, primaryColor);
+  const primaryButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
   const redButtonBg = useColorModeValue('red.500', 'red.400');
   const redButtonHoverBg = useColorModeValue('red.600', 'red.500');
-  const blueButtonBg = useColorModeValue('blue.500', 'blue.600');
-  const blueButtonHoverBg = useColorModeValue('blue.600', 'blue.500');
+  const greenButtonBg = useColorModeValue(primaryColor, primaryColor);
+  const greenButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
   const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.600');
   
-  // 其他UI颜色
-  const spinnerColor = useColorModeValue('blue.500', 'blue.300');
-  const folderIconColor = useColorModeValue('blue.500', 'blue.300');
+  // 其他UI颜色 - 使用绿色主题
+  const spinnerColor = useColorModeValue(primaryColor, primaryColor);
+  const folderIconColor = useColorModeValue(primaryColor, primaryColor);
   const deleteIconColor = useColorModeValue('red.500', 'red.300');
   const deleteIconHoverBg = useColorModeValue('red.50', 'red.900');
 
@@ -413,8 +419,8 @@ const CategoryManagementPage: React.FC = () => {
   };
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
-      <Box flex="1" maxW="1200px" mx="auto" w="100%">
+    <Box w="100%" p={0} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
+      <Box flex="1" maxW="1200px" mx="auto" w="100%" p={6}>
         <Card bg={cardBg} boxShadow="sm" borderRadius="16px" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
           <CardBody p={8}>
             {/* 页面头部 */}
@@ -427,9 +433,10 @@ const CategoryManagementPage: React.FC = () => {
               </Box>
               <Button
                 leftIcon={<FiPlus />}
-                colorScheme="blue"
+                colorScheme="green"
                 onClick={handleCreate}
                 bg={primaryButtonBg}
+                color="black"
                 _hover={{
                   bg: primaryButtonHoverBg
                 }}
@@ -503,8 +510,9 @@ const CategoryManagementPage: React.FC = () => {
                     <Text color={mutedTextColor}>
                       点击"新增分类"按钮开始创建第一个分类
                     </Text>
-                    <Button leftIcon={<FiPlus />} colorScheme="blue" onClick={handleCreate}
+                    <Button leftIcon={<FiPlus />} colorScheme="green" onClick={handleCreate}
                       bg={primaryButtonBg}
+                      color="black"
                       _hover={{
                         bg: primaryButtonHoverBg
                       }}
@@ -678,11 +686,12 @@ const CategoryManagementPage: React.FC = () => {
                 取消
               </Button>
               <Button
-                colorScheme="blue"
+                colorScheme="green"
                 onClick={handleSubmitCreate}
                 isLoading={isSubmitting}
                 loadingText="创建中"
                 bg={primaryButtonBg}
+                color="black"
                 _hover={{
                   bg: primaryButtonHoverBg
                 }}
@@ -778,11 +787,12 @@ const CategoryManagementPage: React.FC = () => {
                 取消
               </Button>
               <Button
-                colorScheme="blue"
+                colorScheme="green"
                 onClick={handleSubmitEdit}
                 isLoading={isSubmitting}
                 loadingText="保存中"
                 bg={primaryButtonBg}
+                color="black"
                 _hover={{
                   bg: primaryButtonHoverBg
                 }}
@@ -836,11 +846,11 @@ const CategoryManagementPage: React.FC = () => {
             <ModalFooter>
               <Button 
                 onClick={onViewClose} 
-                colorScheme="blue"
-                bg={blueButtonBg}
-                color="white"
+                colorScheme="green"
+                bg={greenButtonBg}
+                color="black"
                 _hover={{ 
-                  bg: blueButtonHoverBg 
+                  bg: greenButtonHoverBg 
                 }}
               >
                 关闭

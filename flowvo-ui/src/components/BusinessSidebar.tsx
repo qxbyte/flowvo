@@ -39,7 +39,7 @@ import { Link as ChakraLink } from '@chakra-ui/react'; // Chakra's Link
 
 // 业务菜单项
 const businessMenuItems = [
-  { id: 'dashboard', title: '首页', icon: FiHome, path: '/business' },
+  { id: 'dashboard', title: '业务概览', icon: FiHome, path: '/business/dashboard' },
   { id: 'orders', title: '订单管理', icon: FiShoppingCart, path: '/business/orders' },
   { id: 'tasks', title: '任务管理', icon: FiClipboard, path: '/business/tasks' },
   { id: 'team', title: '团队管理', icon: FiUsers, path: '/business/team' },
@@ -60,16 +60,22 @@ const BusinessSidebar: React.FC = () => {
     location.pathname.startsWith('/business/knowledge')
   );
   
-  const bgColor = useColorModeValue('gray.50', '#171A24');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const hoverBgColor = useColorModeValue('gray.200', '#1a1f28');
-  const activeBgColor = useColorModeValue('gray.300', 'gray.600');
+  // Junie风格的颜色配置
+  const sidebarBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  
+  // Junie的绿色主题色
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const hoverBgColor = useColorModeValue('gray.100', '#303033');
+  const activeBgColor = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
 
   // 移动端侧边栏
   const MobileSidebar = () => (
     <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
       <DrawerOverlay />
-      <DrawerContent sx={{ bg: bgColor }}>
+      <DrawerContent sx={{ bg: sidebarBg }}>
         <DrawerCloseButton />
         <DrawerHeader borderBottomWidth="1px">业务系统菜单</DrawerHeader>
         <DrawerBody p={0}>
@@ -83,7 +89,7 @@ const BusinessSidebar: React.FC = () => {
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
     <VStack spacing={0} align="stretch" h={isMobile ? "auto" : "full"}>
       <Box p={4}>
-        <Text fontSize="lg" fontWeight="bold" color={useColorModeValue('gray.600', 'gray.200')}>业务系统</Text>
+        <Text fontSize="lg" fontWeight="bold" color={textColor}>业务系统</Text>
       </Box>
 
       <Divider my={2} />
@@ -105,11 +111,11 @@ const BusinessSidebar: React.FC = () => {
                 justifyContent="flex-start"
                 variant="ghost"
                 bg={isActive ? activeBgColor : 'transparent'}
-                _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }}
+                _hover={{ bg: hoverBgColor, color: textColor }}
                 size="md"
                 borderRadius="md"
                 width="full"
-                color={useColorModeValue('gray.700', 'gray.200')}
+                color={textColor}
                 onClick={isMobile ? onClose : undefined}
               >
                 {item.title}
@@ -126,11 +132,11 @@ const BusinessSidebar: React.FC = () => {
             justifyContent="space-between"
             variant="ghost"
             bg={location.pathname.startsWith('/business/knowledge') ? activeBgColor : 'transparent'}
-            _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }}
+            _hover={{ bg: hoverBgColor, color: textColor }}
             size="md"
             borderRadius="md"
             width="full"
-            color={useColorModeValue('gray.700', 'gray.200')}
+            color={textColor}
             onClick={() => setIsKnowledgeOpen(!isKnowledgeOpen)}
             px={3}
           >
@@ -156,10 +162,10 @@ const BusinessSidebar: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       bg={isActive ? activeBgColor : 'transparent'}
-                      _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }}
+                      _hover={{ bg: hoverBgColor, color: textColor }}
                       borderRadius="md"
                       width="full"
-                      color={useColorModeValue('gray.600', 'gray.300')}
+                      color={useColorModeValue('gray.600', 'rgba(255,255,255,0.7)')}
                       fontSize="sm"
                       onClick={isMobile ? onClose : undefined}
                       px={3}
@@ -186,8 +192,8 @@ const BusinessSidebar: React.FC = () => {
           size="md"
           borderRadius="md"
           mb={2}
-          color={useColorModeValue('gray.700', 'gray.200')}
-          _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }} // No !important
+          color={textColor}
+          _hover={{ bg: hoverBgColor, color: textColor }}
         >
           系统设置
         </Button>
@@ -198,8 +204,8 @@ const BusinessSidebar: React.FC = () => {
           width="full"
           size="md"
           borderRadius="md"
-          color={useColorModeValue('gray.700', 'gray.200')}
-          _hover={{ bg: hoverBgColor, color: useColorModeValue('gray.700', 'gray.100') }} // No !important
+          color={textColor}
+          _hover={{ bg: hoverBgColor, color: textColor }}
         >
           帮助中心
         </Button>
@@ -218,9 +224,9 @@ const BusinessSidebar: React.FC = () => {
         left={4}
         zIndex={20}
         display={{ base: 'flex', md: 'none' }}
-        bg={useColorModeValue('gray.200', 'gray.700')}
-        color={useColorModeValue('gray.800', 'whiteAlpha.900')}
-        _hover={{ bg: useColorModeValue('gray.300', 'gray.600') }}
+        bg={sidebarBg}
+        color={textColor}
+        _hover={{ bg: hoverBgColor }}
         onClick={onOpen}
         borderRadius="full"
       />
@@ -232,7 +238,7 @@ const BusinessSidebar: React.FC = () => {
       <Box
         w={{ base: '0', md: '260px' }}
         h="calc(100vh - var(--header-height, 70px))"
-        sx={{ bg: bgColor }}
+        sx={{ bg: sidebarBg }}
         borderRight="1px"
         borderColor={borderColor}
         position="fixed"

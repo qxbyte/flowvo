@@ -108,9 +108,18 @@ export const orderApi = {
   getOrders: (params: any) => api.get('/orders', { params }),
   createOrder: (data: any) => api.post('/orders', data),
   updateOrder: (id: string, data: any) => api.put(`/orders/${id}`, data),
-  cancelOrder: (id: string) => api.put(`/orders/${id}/cancel`),
-  getOrderById: (id: string) => api.get(`/orders/${id}`),
-  deleteOrder: (id: string) => api.delete(`/orders/${id}`),
+  cancelOrder: (id: string, userId?: string) => {
+    const params = userId ? { userId } : {};
+    return api.put(`/orders/${id}/cancel`, {}, { params });
+  },
+  getOrderById: (id: string, userId?: string) => {
+    const params = userId ? { userId } : {};
+    return api.get(`/orders/${id}`, { params });
+  },
+  deleteOrder: (id: string, userId?: string) => {
+    const params = userId ? { userId } : {};
+    return api.delete(`/orders/${id}`, { params });
+  },
 };
 
 // 认证相关类型
@@ -128,7 +137,8 @@ export interface RegisterRequest {
 }
 
 export interface UserInfo {
-  id: string;
+  id: string; // 当前可能是username，保持兼容性
+  userId?: string; // 数据库中user表的真正ID
   username: string;
   name?: string;
   email?: string;

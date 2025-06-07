@@ -53,14 +53,20 @@ const SearchSettingsPage: React.FC = () => {
   
   const toast = useToast();
   
-  // 统一颜色配置
-  const cardBg = useColorModeValue('white', '#2D3748');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.600');
-  const textColor = useColorModeValue('gray.700', 'gray.200');
-  const mutedTextColor = useColorModeValue('gray.500', 'gray.400');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const pageBg = useColorModeValue('gray.50', '#1B212C');
+  // Junie风格的颜色配置
+  const bgColor = useColorModeValue('#f4f4f4', '#000000');
+  const cardBg = useColorModeValue('white', '#19191c');
+  const borderColor = useColorModeValue('gray.200', '#303033');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
+  
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  
+  const hoverBg = useColorModeValue('gray.50', '#303033');
+  const inputBg = useColorModeValue('white', '#19191c');
+  const pageBg = bgColor;
 
   // 初始化加载设置
   useEffect(() => {
@@ -144,8 +150,8 @@ const SearchSettingsPage: React.FC = () => {
   };
 
   return (
-    <Box w="100%" py={6} px={6} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
-      <Box flex="1" maxW="1200px" mx="auto" w="100%">
+    <Box w="100%" p={0} minH="100%" display="flex" flexDirection="column" bg={pageBg}>
+      <Box flex="1" maxW="1200px" mx="auto" w="100%" p={6}>
         <Card bg={cardBg} boxShadow="sm" borderRadius="16px" overflow="hidden" borderWidth="1px" borderColor={borderColor}>
           <CardBody p={8}>
             {/* 页面头部 */}
@@ -165,20 +171,21 @@ const SearchSettingsPage: React.FC = () => {
                   color={textColor}
                   _hover={{
                     bg: hoverBg,
-                    borderColor: useColorModeValue('blue.300', 'blue.500')
+                    borderColor: useColorModeValue(primaryColor, primaryColor)
                   }}
                 >
                   重置为默认
                 </Button>
                 <Button
                   leftIcon={<FiSave />}
-                  colorScheme="blue"
+                  colorScheme="green"
                   onClick={handleSaveSettings}
                   isLoading={isLoading}
                   loadingText="保存中"
-                  bg={useColorModeValue('#1a73e8', 'blue.500')}
+                  bg={primaryColor}
+                  color="black"
                   _hover={{
-                    bg: useColorModeValue('#1557b0', 'blue.400')
+                    bg: '#3bcc47'
                   }}
                 >
                   保存设置
@@ -187,10 +194,10 @@ const SearchSettingsPage: React.FC = () => {
             </Flex>
 
             {/* 设置说明卡片 */}
-            <Card mb={6} bg={useColorModeValue('blue.50', 'blue.900')} borderColor={useColorModeValue('blue.200', 'blue.700')}>
+            <Card mb={6} bg={useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)')} borderColor={useColorModeValue(primaryColor, primaryColor)}>
               <CardBody p={4}>
                 <HStack spacing={3}>
-                  <Icon as={FiInfo} color={useColorModeValue('blue.500', 'blue.300')} />
+                  <Icon as={FiInfo} color={useColorModeValue(primaryColor, primaryColor)} />
                   <Box>
                     <Text fontSize="sm" fontWeight="medium" color={textColor} mb={1}>
                       参数说明
@@ -224,11 +231,11 @@ const SearchSettingsPage: React.FC = () => {
                         bg={inputBg}
                         borderColor={borderColor}
                         _hover={{
-                          borderColor: useColorModeValue('blue.300', 'blue.500')
+                          borderColor: useColorModeValue(primaryColor, primaryColor)
                         }}
                         _focus={{
-                          borderColor: useColorModeValue('blue.500', 'blue.400'),
-                          boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400')
+                          borderColor: useColorModeValue(primaryColor, primaryColor),
+                          boxShadow: useColorModeValue(`0 0 0 1px ${primaryColor}`, `0 0 0 1px ${primaryColor}`)
                         }}
                       >
                         <NumberInputField color={textColor} />
@@ -240,7 +247,7 @@ const SearchSettingsPage: React.FC = () => {
                       <Text fontSize="sm" color={mutedTextColor} mt={1}>
                         {getTopKDescription(topK)}
                       </Text>
-                      <Badge size="sm" colorScheme="blue" mt={2}>
+                      <Badge size="sm" colorScheme="green" mt={2}>
                         当前值: {topK} 个文档
                       </Badge>
                     </FormControl>
@@ -254,11 +261,11 @@ const SearchSettingsPage: React.FC = () => {
                         borderColor={borderColor}
                         color={textColor}
                         _hover={{
-                          borderColor: useColorModeValue('blue.300', 'blue.500')
+                          borderColor: useColorModeValue(primaryColor, primaryColor)
                         }}
                         _focus={{
-                          borderColor: useColorModeValue('blue.500', 'blue.400'),
-                          boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400')
+                          borderColor: useColorModeValue(primaryColor, primaryColor),
+                          boxShadow: useColorModeValue(`0 0 0 1px ${primaryColor}`, `0 0 0 1px ${primaryColor}`)
                         }}
                         css={{
                           '> option': {
@@ -304,11 +311,11 @@ const SearchSettingsPage: React.FC = () => {
                         bg={inputBg}
                         borderColor={borderColor}
                         _hover={{
-                          borderColor: useColorModeValue('blue.300', 'blue.500')
+                          borderColor: useColorModeValue(primaryColor, primaryColor)
                         }}
                         _focus={{
-                          borderColor: useColorModeValue('blue.500', 'blue.400'),
-                          boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400')
+                          borderColor: useColorModeValue(primaryColor, primaryColor),
+                          boxShadow: useColorModeValue(`0 0 0 1px ${primaryColor}`, `0 0 0 1px ${primaryColor}`)
                         }}
                       >
                         <NumberInputField color={textColor} />
@@ -334,11 +341,11 @@ const SearchSettingsPage: React.FC = () => {
                         borderColor={borderColor}
                         color={textColor}
                         _hover={{
-                          borderColor: useColorModeValue('blue.300', 'blue.500')
+                          borderColor: useColorModeValue(primaryColor, primaryColor)
                         }}
                         _focus={{
-                          borderColor: useColorModeValue('blue.500', 'blue.400'),
-                          boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.400')
+                          borderColor: useColorModeValue(primaryColor, primaryColor),
+                          boxShadow: useColorModeValue(`0 0 0 1px ${primaryColor}`, `0 0 0 1px ${primaryColor}`)
                         }}
                         css={{
                           '> option': {

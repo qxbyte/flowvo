@@ -6,10 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.xue.app.dto.OrderCreateDTO;
-import org.xue.app.dto.OrderDTO;
-import org.xue.app.dto.OrderUpdateDTO;
-import org.xue.app.dto.PageResponseDTO;
+import org.xue.app.dto.*;
+import org.xue.app.service.AuthService;
 import org.xue.app.service.OrderService;
 
 import java.time.LocalDateTime;
@@ -24,7 +22,9 @@ public class OrderController {
     
     @Autowired
     private OrderService orderService;
-    
+    @Autowired
+    private AuthService authService;
+
     /**
      * 获取当前用户ID
      */
@@ -33,11 +33,12 @@ public class OrderController {
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getPrincipal())) {
             throw new RuntimeException("用户未登录");
         }
-        return authentication.getName(); // 返回用户名作为用户ID
+
+        return authService.getCurrentUserId(authentication.getName());
     }
     
     /**
-     * 创建订单（仅当前用户）
+     * 创建订单
      */
     @PostMapping
     public ResponseEntity<OrderDTO> createOrder(@RequestBody OrderCreateDTO orderCreateDTO) {
@@ -50,7 +51,7 @@ public class OrderController {
     }
     
     /**
-     * 更新订单（仅当前用户的订单）
+     * 更新订单
      */
     @PutMapping("/{id}")
     public ResponseEntity<OrderDTO> updateOrder(@PathVariable String id, @RequestBody OrderUpdateDTO orderUpdateDTO) {
@@ -67,7 +68,7 @@ public class OrderController {
     }
     
     /**
-     * 取消订单（仅当前用户的订单）
+     * 取消订单
      */
     @PutMapping("/{id}/cancel")
     public ResponseEntity<OrderDTO> cancelOrder(@PathVariable String id) {
@@ -84,7 +85,7 @@ public class OrderController {
     }
     
     /**
-     * 删除订单（仅当前用户的订单）
+     * 删除订单
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable String id) {
@@ -101,7 +102,7 @@ public class OrderController {
     }
     
     /**
-     * 根据ID获取订单（仅当前用户的订单）
+     * 根据ID获取订单
      */
     @GetMapping("/{id}")
     public ResponseEntity<OrderDTO> getOrderById(@PathVariable String id) {
@@ -117,7 +118,7 @@ public class OrderController {
     }
     
     /**
-     * 根据订单号获取订单（仅当前用户的订单）
+     * 根据订单号获取订单
      */
     @GetMapping("/number/{orderNumber}")
     public ResponseEntity<OrderDTO> getOrderByOrderNumber(@PathVariable String orderNumber) {
@@ -133,7 +134,7 @@ public class OrderController {
     }
     
     /**
-     * 分页查询订单列表（仅当前用户的订单）
+     * 分页查询订单列表
      */
     @GetMapping
     public ResponseEntity<PageResponseDTO<OrderDTO>> getOrderList(
