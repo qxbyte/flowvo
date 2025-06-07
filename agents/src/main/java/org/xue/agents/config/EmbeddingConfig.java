@@ -2,13 +2,11 @@ package org.xue.agents.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * 向量化配置类
- * 支持外部向量化服务和Spring AI内置服务的灵活切换
+ * 支持多种向量化服务的灵活切换：OpenAI、ZhiPuAI、外部服务
  */
 @Configuration
 @ConfigurationProperties(prefix = "embedding")
@@ -17,10 +15,11 @@ public class EmbeddingConfig {
     
     /**
      * 向量化服务类型
-     * EXTERNAL: 使用外部Python向量化服务
-     * SPRING_AI: 使用Spring AI内置的OpenAI向量化服务
+     * OPENAI: 使用OpenAI向量化服务 (text-embedding-ada-002, 1536维)
+     * ZHIPUAI: 使用智谱AI向量化服务 (embedding-3, 2048维)
+     * EXTERNAL: 使用外部Python向量化服务 (768维)
      */
-    private ServiceType type = ServiceType.SPRING_AI;
+    private ServiceType type = ServiceType.OPENAI;
     
     /**
      * 外部向量化服务配置
@@ -31,8 +30,9 @@ public class EmbeddingConfig {
      * 服务类型枚举
      */
     public enum ServiceType {
-        EXTERNAL,    // 外部Python服务
-        SPRING_AI    // Spring AI内置服务
+        OPENAI,      // OpenAI服务 (1536维)
+        ZHIPUAI,     // ZhiPuAI服务 (2048维)
+        EXTERNAL     // 外部Python服务 (768维)
     }
     
     /**

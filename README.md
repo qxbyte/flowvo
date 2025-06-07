@@ -7,8 +7,11 @@ FlowVO 是一个基于微服务架构的智能对话和向量检索平台，集�
 ![img.png](docs/cite/Image/home.png)
 ![img.png](docs/cite/Image/chat.png)
 ![img.png](docs/cite/Image/document.png)
-![img.png](docs/cite/Image/knowledge.png)
+![knowledge1.png](docs/cite/Image/knowledge1.png)
+![knowledge2.png](docs/cite/Image/knowledge2.png)
 ![img.png](docs/cite/Image/business.png)
+
+
 
 
 ### 🎯 核心特性

@@ -1,14 +1,14 @@
 package org.xue.agents.service.impl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.deepseek.DeepSeekChatModel;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.milvus.MilvusSearchRequest;
+import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,8 +41,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * 知识库问答服务实现类
@@ -50,11 +48,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class KnowledgeQaServiceImpl implements KnowledgeQaService {
     
-    private final ChatModel chatModel;
-    private final VectorStore vectorStore;
+    private final DeepSeekChatModel chatModel;
+    private final MilvusVectorStore milvusVectorStore;
     private final KnowledgeQaRecordRepository qaRecordRepository;
     private final DocumentCategoryRepository categoryRepository;
     private final PopularQuestionRepository popularQuestionRepository;
@@ -82,7 +79,17 @@ public class KnowledgeQaServiceImpl implements KnowledgeQaService {
             
             请基于以上规则给出准确的回答：
             """;
-    
+
+    public KnowledgeQaServiceImpl(DeepSeekChatModel chatModel, @Qualifier("customVectorStore") MilvusVectorStore milvusVectorStore, KnowledgeQaRecordRepository qaRecordRepository, DocumentCategoryRepository categoryRepository, PopularQuestionRepository popularQuestionRepository, DocumentRepository documentRepository, ObjectMapper objectMapper) {
+        this.chatModel = chatModel;
+        this.milvusVectorStore = milvusVectorStore;
+        this.qaRecordRepository = qaRecordRepository;
+        this.categoryRepository = categoryRepository;
+        this.popularQuestionRepository = popularQuestionRepository;
+        this.documentRepository = documentRepository;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     @Transactional
     public KnowledgeQaResponse askQuestion(KnowledgeQaRequest request, String userId) {
@@ -705,24 +712,31 @@ public class KnowledgeQaServiceImpl implements KnowledgeQaService {
     
     private List<Document> searchRelevantDocuments(KnowledgeQaRequest request, String userId) {
         try {
-            SearchRequest.Builder searchBuilder = SearchRequest.builder()
-                    .query(request.getQuestion())
-                    .topK(request.getTopK() * 2) // 扩大检索范围，为用户筛选留出余量
-                    .similarityThreshold(request.getSimilarityThreshold());
-            
+//            SearchRequest.Builder searchBuilder = SearchRequest.builder()
+//                    .query(request.getQuestion())
+//                    .topK(request.getTopK()) // 扩大检索范围，为用户筛选留出余量
+//                    .similarityThreshold(request.getSimilarityThreshold());
+//
+            MilvusSearchRequest.MilvusBuilder searchBuilder = MilvusSearchRequest.milvusBuilder()
+                .query(request.getQuestion())
+                .topK(request.getTopK())
+                .similarityThreshold(request.getSimilarityThreshold());
+
             // 只添加分类过滤条件（如果指定了分类），不在向量库层面进行用户过滤
             if (StringUtils.hasText(request.getCategory())) {
-                searchBuilder.filterExpression("category == '" + request.getCategory() + "'");
+//                searchBuilder.filterExpression("category == '" + request.getCategory() + "'");
+//                searchBuilder.nativeExpression("metadata['category'] == 'science'");
+                searchBuilder.nativeExpression("metadata['category'] == '" + request.getCategory() + "'");
             }
             
             SearchRequest searchRequest = searchBuilder.build();
             
             log.debug("向量检索参数: category={}, topK={}, threshold={}, filter={}", 
-                request.getCategory(), request.getTopK() * 2, request.getSimilarityThreshold(), 
+                request.getCategory(), request.getTopK(), request.getSimilarityThreshold(),
                 StringUtils.hasText(request.getCategory()) ? "category == '" + request.getCategory() + "'" : "none");
-            
+
             // 执行向量检索
-            List<Document> allResults = vectorStore.similaritySearch(searchRequest);
+            List<Document> allResults = milvusVectorStore.similaritySearch(searchRequest);
             log.debug("向量检索完成: 总共找到{}个文档块", allResults.size());
             
             // 在结果层面进行严格的用户隔离筛选

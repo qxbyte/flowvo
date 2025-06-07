@@ -5,7 +5,9 @@ import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.xue.agents.config.EmbeddingConfig;
@@ -26,6 +28,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 文档服务实现类
@@ -35,7 +38,8 @@ import java.util.*;
 @Service
 public class DocumentServiceImpl implements DocumentService {
 
-    private final VectorStore vectorStore;
+//    private final VectorStore vectorStore;
+    private final MilvusVectorStore milvusVectorStore;
     private final EmbeddingConfig embeddingConfig;
     private final TextSplitter textSplitter;
     private final EmbeddingClient embeddingClient; // 可选依赖
@@ -44,12 +48,12 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentCategoryRepository categoryRepository;
 
     @Autowired
-    public DocumentServiceImpl(VectorStore vectorStore,
+    public DocumentServiceImpl(MilvusVectorStore milvusVectorStore,
                                EmbeddingConfig embeddingConfig,
                                DocumentRepository documentRepository,
                                DocumentParserService documentParserService,
                                @Autowired(required = false) EmbeddingClient embeddingClient, DocumentCategoryRepository categoryRepository) {
-        this.vectorStore = vectorStore;
+        this.milvusVectorStore = milvusVectorStore;
         this.embeddingConfig = embeddingConfig;
         this.documentRepository = documentRepository;
         this.documentParserService = documentParserService;
@@ -104,8 +108,8 @@ public class DocumentServiceImpl implements DocumentService {
                     .topK(1000) // 获取最多1000个块
                     .similarityThreshold(0.0) // 最低阈值
                     .build();
-            
-            List<org.springframework.ai.document.Document> allChunks = vectorStore.similaritySearch(searchRequest);
+
+            List<org.springframework.ai.document.Document> allChunks = milvusVectorStore.similaritySearch(searchRequest);
             log.info("从Milvus获取到 {} 个文档块", allChunks.size());
             
             // 按document_id分组，恢复文档
@@ -204,7 +208,7 @@ public class DocumentServiceImpl implements DocumentService {
             }
             
             // 5. 批量添加到向量数据库
-            vectorStore.add(documentsToStore);
+            milvusVectorStore.add(documentsToStore);
             
             // 6. 更新文档状态
             document.setStatus(Document.Status.COMPLETED);
@@ -359,7 +363,7 @@ public class DocumentServiceImpl implements DocumentService {
             // 1. 从向量数据库删除相关的文档块，使用过滤表达式
             try {
                 String filterExpression = "document_id == '" + documentId + "'";
-                vectorStore.delete(filterExpression);
+                milvusVectorStore.delete(filterExpression);
             } catch (Exception e) {
                 log.warn("从向量数据库删除文档块时出现警告: {}", e.getMessage());
             }
@@ -454,7 +458,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .updatedAt(document.getUpdatedAt())
                 .build();
             return dto;
-        }).collect(java.util.stream.Collectors.toList());
+        }).collect(Collectors.toList());
     }
     
     /**
@@ -485,7 +489,7 @@ public class DocumentServiceImpl implements DocumentService {
             return "folder";
         }
         
-        // 为简化起见，先使用固定的映射
+        // 先使用固定的映射
         switch (categoryId) {
             case "cat_user_manual": return "book";
             case "cat_technical_doc": return "code";
@@ -516,7 +520,7 @@ public class DocumentServiceImpl implements DocumentService {
             SearchRequest searchRequest = searchRequestBuilder.build();
             
             // 执行搜索
-            List<org.springframework.ai.document.Document> searchResults = vectorStore.similaritySearch(searchRequest);
+            List<org.springframework.ai.document.Document> searchResults = milvusVectorStore.similaritySearch(searchRequest);
             
             // 转换为业务对象
             List<SearchResult> results = new ArrayList<>();
@@ -599,7 +603,7 @@ public class DocumentServiceImpl implements DocumentService {
             }
             
             if (!vectorIds.isEmpty()) {
-                vectorStore.delete(vectorIds);
+                milvusVectorStore.delete(vectorIds);
                 log.info("已删除 {} 个向量块", vectorIds.size());
             }
             
@@ -648,7 +652,7 @@ public class DocumentServiceImpl implements DocumentService {
             }
             
             // 6. 存储到向量数据库
-            vectorStore.add(vectorDocuments);
+            milvusVectorStore.add(vectorDocuments);
             
             // 7. 更新文档状态和块数量
             document.setStatus(Document.Status.COMPLETED);
