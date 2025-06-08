@@ -35,7 +35,8 @@ import {
   FiUsers,
   FiTruck,
   FiHome,
-  FiActivity
+  FiActivity,
+  FiServer
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import PixelChatDemo from '../../components/PixelChatDemo';
@@ -287,7 +288,7 @@ const HomePage: React.FC = () => {
                 lineHeight="1.7"
                 opacity="0.8"
               >
-                帮助您高效管理信息并获取洞见。利用先进的AI技术，从您的知识库中提取精准信息，无需手动搜索。
+                帮助您高效管理信息并获取洞见。利用先进的AI技术，从您的知识库中提取精准信息，无需手动搜索，以及通用MCP Server接入。
               </Text>
             </VStack>
 
@@ -454,7 +455,8 @@ const HomePage: React.FC = () => {
                   {[
                     { icon: FiCpu, title: 'AI Assistant', desc: '智能编程伙伴，理解您的项目上下文' },
                     { icon: FiZap, title: 'Code Generation', desc: '生成高质量代码片段和完整功能' },
-                    { icon: FiMessageCircle, title: 'Interactive Chat', desc: '实时对话式编程协助体验' }
+                    { icon: FiMessageCircle, title: 'Interactive Chat', desc: '实时对话式编程协助体验' },
+                    { icon: FiServer, title: 'MCP', desc: 'Model Context Protocol，多源数据采集处理' }
                   ].map((item, index) => (
                     <HStack 
                       key={index} 
