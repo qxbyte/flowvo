@@ -473,16 +473,34 @@ const DocumentsPage: React.FC = () => {
           const IconComponent = getDocumentIcon(doc.type);
           return (
             <Tr key={doc.id} _hover={{ bg: hoverBg }}>
-              <Td>
-                <HStack spacing={3}>
-                  <IconComponent size={20} color={textColor} />
-                  <VStack align="start" spacing={0}>
-                    <Text fontWeight="medium" fontSize="sm">{doc.name}</Text>
+              <Td maxW="300px">
+                <HStack spacing={3} maxW="100%">
+                  <Box flexShrink={0}>
+                    <IconComponent size={20} color={textColor} />
+                  </Box>
+                  <VStack align="start" spacing={0} flex="1" minW="0">
+                    <Text 
+                      fontWeight="medium" 
+                      fontSize="sm" 
+                      noOfLines={1}
+                      maxW="100%"
+                      wordBreak="break-all"
+                    >
+                      {doc.name}
+                    </Text>
                     {doc.tags && doc.tags.length > 0 && (
-                      <HStack spacing={1}>
+                      <Flex wrap="wrap" gap={1} maxW="100%">
                         {doc.tags.slice(0, 2).map((tag, index) => (
-                          <Tag key={index} size="sm" colorScheme="blue">
-                            {tag}
+                          <Tag 
+                            key={index} 
+                            size="sm" 
+                            colorScheme="blue"
+                            maxW="100px"
+                            textOverflow="ellipsis"
+                            overflow="hidden"
+                            whiteSpace="nowrap"
+                          >
+                            {tag.length > 8 ? tag.substring(0, 8) + '...' : tag}
                           </Tag>
                         ))}
                         {doc.tags.length > 2 && (
@@ -490,7 +508,7 @@ const DocumentsPage: React.FC = () => {
                             +{doc.tags.length - 2}
                           </Tag>
                         )}
-                      </HStack>
+                      </Flex>
                     )}
                   </VStack>
                 </HStack>
@@ -580,38 +598,60 @@ const DocumentsPage: React.FC = () => {
               <IconComponent size={48} color={textColor} />
             </CardHeader>
             <CardBody pt={2} px={4} pb={4}>
-              <VStack align="start" spacing={2}>
-                <Text fontWeight="medium" fontSize="sm" noOfLines={2}>
+              <VStack align="start" spacing={2} maxW="100%">
+                <Text 
+                  fontWeight="medium" 
+                  fontSize="sm" 
+                  noOfLines={2}
+                  wordBreak="break-all"
+                  maxW="100%"
+                >
                   {doc.name}
                 </Text>
-                <HStack justify="space-between" w="100%">
-                  <Text fontSize="xs" color={mutedTextColor}>
+                <HStack justify="space-between" w="100%" maxW="100%">
+                  <Text fontSize="xs" color={mutedTextColor} noOfLines={1}>
                     {formatFileSize(doc.size)}
                   </Text>
-                  <Badge size="sm" colorScheme={getStatusColor(doc.status)}>
+                  <Badge size="sm" colorScheme={getStatusColor(doc.status)} flexShrink={0}>
                     {getStatusText(doc.status)}
                   </Badge>
                 </HStack>
-                <Text fontSize="xs" color={mutedTextColor}>
+                <Text fontSize="xs" color={mutedTextColor} noOfLines={1} maxW="100%">
                   {formatDate(doc.updatedAt)}
                 </Text>
                 {doc.categoryId && (
-                  <Badge size="sm" colorScheme="purple" variant="subtle">
+                  <Badge 
+                    size="sm" 
+                    colorScheme="purple" 
+                    variant="subtle"
+                    maxW="100%"
+                    textOverflow="ellipsis"
+                    overflow="hidden"
+                    whiteSpace="nowrap"
+                  >
                     {getCategoryName(doc)}
                   </Badge>
                 )}
-                <HStack spacing={1} flexWrap="wrap" w="100%">
+                <Flex flexWrap="wrap" w="100%" gap={1}>
                   {doc.tags?.slice(0, 2).map((tag, index) => (
-                    <Tag key={index} size="sm" colorScheme="blue">
-                      {tag}
+                    <Tag 
+                      key={index} 
+                      size="sm" 
+                      colorScheme="blue"
+                      maxW="80px"
+                      textOverflow="ellipsis"
+                      overflow="hidden"
+                      whiteSpace="nowrap"
+                    >
+                      {tag.length > 6 ? tag.substring(0, 6) + '...' : tag}
                     </Tag>
                   ))}
                   {(doc.tags?.length || 0) > 2 && (
-                    <Tag size="sm" colorScheme="gray">
+                    <Tag size="sm" colorScheme="gray" flexShrink={0}>
                       +{(doc.tags?.length || 0) - 2}
                     </Tag>
                   )}
-                </HStack>
+                </Flex>
               </VStack>
             </CardBody>
           </Card>

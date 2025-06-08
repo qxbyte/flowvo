@@ -835,40 +835,50 @@ const KnowledgePage: React.FC = () => {
               </form>
           
           {/* 热门问题和流式模式提示 - 优化颜色 */}
-          <Flex justify="center" mt={4} wrap="wrap" gap={4}>
-            <HStack spacing={2}>
-              <Text fontSize="sm" color={mutedTextColor}>热门问题:</Text>
-              {hotQuestions.slice(0, 3).map((q) => (
-                  <Tag 
-                  key={q.id}
-                    size="sm" 
-                    colorScheme="blue" 
-                    cursor="pointer"
-                  onClick={() => useHotQuestion(q.representativeQuestion)}
-                  borderRadius="full"
-                  bg={categoryBadgeBg}
-                  color={categoryBadgeColor}
-                  _hover={{
-                    bg: categoryBadgeHoverBg,
-                    color: categoryBadgeHoverColor,
-                    transform: 'translateY(-1px)'
-                  }}
-                  transition="all 0.2s ease"
-                  >
-                  {q.representativeQuestion.length > 15 
-                    ? q.representativeQuestion.substring(0, 15) + '...' 
-                    : q.representativeQuestion}
-                  </Tag>
-                ))}
-            </HStack>
-            
-            {isStreamMode && (
+          <Box maxW="100%" overflow="hidden" mt={4}>
+            <Flex justify="center" wrap="wrap" gap={4}>
+              <VStack spacing={2} align="center" maxW="100%">
+                <Text fontSize="sm" color={mutedTextColor}>热门问题:</Text>
+                <Flex wrap="wrap" justify="center" gap={2} maxW="100%">
+                  {hotQuestions.slice(0, 3).map((q) => (
+                    <Tag 
+                      key={q.id}
+                      size="sm" 
+                      colorScheme="blue" 
+                      cursor="pointer"
+                      onClick={() => useHotQuestion(q.representativeQuestion)}
+                      borderRadius="full"
+                      bg={categoryBadgeBg}
+                      color={categoryBadgeColor}
+                      _hover={{
+                        bg: categoryBadgeHoverBg,
+                        color: categoryBadgeHoverColor,
+                        transform: 'translateY(-1px)'
+                      }}
+                      transition="all 0.2s ease"
+                      maxW="200px"
+                      textOverflow="ellipsis"
+                      overflow="hidden"
+                      whiteSpace="nowrap"
+                    >
+                      {q.representativeQuestion.length > 12 
+                        ? q.representativeQuestion.substring(0, 12) + '...' 
+                        : q.representativeQuestion}
+                    </Tag>
+                  ))}
+                </Flex>
+              </VStack>
+            </Flex>
+          </Box>
+          
+          {isStreamMode && (
+            <Flex justify="center" mt={2}>
               <HStack spacing={2}>
                 <FiClock color={clockColor} />
                 <Text fontSize="sm" color={streamModeTextColor}>流式回答模式已开启</Text>
               </HStack>
-            )}
-              </Flex>
+            </Flex>
+          )}
         </Box>
 
         {/* 问答结果 - 优化颜色 */}

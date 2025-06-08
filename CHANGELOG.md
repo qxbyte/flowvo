@@ -1,5 +1,98 @@
 # CHANGELOG - 项目更新日志
 
+## v1.6.38 - 2025-01-30
+### 🐛 布局修复 - 内容超出边框问题
+- **知识库问答页面优化**：
+  - **热门问题标签布局**：修复热门问题标签"FUNCTION_CALLING..."等长文本超出容器边界的问题
+  - **响应式改进**：使用VStack垂直布局替代HStack，防止水平溢出
+  - **文本截断优化**：标签文本长度限制从15字符调整为12字符，并设置最大宽度200px
+  - **溢出控制**：添加`textOverflow="ellipsis"`、`overflow="hidden"`、`whiteSpace="nowrap"`
+
+- **文档管理页面优化**：
+  - **列表视图修复**：
+    - 文档名称列添加最大宽度限制（300px）
+    - 文档名称使用`noOfLines={1}`和`wordBreak="break-all"`防止溢出
+    - 标签容器改为Flex布局，支持换行和gap间距
+    - 标签文本截断（超过8字符显示省略号）
+  - **网格视图修复**：
+    - 所有文本元素添加最大宽度和溢出控制
+    - 卡片内容使用`maxW="100%"`确保不超出容器
+    - 标签在网格视图中限制为6字符，超出显示省略号
+    - 状态Badge和计数器使用`flexShrink={0}`防止压缩
+
+- **技术实现**：
+  ```typescript
+  // 热门问题标签优化
+  <Tag 
+    maxW="200px"
+    textOverflow="ellipsis"
+    overflow="hidden"
+    whiteSpace="nowrap"
+  >
+    {question.length > 12 ? question.substring(0, 12) + '...' : question}
+  </Tag>
+  
+  // 文档列表布局优化
+  <Td maxW="300px">
+    <VStack align="start" flex="1" minW="0">
+      <Text noOfLines={1} maxW="100%" wordBreak="break-all">
+        {doc.name}
+      </Text>
+    </VStack>
+  </Td>
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/pages/knowledge/KnowledgePage.tsx` - 热门问题标签布局优化
+  - `flowvo-ui/src/pages/documents/DocumentsPage.tsx` - 文档列表布局修复
+
+- **用户体验**：
+  - ✅ 彻底解决内容超出边框的显示问题
+  - ✅ 长文本自动截断并显示省略号
+  - ✅ 保持界面整洁和视觉对齐
+  - ✅ 响应式设计在不同屏幕尺寸下正常显示
+  - ✅ 保持所有交互功能和点击操作
+
+## v1.6.37 - 2025-01-30
+### 🎨 UI改进 - 首页图标扁平化设计
+- **图标设计统一**：
+  - **全面替换emoji图标**：将首页中所有实物类型的emoji图标替换为扁平化的Feather Icons
+  - **Badge图标优化**：AI驱动、智能对话体验等Badge使用图标+文字组合形式
+  - **功能模块图标**：AI助手功能特点使用`FiCpu`、`FiZap`、`FiMessageCircle`图标
+  - **业务系统模块**：使用专业的图标表示各功能模块
+
+- **图标映射**：
+  ```typescript
+  // 替换前 → 替换后
+  🚀 → FiZap (AI驱动)
+  🤖 → FiActivity (智能对话体验)
+  🧠 → FiCpu (AI Assistant)
+  ⚡ → FiZap (Code Generation)
+  💬 → FiMessageCircle (Interactive Chat)
+  📊 → FiHome (首页)
+  🛒 → FiShoppingCart (订单管理)
+  📈 → FiBarChart (数据分析)
+  📦 → FiPackage (库存管理)
+  👥 → FiUsers (客户管理)
+  🚚 → FiTruck (物流配送)
+  ```
+
+- **设计一致性**：
+  - 所有图标统一使用Feather Icons风格
+  - 图标尺寸和颜色主题保持一致
+  - Badge中的图标与文字对齐优化
+  - 业务系统模块中的图标颜色与对应模块主题色匹配
+
+- **修复文件**：
+  - `flowvo-ui/src/pages/home/HomePage.tsx` - 全面替换emoji为扁平化图标
+
+- **用户体验**：
+  - ✅ 统一的扁平化图标设计风格
+  - ✅ 更专业的视觉呈现效果
+  - ✅ 更好的跨平台显示兼容性
+  - ✅ 保持所有原有的功能和交互
+  - ✅ 图标与内容主题更匹配
+
 ## v1.6.36 - 2025-01-30
 ### 🎨 UI调整 - 搜索框间距和分类选择图标优化
 - **搜索框间距优化**：
