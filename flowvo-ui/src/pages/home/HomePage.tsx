@@ -30,6 +30,7 @@ import {
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import PixelChatDemo from '../../components/PixelChatDemo';
+import JunieEffects from '../../components/JunieEffects';
 
 const HomePage: React.FC = () => {
   // Junie风格的颜色配置
@@ -84,6 +85,8 @@ const HomePage: React.FC = () => {
     100% { transform: translateY(0px) rotate(0deg); }
   `;
 
+
+
   // 鼠标位置跟踪
   const [cardMousePositions, setCardMousePositions] = useState<{[key: string]: {x: number, y: number}}>({});
 
@@ -113,6 +116,8 @@ const HomePage: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+
 
   const modules = [
     {
@@ -144,12 +149,6 @@ const HomePage: React.FC = () => {
     }
   ];
 
-  const features = [
-    { icon: FiZap, title: '极速响应', desc: '毫秒级查询响应' },
-    { icon: FiStar, title: '智能分析', desc: 'AI驱动的深度洞察' },
-    { icon: FiTrendingUp, title: '持续优化', desc: '自动学习与改进' }
-  ];
-
   return (
     <Box 
       bg={bgColor}
@@ -157,7 +156,7 @@ const HomePage: React.FC = () => {
       position="relative"
       overflow="hidden"
     >
-      {/* 背景装饰 */}
+      {/* Junie风格背景装饰 */}
       <Box
         position="absolute"
         top="0"
@@ -173,59 +172,67 @@ const HomePage: React.FC = () => {
         transform={`translateY(${scrollY * 0.5}px)`}
       />
 
-      <Container maxW="container.xl" position="relative" zIndex={1} pt={10} pb={20}>
-        {/* Hero Section */}
-        <VStack spacing={12} align="stretch">
-        <Flex 
-            direction={{ base: 'column', lg: 'row' }} 
-          align="center" 
-          justify="space-between"
-            gap={12}
-            minH="80vh"
-          >
-            {/* 左侧内容 */}
-            <VStack 
-              align={{ base: 'center', lg: 'flex-start' }} 
-              spacing={8} 
-              flex="1"
-              maxW={{ base: '100%', lg: '50%' }}
-              animation={`${fadeInUp} 1s ease-out`}
-            >
-              {/* 标签 */}
-              <HStack>
-                <Badge
-                  px={3}
-                  py={1}
-                  bg={primaryColor}
-                  color="black"
-                  fontWeight="bold"
-                  borderRadius="full"
-                  fontSize="sm"
-                >
-                  🚀 AI 驱动
-                </Badge>
-                <Badge
-                  px={3}
-                  py={1}
-                  bg="transparent"
-                  color={primaryColor}
-                  fontWeight="bold"
-                  borderRadius="full"
-                  fontSize="sm"
-                  border="1px solid"
-                  borderColor={primaryColor}
-                >
-                  智能平台
-                </Badge>
-              </HStack>
+      {/* Junie风格特效组件 */}
+      <JunieEffects primaryColor={primaryColor} />
 
-              {/* 主标题 */}
+      <Container maxW="container.xl" position="relative" zIndex={2} pt={4} pb={20}>
+        {/* 第一模块：主要欢迎页面 - 类似Junie官网的居中布局 */}
+        <Box minH="85vh" display="flex" alignItems="center" justifyContent="center" pt={8}>
+          <VStack 
+            spacing={12} 
+            align="center" 
+            textAlign="center"
+            maxW="800px"
+            animation={`${fadeInUp} 1s ease-out`}
+          >
+            {/* 标签 */}
+            <HStack spacing={4}>
+              <Badge
+                px={4}
+                py={2}
+                bg={primaryColor}
+                color="black"
+                fontWeight="bold"
+                borderRadius="full"
+                fontSize="sm"
+                cursor="pointer"
+                _hover={{
+                  transform: 'scale(1.05)',
+                  boxShadow: `0 0 15px ${primaryColor}`
+                }}
+                transition="all 0.2s ease"
+              >
+                🚀 AI 驱动
+              </Badge>
+              <Badge
+                px={4}
+                py={2}
+                bg="transparent"
+                color={primaryColor}
+                fontWeight="bold"
+                borderRadius="full"
+                fontSize="sm"
+                border="1px solid"
+                borderColor={primaryColor}
+                cursor="pointer"
+                _hover={{
+                  bg: primaryColor,
+                  color: 'black',
+                  transform: 'scale(1.05)'
+                }}
+                transition="all 0.2s ease"
+              >
+                智能平台
+              </Badge>
+            </HStack>
+
+            {/* 主标题 - 类似Junie风格 */}
+            <VStack spacing={6}>
               <Heading 
                 as="h1" 
-                fontSize={{ base: '4xl', md: '5xl', lg: '6xl' }}
+                fontSize={{ base: '4xl', md: '6xl', lg: '7xl' }}
                 fontWeight="600"
                 color={textColor}
-                textAlign={{ base: 'center', lg: 'left' }}
                 lineHeight="1.1"
                 letterSpacing="-0.02em"
               >
@@ -240,84 +247,64 @@ const HomePage: React.FC = () => {
                     bottom: '0',
                     left: '0',
                     right: '0',
-                    height: '3px',
+                    height: '4px',
                     background: `linear-gradient(90deg, ${primaryColor}, transparent)`,
                     animation: `${gradientShift} 3s ease-in-out infinite`
                   }}
                 >
                   FlowVo
                 </Text>
-            </Heading>
+              </Heading>
 
               {/* 副标题 */}
               <Text 
-                fontSize={{ base: 'lg', md: 'xl' }}
+                fontSize={{ base: 'xl', md: '2xl' }}
                 color={subTextColor}
-                textAlign={{ base: 'center', lg: 'left' }}
-                maxW="600px"
+                maxW="700px"
                 lineHeight="1.6"
+                fontWeight="400"
               >
-                FlowVo是一个智能化文档管理和知识问答以及职能操作业务平台，
-                帮助您高效管理信息并获取洞见。
+                智能化文档管理和知识问答平台
               </Text>
 
-              {/* 特性列表 */}
-              <SimpleGrid columns={3} spacing={6} w="full" maxW="500px">
-                {features.map((feature, index) => (
-                  <VStack key={index} spacing={2} align="center">
-                    <Box
-                      p={3}
-                      bg={primaryFog}
-                      borderRadius="lg"
-                      color={primaryColor}
-                    >
-                      <Icon as={feature.icon} boxSize="6" />
-                    </Box>
-                    <Text fontSize="sm" fontWeight="bold" color={textColor}>
-                      {feature.title}
-                    </Text>
-                    <Text fontSize="xs" color={subTextColor} textAlign="center">
-                      {feature.desc}
-            </Text>
-                  </VStack>
-                ))}
-              </SimpleGrid>
+              {/* 描述文字 */}
+              <Text 
+                fontSize={{ base: 'md', md: 'lg' }}
+                color={subTextColor}
+                maxW="600px"
+                lineHeight="1.7"
+                opacity="0.8"
+              >
+                帮助您高效管理信息并获取洞见。利用先进的AI技术，从您的知识库中提取精准信息，无需手动搜索。
+              </Text>
+            </VStack>
 
-              {/* CTA按钮 */}
-              <HStack spacing={4}>
-            <Button 
-              as={Link} 
-              to="/pixel-chat" 
-              size="lg" 
-              rightIcon={<Icon as={FiArrowRight} />}
+            {/* CTA按钮 - 类似Junie风格 */}
+            <VStack spacing={4}>
+              <HStack spacing={6}>
+                <Button 
+                  as={Link} 
+                  to="/pixel-chat" 
+                  size="lg" 
+                  rightIcon={<Icon as={FiArrowRight} />}
                   bg={primaryBtnBg}
                   color={primaryBtnText}
-              borderRadius="full"
-              px={8}
-                  py={6}
-                  fontSize="md"
+                  borderRadius="full"
+                  px={10}
+                  py={7}
+                  fontSize="lg"
                   fontWeight="bold"
                   transform="translateY(0)"
                   transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
-              _hover={{
-                    bg: primaryBtnHoverBg,
-                    transform: 'translateY(-2px)',
-                    boxShadow: `0 10px 20px ${primaryFog}`
-              }}
-              _active={{
-                    transform: 'translateY(0)'
-                  }}
                   position="relative"
                   overflow="hidden"
-                  _before={{
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                    transition: 'left 0.5s'
+                  _hover={{
+                    bg: primaryBtnHoverBg,
+                    transform: 'translateY(-3px)',
+                    boxShadow: `0 15px 30px ${primaryFog}`
+                  }}
+                  _active={{
+                    transform: 'translateY(0)'
                   }}
                   _after={{
                     content: '""',
@@ -331,10 +318,10 @@ const HomePage: React.FC = () => {
                     zIndex: -1,
                     backgroundSize: '200% 200%',
                     animation: `${gradientShift} 3s ease infinite`
-              }}
-            >
-              开始使用
-            </Button>
+                  }}
+                >
+                  开始使用
+                </Button>
 
                 <Button
                   variant="outline"
@@ -343,88 +330,239 @@ const HomePage: React.FC = () => {
                   color={secondaryBtnText}
                   borderColor={secondaryBtnBorder}
                   borderRadius="full"
-                  px={8}
-                  py={6}
-                  fontSize="md"
+                  px={10}
+                  py={7}
+                  fontSize="lg"
                   fontWeight="bold"
                   _hover={{
                     bg: secondaryBtnHoverBg,
                     color: secondaryBtnHoverText,
-                    borderColor: primaryColor
+                    borderColor: primaryColor,
+                    transform: 'translateY(-3px)',
+                    boxShadow: `0 10px 20px ${primaryFog}`
                   }}
+                  transition="all 0.3s ease"
                 >
                   了解更多
                 </Button>
               </HStack>
+
+              {/* 更多提示 */}
+              <Text fontSize="sm" color={subTextColor} opacity="0.7">
+                More than productivity – a new way to manage knowledge
+              </Text>
+            </VStack>
+          </VStack>
+        </Box>
+
+        {/* 第二模块：聊天演示模块介绍 */}
+        <Box py={20}>
+          <VStack spacing={16} align="stretch">
+            {/* 模块标题 */}
+            <VStack spacing={6} textAlign="center">
+              <Badge
+                px={4}
+                py={2}
+                bg={primaryFog}
+                color={primaryColor}
+                fontWeight="bold"
+                borderRadius="full"
+                fontSize="sm"
+                border="1px solid"
+                borderColor={primaryColor}
+              >
+                🤖 智能对话体验
+              </Badge>
+              
+              <Heading 
+                as="h2" 
+                fontSize={{ base: '3xl', md: '4xl', lg: '5xl' }}
+                fontWeight="600"
+                color={textColor}
+                lineHeight="1.2"
+              >
+                体验{' '}
+                <Text as="span" color={primaryColor}>
+                  AI 智能助手
+                </Text>
+              </Heading>
+              
+              <Text 
+                fontSize={{ base: 'lg', md: 'xl' }}
+                color={subTextColor}
+                maxW="700px"
+                lineHeight="1.6"
+              >
+                与我们的AI助手对话，体验智能代码生成、项目理解和实时协助功能。
+                就像拥有一个懂你项目的智能编程伙伴。
+              </Text>
             </VStack>
 
-            {/* 右侧演示区域 */}
-            <Box 
-              maxW={{ base: '90%', lg: '45%' }} 
-            position="relative"
-              animation={`${scaleIn} 0.8s ease-out 0.3s both`}
-          >
-            <Box
-                borderRadius="24px"
-              overflow="hidden"
-              bg="gray.900"
-              border="3px solid"
-                borderColor={borderColor}
-              position="relative"
-              _before={{
-                content: '""',
-                position: 'absolute',
-                  top: -3,
-                  left: -3,
-                  right: -3,
-                  bottom: -3,
-                  borderRadius: '27px',
-                  background: `linear-gradient(45deg, ${primaryColor}, #52e658, #3bcc47, ${primaryColor})`,
-                backgroundSize: '400% 400%',
-                  animation: `${gradientShift} 4s ease-in-out infinite`,
-                  zIndex: -1
-                }}
-                _after={{
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: `radial-gradient(circle at 50% 50%, ${primaryFog} 0%, transparent 70%)`,
-                  animation: `${glow} 3s ease-in-out infinite`,
-                  pointerEvents: 'none'
-              }}
+            {/* 演示区域 */}
+            <Flex 
+              direction={{ base: 'column', lg: 'row' }} 
+              align="center" 
+              justify="space-between"
+              gap={12}
             >
-              <PixelChatDemo />
+              {/* 左侧：功能介绍 */}
+              <VStack 
+                align={{ base: 'center', lg: 'flex-start' }} 
+                spacing={8} 
+                flex="1"
+                maxW={{ base: '100%', lg: '45%' }}
+              >
+                <VStack align={{ base: 'center', lg: 'flex-start' }} spacing={6}>
+                  <Heading 
+                    as="h3" 
+                    fontSize={{ base: '2xl', md: '3xl' }}
+                    fontWeight="600"
+                    color={textColor}
+                    textAlign={{ base: 'center', lg: 'left' }}
+                  >
+                    智能编程助手
+                  </Heading>
+                  
+                  <Text 
+                    fontSize="lg"
+                    color={subTextColor}
+                    textAlign={{ base: 'center', lg: 'left' }}
+                    lineHeight="1.7"
+                  >
+                    体验下一代AI编程助手，它不仅能理解您的项目上下文，
+                    还能生成高质量的代码片段和完整功能。
+                  </Text>
+                </VStack>
+
+                {/* 功能特点 */}
+                <VStack spacing={4} align={{ base: 'center', lg: 'flex-start' }} w="full">
+                  {[
+                    { icon: '🧠', title: 'AI Assistant', desc: '智能编程伙伴，理解您的项目上下文' },
+                    { icon: '⚡', title: 'Code Generation', desc: '生成高质量代码片段和完整功能' },
+                    { icon: '💬', title: 'Interactive Chat', desc: '实时对话式编程协助体验' }
+                  ].map((item, index) => (
+                    <HStack 
+                      key={index} 
+                      spacing={4} 
+                      align="flex-start"
+                      w="full"
+                      maxW="400px"
+                    >
+                      <Box
+                        p={2}
+                        bg={primaryFog}
+                        borderRadius="lg"
+                        fontSize="lg"
+                      >
+                        {item.icon}
+                      </Box>
+                      <VStack align="flex-start" spacing={1} flex="1">
+                        <Text fontWeight="bold" color={textColor} fontSize="md">
+                          {item.title}
+                        </Text>
+                        <Text fontSize="sm" color={subTextColor} lineHeight="1.5">
+                          {item.desc}
+                        </Text>
+                      </VStack>
+                    </HStack>
+                  ))}
+                </VStack>
+
+                {/* 体验按钮 */}
+                <Button
+                  as={Link}
+                  to="/pixel-chat"
+                  size="lg"
+                  bg={primaryColor}
+                  color="black"
+                  borderRadius="full"
+                  px={8}
+                  py={6}
+                  fontSize="md"
+                  fontWeight="bold"
+                  rightIcon={<Icon as={FiArrowRight} />}
+                  _hover={{
+                    bg: primaryBtnHoverBg,
+                    transform: 'translateY(-2px)',
+                    boxShadow: `0 10px 20px ${primaryFog}`
+                  }}
+                  transition="all 0.3s ease"
+                >
+                  立即体验
+                </Button>
+              </VStack>
+
+              {/* 右侧：聊天演示 */}
+              <Box 
+                maxW={{ base: '90%', lg: '50%' }} 
+                position="relative"
+                animation={`${scaleIn} 0.8s ease-out 0.3s both`}
+              >
+                <Box
+                  borderRadius="24px"
+                  overflow="hidden"
+                  bg="gray.900"
+                  border="3px solid"
+                  borderColor={borderColor}
+                  position="relative"
+                  _before={{
+                    content: '""',
+                    position: 'absolute',
+                    top: -3,
+                    left: -3,
+                    right: -3,
+                    bottom: -3,
+                    borderRadius: '27px',
+                    background: `linear-gradient(45deg, ${primaryColor}, #52e658, #3bcc47, ${primaryColor})`,
+                    backgroundSize: '400% 400%',
+                    animation: `${gradientShift} 4s ease-in-out infinite`,
+                    zIndex: -1
+                  }}
+                  _after={{
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `radial-gradient(circle at 50% 50%, ${primaryFog} 0%, transparent 70%)`,
+                    animation: `${glow} 3s ease-in-out infinite`,
+                    pointerEvents: 'none'
+                  }}
+                >
+                  <PixelChatDemo />
+                </Box>
+                
+                {/* 浮动装饰元素 */}
+                <Box
+                  position="absolute"
+                  top={-4}
+                  right={-4}
+                  w="8"
+                  h="8"
+                  bg={primaryColor}
+                  borderRadius="full"
+                  animation={`${glow} 2s ease-in-out infinite`}
+                />
+                <Box
+                  position="absolute"
+                  bottom={-6}
+                  left={-6}
+                  w="6"
+                  h="6"
+                  bg="#52e658"
+                  borderRadius="full"
+                  animation={`${glow} 2.5s ease-in-out infinite`}
+                />
               </Box>
-              
-              {/* 浮动装饰元素 */}
-              <Box
-                position="absolute"
-                top={-4}
-                right={-4}
-                w="8"
-                h="8"
-                bg={primaryColor}
-                borderRadius="full"
-                animation={`${glow} 2s ease-in-out infinite`}
-              />
-              <Box
-                position="absolute"
-                bottom={-6}
-                left={-6}
-                w="6"
-                h="6"
-                bg="#52e658"
-                borderRadius="full"
-                animation={`${glow} 2.5s ease-in-out infinite`}
-              />
-          </Box>
-        </Flex>
+            </Flex>
+          </VStack>
+        </Box>
 
-          <Divider borderColor={borderColor} />
+        <Divider borderColor={borderColor} />
 
+        {/* 第三模块：功能模块展示 */}
+        <VStack spacing={12} align="stretch" py={20}>
           {/* 功能模块 */}
           <VStack spacing={8} align="stretch">
             <VStack spacing={4}>
@@ -435,7 +573,7 @@ const HomePage: React.FC = () => {
                 textAlign="center"
               >
                 核心功能
-        </Heading>
+              </Heading>
               <Text 
                 fontSize="lg" 
                 color={subTextColor} 
@@ -449,57 +587,57 @@ const HomePage: React.FC = () => {
 
             <SimpleGrid columns={{ base: 1, md: 3 }} spacing={8}>
               {modules.map((module, index) => (
-            <Card 
-              key={module.id} 
-              bg={cardBg} 
-              borderWidth="1px" 
-              borderColor={borderColor}
+                <Card 
+                  key={module.id} 
+                  bg={cardBg} 
+                  borderWidth="1px" 
+                  borderColor={borderColor}
                   borderRadius="24px"
-              overflow="hidden" 
-              position="relative"
+                  overflow="hidden" 
+                  position="relative"
                   cursor="pointer"
-              transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+                  transition="all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
                   animation={`${fadeInUp} 0.6s ease-out ${index * 0.1}s both`}
-              _hover={{
+                  _hover={{
                     transform: 'translateY(-8px) scale(1.02)',
                     borderColor: primaryColor,
                     boxShadow: `0 20px 40px ${primaryFog}`
-              }}
-              _before={{
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                  }}
+                  _before={{
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
                     background: `radial-gradient(600px circle at ${cardMousePositions[module.id]?.x || 0}px ${cardMousePositions[module.id]?.y || 0}px, ${primaryFog} 0%, transparent 40%)`,
-                opacity: 0,
+                    opacity: 0,
                     transition: 'opacity 0.3s ease',
-                pointerEvents: 'none',
-                zIndex: 1
-              }}
-              sx={{
-                '&:hover::before': {
-                  opacity: 1
-                }
-              }}
-              onMouseMove={(e) => handleCardMouseMove(e, module.id)}
-              onMouseLeave={() => handleCardMouseLeave(module.id)}
-            >
+                    pointerEvents: 'none',
+                    zIndex: 1
+                  }}
+                  sx={{
+                    '&:hover::before': {
+                      opacity: 1
+                    }
+                  }}
+                  onMouseMove={(e) => handleCardMouseMove(e, module.id)}
+                  onMouseLeave={() => handleCardMouseLeave(module.id)}
+                >
                   <CardBody p={8} position="relative" zIndex={2}>
                     <VStack align="flex-start" spacing={6}>
                       {/* 图标和统计 */}
                       <HStack justify="space-between" w="full">
-                                                 <Box
-                  w="60px" 
-                  h="60px" 
-                           bg={primaryColor}
-                           color="black"
-                           borderRadius="16px"
-                           display="flex"
-                           alignItems="center"
-                           justifyContent="center"
-                  position="relative"
+                        <Box
+                          w="60px" 
+                          h="60px" 
+                          bg={primaryColor}
+                          color="black"
+                          borderRadius="16px"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          position="relative"
                           _before={{
                             content: '""',
                             position: 'absolute',
@@ -513,8 +651,8 @@ const HomePage: React.FC = () => {
                             backgroundSize: '200% 200%',
                             animation: `${gradientShift} 3s ease infinite`
                           }}
-                >
-                  <Icon as={module.icon} boxSize="30px" />
+                        >
+                          <Icon as={module.icon} boxSize="30px" />
                         </Box>
                         <Badge
                           px={3}
@@ -535,21 +673,21 @@ const HomePage: React.FC = () => {
                           {module.title}
                         </Heading>
                         <Text color={subTextColor} lineHeight="1.6">
-                    {module.description}
-                  </Text>
+                          {module.description}
+                        </Text>
                       </VStack>
 
                       {/* 操作按钮 */}
-                  <Button
-                    as={Link}
-                    to={module.path}
+                      <Button
+                        as={Link}
+                        to={module.path}
                         variant="ghost"
-                    rightIcon={<Icon as={FiArrowRight} />}
+                        rightIcon={<Icon as={FiArrowRight} />}
                         color={primaryColor}
                         fontWeight="bold"
                         p={0}
                         h="auto"
-                    _hover={{
+                        _hover={{
                           bg: 'transparent',
                           color: primaryColor,
                           transform: 'translateX(4px)'
@@ -557,12 +695,12 @@ const HomePage: React.FC = () => {
                         transition="all 0.2s ease"
                       >
                         探索功能
-                  </Button>
+                      </Button>
                     </VStack>
-              </CardBody>
-            </Card>
-          ))}
-        </SimpleGrid>
+                  </CardBody>
+                </Card>
+              ))}
+            </SimpleGrid>
           </VStack>
 
           <Divider borderColor={borderColor} />
@@ -589,11 +727,11 @@ const HomePage: React.FC = () => {
             </VStack>
 
             {/* 功能标签云 */}
-        <Box 
-          p={8} 
-          bg={cardBg} 
-          borderWidth="1px" 
-          borderColor={borderColor}
+            <Box 
+              p={8} 
+              bg={cardBg} 
+              borderWidth="1px" 
+              borderColor={borderColor}
               borderRadius="24px"
               position="relative"
             >
@@ -723,6 +861,7 @@ const HomePage: React.FC = () => {
                 textAlign="center"
                 bgGradient={`linear(45deg, ${primaryColor}, #52e658)`}
                 bgClip="text"
+                cursor="pointer"
               >
                 FlowVo 核心能力
               </Heading>
@@ -744,6 +883,7 @@ const HomePage: React.FC = () => {
               borderColor={borderColor}
               borderRadius="32px"
               overflow="hidden"
+              cursor="pointer"
               _hover={{
                 borderColor: primaryColor,
                 transform: 'translateY(-4px)',
@@ -883,6 +1023,7 @@ const HomePage: React.FC = () => {
               borderColor={borderColor}
               borderRadius="32px"
               overflow="hidden"
+              cursor="pointer"
               _hover={{
                 borderColor: primaryColor,
                 transform: 'translateY(-4px)',
@@ -1026,6 +1167,7 @@ const HomePage: React.FC = () => {
               borderColor={borderColor}
               borderRadius="32px"
               overflow="hidden"
+              cursor="pointer"
               _hover={{
                 borderColor: primaryColor,
                 transform: 'translateY(-4px)',
@@ -1202,8 +1344,8 @@ const HomePage: React.FC = () => {
               <HStack spacing={3}>
                 <Icon as={FiZap} color={primaryColor} boxSize="6" />
                 <Heading as="h3" size="lg" color={textColor}>
-            关于 FlowVo
-          </Heading>
+                  About FlowVo
+                </Heading>
               </HStack>
               <Text 
                 color={subTextColor} 
@@ -1215,12 +1357,12 @@ const HomePage: React.FC = () => {
                 FlowVo是一个集成了文档管理、知识问答和业务系统的智能平台。
                 通过先进的AI技术，帮助企业高效管理信息资产，提升团队协作效率，
                 并从数据中获取有价值的洞见。
-            <br /><br />
+                <br /><br />
                 无论您是需要管理大量文档、寻找特定信息，还是需要定制业务流程，
                 FlowVo都能为您提供全方位的解决方案。
-          </Text>
+              </Text>
             </VStack>
-        </Box>
+          </Box>
         </VStack>
       </Container>
     </Box>

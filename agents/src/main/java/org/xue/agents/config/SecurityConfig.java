@@ -3,6 +3,7 @@ package org.xue.agents.config;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -45,6 +46,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()          // 允许Actuator端点
+                .requestMatchers(HttpMethod.POST, "/api/knowledge-qa/ask-stream").permitAll() // 允许流式端点跳过Spring Security
                 .anyRequest().authenticated()                         // 其他请求需要认证
             )
             .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -64,8 +66,18 @@ public class SecurityConfig {
                 
                 String requestUri = request.getRequestURI();
                 
+                // 调试日志：打印请求URI和方法
+                log.debug("Agents服务接收到请求: {} {}", request.getMethod(), requestUri);
+                
                 // 跳过actuator端点的认证检查
                 if (requestUri.startsWith("/actuator/")) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                
+                // 跳过流式传输端点的认证检查
+                if (requestUri.equals("/api/knowledge-qa/ask-stream") && "POST".equals(request.getMethod())) {
+                    log.info("跳过流式传输端点的Spring Security认证: {}", requestUri);
                     filterChain.doFilter(request, response);
                     return;
                 }

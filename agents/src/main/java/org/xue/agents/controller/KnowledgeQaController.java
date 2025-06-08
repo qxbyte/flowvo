@@ -1,5 +1,6 @@
 package org.xue.agents.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -87,20 +88,29 @@ public class KnowledgeQaController {
      * 知识库问答（流式）
      */
     @PostMapping(value = "/ask-stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> askQuestionStream(@RequestBody KnowledgeQaRequest request) {
-        String currentUserId = getCurrentUserId();
-        log.info("收到用户流式问答请求: {} (用户: {})", request.getQuestion(), currentUserId);
+    public Flux<String> askQuestionStream(@RequestBody KnowledgeQaRequest request, HttpServletRequest httpRequest) {
+        // 手动验证认证信息（因为SSE端点跳过了Spring Security）
+        String userName = httpRequest.getHeader("X-User-Name");
+        String userId = httpRequest.getHeader("X-User-Id");
+        String tokenValid = httpRequest.getHeader("X-Token-Valid");
+        
+        if (userName == null || userId == null || !"true".equals(tokenValid)) {
+            log.warn("流式传输请求缺少有效认证信息: userName={}, userId={}, tokenValid={}", userName, userId, tokenValid);
+            return Flux.error(new RuntimeException("认证失败"));
+        }
+        
+        log.info("收到用户流式问答请求: {} (用户: {})", request.getQuestion(), userId);
         
         // 强制设置为当前登录用户的ID
-        request.setUserId(currentUserId);
+        request.setUserId(userId);
         
-        return knowledgeQaService.askQuestionStream(request, currentUserId)
+        return knowledgeQaService.askQuestionStream(request, userId)
                 .map(chunk -> "data: " + chunk + "\n\n")  // 转换为SSE格式
                 .doOnError(error -> log.error("流式问答处理失败", error));
     }
     
     /**
-     * 获取最近提问（仅当前用户）
+     * 获取最近提问
      */
     @GetMapping("/recent-questions")
     public ResponseEntity<List<KnowledgeQaRecord>> getRecentQuestions(

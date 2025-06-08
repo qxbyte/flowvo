@@ -56,6 +56,48 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
             return chain.filter(exchange);
         }
         
+        // 对流式问答端点进行特殊处理
+        if ("/api/knowledge-qa/ask-stream".equals(path)) {
+            System.out.println("流式问答端点，进行特殊认证处理: " + path);
+            
+            // 获取Authorization头
+            String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                try {
+                    // 验证token
+                    if (jwtService.validateToken(token)) {
+                        String username = jwtService.getUsernameFromToken(token);
+                        String userId = jwtService.getUserIdFromToken(token);
+                        
+                        System.out.println("流式端点Token验证成功，用户: " + username + ", ID: " + userId);
+                        
+                        // 将用户信息添加到请求头中，传递给下游服务
+                        ServerHttpRequest mutatedRequest = request.mutate()
+                            .header("X-User-Name", username)
+                            .header("X-User-Id", userId)
+                            .header("X-Token-Valid", "true")
+                            .build();
+                        
+                        return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                    }
+                } catch (Exception e) {
+                    System.err.println("流式端点Token处理异常: " + e.getMessage());
+                }
+            }
+            
+            // Token无效时，使用默认用户信息（临时方案）
+            System.out.println("流式端点使用默认用户信息");
+            ServerHttpRequest mutatedRequest = request.mutate()
+                .header("X-User-Name", "anonymous")
+                .header("X-User-Id", "1") // 使用默认用户ID
+                .header("X-Token-Valid", "false")
+                .build();
+            
+            return chain.filter(exchange.mutate().request(mutatedRequest).build());
+        }
+        
         // 获取Authorization头
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         

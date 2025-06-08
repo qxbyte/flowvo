@@ -811,6 +811,8 @@ export const knowledgeQaApi = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
         ...(token && { 'Authorization': `Bearer ${token}` })
       },
       body: JSON.stringify(request),
@@ -818,7 +820,12 @@ export const knowledgeQaApi = {
     });
 
     if (!response.ok) {
-      throw new Error('流式问答请求失败');
+      if (response.status === 401) {
+        throw new Error('认证失败，请重新登录');
+      } else if (response.status === 403) {
+        throw new Error('权限不足');
+      }
+      throw new Error(`流式问答请求失败: ${response.status} ${response.statusText}`);
     }
 
     const reader = response.body?.getReader();
@@ -826,20 +833,61 @@ export const knowledgeQaApi = {
       throw new Error('无法获取响应流');
     }
 
-    const decoder = new TextDecoder();
+    // 使用 UTF-8 解码器并开启流式模式
+    const decoder = new TextDecoder('utf-8');
+    let buffer = ''; // 缓存不完整的行
 
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        
+        if (done) {
+          break;
+        }
 
+        // 使用 stream: true 进行流式解码，避免多字节字符被分割
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+        buffer += chunk;
+        
+        // 处理完整的行
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // 保留最后一个可能不完整的行
         
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.substring(6);
-            if (data.trim() && data !== '[DONE]') {
+          // 处理所有以data:开头的行
+          if (line.startsWith('data:')) {
+            // 处理各种SSE数据格式
+            let data = '';
+            if (line.startsWith('data:data: ')) {
+              data = line.substring(11); // 移除 "data:data: "
+            } else if (line.startsWith('data: ')) {
+              data = line.substring(6); // 移除 "data: "
+            } else if (line === 'data:') {
+              data = ''; // 空的data行
+            }
+            
+            if (data !== null && data !== undefined && data !== '[DONE]') {
+              onChunk(data);
+            }
+          }
+        }
+      }
+      
+      // 处理最后剩余的数据
+      if (buffer) {
+        const lines = buffer.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            let data = '';
+            if (line.startsWith('data:data: ')) {
+              data = line.substring(11);
+            } else if (line.startsWith('data: ')) {
+              data = line.substring(6);
+            } else if (line === 'data:') {
+              data = '';
+            }
+            
+            if (data !== null && data !== undefined && data !== '[DONE]') {
               onChunk(data);
             }
           }

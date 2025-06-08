@@ -90,9 +90,6 @@ import {
   FiChevronDown
 } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { prism, tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { knowledgeQaApi, type KnowledgeQaRequest, type KnowledgeQaResponse, type KnowledgeQaRecord, type PopularQuestion, type CategoryStatistics, type DocumentCategory, type SourceDocument } from '../../utils/api';
 
 const KnowledgePage: React.FC = () => {
@@ -101,10 +98,6 @@ const KnowledgePage: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isStreamMode, setIsStreamMode] = useState(false); // 流式模式开关
   const [currentAnswer, setCurrentAnswer] = useState('');
-  const [streamSources, setStreamSources] = useState<SourceDocument[]>([]);
-  const [streamResponseTime, setStreamResponseTime] = useState<number>(0);
-  const [streamSimilarityScore, setStreamSimilarityScore] = useState<number>(0);
-  const [streamStartTime, setStreamStartTime] = useState<number>(0);
   const [qaResult, setQaResult] = useState<KnowledgeQaResponse | null>(null);
   const [recentQuestions, setRecentQuestions] = useState<KnowledgeQaRecord[]>([]);
   const [hotQuestions, setHotQuestions] = useState<PopularQuestion[]>([]);
@@ -140,7 +133,7 @@ const KnowledgePage: React.FC = () => {
   const primaryColor = '#47e054';
   const primaryDim = 'rgba(71, 224, 84, 0.8)';
   const primaryFog = 'rgba(71, 224, 84, 0.2)';
-  
+
   const highlightBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
   const inputBg = useColorModeValue('white', '#19191c');
   const answerBg = useColorModeValue('gray.50', '#303033');
@@ -280,35 +273,28 @@ const KnowledgePage: React.FC = () => {
   
   // Badge颜色预定义映射表 - 修复Hooks调用顺序问题
   const badgeColorMap = useColorModeValue(
-    {
-      'green': { bg: primaryFog, color: primaryColor },
-      'yellow': { bg: 'yellow.100', color: 'yellow.700' },
-      'red': { bg: 'red.100', color: 'red.700' },
-      'blue': { bg: primaryFog, color: primaryColor },
-      'gray': { bg: 'gray.100', color: 'gray.700' }
-    },
-    {
-      'green': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
-      'yellow': { bg: 'yellow.800', color: 'yellow.200' },
-      'red': { bg: 'red.800', color: 'red.200' },
-      'blue': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
-      'gray': { bg: 'gray.800', color: 'gray.200' }
-    }
+      {
+        'green': { bg: primaryFog, color: primaryColor },
+        'yellow': { bg: 'yellow.100', color: 'yellow.700' },
+        'red': { bg: 'red.100', color: 'red.700' },
+        'blue': { bg: primaryFog, color: primaryColor },
+        'gray': { bg: 'gray.100', color: 'gray.700' }
+      },
+      {
+        'green': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
+        'yellow': { bg: 'yellow.800', color: 'yellow.200' },
+        'red': { bg: 'red.800', color: 'red.200' },
+        'blue': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
+        'gray': { bg: 'gray.800', color: 'gray.200' }
+      }
   );
 
-  // 代码块背景颜色 - 修复Hooks在CSS中使用的问题
-  const codeBlockBg = useColorModeValue('#f7f7f7', '#2d2d2d');
-  
-  // 相似度Badge颜色 - 橙色主题
-  const similarityBadgeBg = useColorModeValue('orange.100', 'orange.800');
-  const similarityBadgeColor = useColorModeValue('orange.700', 'orange.200');
-  
   // 获取Badge颜色的函数 - 现在不包含Hooks调用
   const getBadgeColors = (status: string) => {
     const colorKey = getStatusColor(status);
     return badgeColorMap[colorKey] || badgeColorMap['gray'];
   };
-  
+
   // 获取用户信息
   const getUserId = () => {
     const userInfo = localStorage.getItem('userInfo');
@@ -429,13 +415,6 @@ const KnowledgePage: React.FC = () => {
     setIsStreaming(true);
     setQaResult(null);
     setCurrentAnswer('');
-    setStreamSources([]);
-    setStreamResponseTime(0);
-    setStreamSimilarityScore(0);
-    
-    // 记录开始时间
-    const startTime = Date.now();
-    setStreamStartTime(startTime);
 
     // 创建新的中止控制器
     const abortController = new AbortController();
@@ -452,6 +431,7 @@ const KnowledgePage: React.FC = () => {
         temperature: temperature
       };
 
+      console.log('发送流式问答请求:', request);
       await knowledgeQaApi.askQuestionStream(
         request,
         (chunk: string) => {
@@ -459,17 +439,6 @@ const KnowledgePage: React.FC = () => {
         },
         abortController.signal
       );
-      
-      // 流式完成后，进行同步查询获取源文档信息
-      try {
-        const syncResult = await knowledgeQaApi.askQuestion(request);
-        setStreamSources(syncResult.data.sources);
-        setStreamSimilarityScore(syncResult.data.similarityScore);
-        setStreamResponseTime(Date.now() - startTime);
-      } catch (syncError) {
-        console.warn('获取源文档信息失败:', syncError);
-        setStreamResponseTime(Date.now() - startTime);
-      }
       
       toast({
         title: "流式问答完成",
@@ -535,19 +504,10 @@ const KnowledgePage: React.FC = () => {
 
   // 提交反馈
   const submitFeedback = async () => {
-    // 检查是否有问答结果或流式回答
-    if (!qaResult && !currentAnswer) return;
+    if (!qaResult) return;
 
     try {
-      if (qaResult) {
-        // 普通问答反馈
-        await knowledgeQaApi.submitFeedback(qaResult.id, feedbackRating, feedbackComment);
-      } else {
-        // 流式回答反馈 - 这里可能需要创建一个临时记录或使用其他方式
-        // 暂时使用一个占位符ID，实际应该根据后端实现调整
-        console.log('流式回答反馈:', { rating: feedbackRating, comment: feedbackComment, answer: currentAnswer });
-      }
-      
+      await knowledgeQaApi.submitFeedback(qaResult.id, feedbackRating, feedbackComment);
       toast({
         title: "反馈提交成功",
         description: "感谢您的反馈",
@@ -670,33 +630,29 @@ const KnowledgePage: React.FC = () => {
                 zIndex={2}
               >
                 <Menu>
-                  <Tooltip 
-                    label={selectedCategory 
+                  <MenuButton
+                    as={Button}
+                    variant="ghost"
+                    size="sm"
+                    rightIcon={<FiChevronDown />}
+                    minW="auto"
+                    px={2}
+                    h="auto"
+                    color={placeholderColor}
+                    _hover={{
+                      bg: placeholderHoverBg,
+                      color: placeholderHoverColor
+                    }}
+                    _active={{
+                      bg: placeholderActiveBg
+                    }}
+                    fontSize="sm"
+                  >
+                    {selectedCategory 
                       ? categories.find(cat => cat.id === selectedCategory)?.name || '全部分类'
                       : '全部分类'
-                    } 
-                    bg={tooltipBg} 
-                    color={tooltipColor}
-                  >
-                    <MenuButton
-                      as={IconButton}
-                      icon={<FiChevronDown />}
-                      variant="ghost"
-                      size="sm"
-                      minW="auto"
-                      h="32px"
-                      w="32px"
-                      isRound
-                      color={placeholderColor}
-                      _hover={{
-                        bg: placeholderHoverBg,
-                        color: placeholderHoverColor
-                      }}
-                      _active={{
-                        bg: placeholderActiveBg
-                      }}
-                    />
-                  </Tooltip>
+                    }
+                  </MenuButton>
                   <MenuList
                     bg={categoryBg}
                     borderColor={borderColor}
@@ -737,7 +693,7 @@ const KnowledgePage: React.FC = () => {
                     bg="transparent"
                     border="none"
                     borderRadius="full"
-                    pl="60px"
+                    pl="120px"
                     pr="160px"
                     h="44px"
                     fontSize="16px"
@@ -965,13 +921,13 @@ const KnowledgePage: React.FC = () => {
                         },
                         '& pre': {
                           overflowX: 'auto',
-                          backgroundColor: codeBlockBg,
+                          backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                           padding: '1rem',
                           borderRadius: '0.375rem',
                           marginBottom: '1rem'
                         },
                         '& code': {
-                          backgroundColor: codeBlockBg,
+                          backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                           padding: '0.125rem 0.25rem',
                           borderRadius: '0.25rem',
                           fontSize: '0.875rem'
@@ -991,39 +947,41 @@ const KnowledgePage: React.FC = () => {
                           <Box 
                             key={index} 
                             as="button"
-                            py={0.5}
+                            py={1}
                             px={2}
-                            bg={sourceBadgeBg}
-                            border="1px solid"
-                            borderColor="transparent"
-                            borderRadius="full" 
+                            bg={cardBg}
+                            border="1px solid" 
+                            borderColor={borderColor}
+                            borderRadius="lg" 
                             cursor="pointer" 
                             onClick={() => viewSource(source)}
                             _hover={{
-                              borderColor: hotCardHoverBorder,
-                              shadow: 'md'
+                              borderColor: sourceCardHoverBorder,
+                              bg: sourceCardHoverBg,
+                              transform: 'translateY(-1px)',
+                              shadow: sourceCardShadow
                             }}
-                            transition="all 0.2s"
+                            transition="all 0.2s ease"
                             display="inline-flex"
                             alignItems="center"
                             minW="fit-content"
-                            maxW="240px"
+                            maxW="300px"
                           >
-                            <HStack spacing={1} align="center">
-                              <FiFileText size={10} color={sourceBadgeColor} />
-                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
+                            <HStack spacing={1.5} align="center">
+                              <FiFileText size={12} color={fileIconColor} />
+                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={textColor} maxW="150px">
                                 {source.title || '未知文档'}
-                              </Text>
-                              <Badge size="xs" fontSize="9px" bg={similarityBadgeBg} color={similarityBadgeColor} borderRadius="full">
+                </Text>
+                              <Badge size="sm" fontSize="10px" bg={sourceBadgeBg} color={sourceBadgeColor}>
                                 {(source.score * 100).toFixed(0)}%
                               </Badge>
                               {source.page && (
-                                <Badge size="xs" fontSize="9px" bg={cardBg} color={textColor} borderRadius="full">
+                                <Badge size="sm" fontSize="10px" bg={categorySourceBadgeBg} color={categorySourceBadgeColor}>
                                   p{source.page}
                                 </Badge>
                               )}
                             </HStack>
-                          </Box>
+              </Box>
                         ))}
                       </Flex>
                     </Box>
@@ -1034,45 +992,7 @@ const KnowledgePage: React.FC = () => {
               {/* 流式回答结果 */}
               {currentAnswer && !qaResult && (
                 <Box>
-                  <Flex justify="space-between" align="center" mb={2}>
-                    <Heading size="sm" color={aiAnswerHeadingColor}>AI回答 (实时)</Heading>
-                    <HStack>
-                      <Text fontSize="xs" color={mutedTextColor}>
-                        响应时间: {streamResponseTime}ms
-                      </Text>
-                      <Text fontSize="xs" color={mutedTextColor}>
-                        相似度: {(streamSimilarityScore * 100).toFixed(1)}%
-                      </Text>
-                      <IconButton
-                        aria-label="复制回答"
-                        icon={<FiClipboard />}
-                        size="xs"
-                        colorScheme="green"
-                        variant="outline"
-                        onClick={() => copyToClipboard(currentAnswer.replace(/\\n/g, '\n'))}
-                        borderColor={thumbsUpBorder}
-                        color={thumbsUpColor}
-                        _hover={{
-                          bg: thumbsUpHoverBg,
-                          borderColor: thumbsUpHoverBorder
-                        }}
-                      />
-                      <IconButton
-                        aria-label="反馈"
-                        icon={<FiThumbsUp />}
-                        size="xs"
-                        colorScheme="green"
-                        variant="outline"
-                        onClick={onFeedbackOpen}
-                        borderColor={thumbsDownBorder}
-                        color={thumbsDownColor}
-                        _hover={{
-                          bg: thumbsDownHoverBg,
-                          borderColor: thumbsDownHoverBorder
-                        }}
-                      />
-                    </HStack>
-                  </Flex>
+                  <Heading size="sm" mb={3} color={streamAnswerHeadingColor}>AI回答 (实时)</Heading>
                   <Box 
                     p={4} 
                     bg={sourceBg} 
@@ -1095,44 +1015,20 @@ const KnowledgePage: React.FC = () => {
                       },
                       '& pre': {
                         overflowX: 'auto',
-                        backgroundColor: codeBlockBg,
+                        backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                         padding: '1rem',
                         borderRadius: '0.375rem',
                         marginBottom: '1rem'
                       },
                       '& code': {
-                        backgroundColor: codeBlockBg,
+                        backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                         padding: '0.125rem 0.25rem',
                         borderRadius: '0.25rem',
                         fontSize: '0.875rem'
                       }
                     }}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code: ({ className, children, ...props }) => {
-                          const match = /language-(\w+)/.exec(className || '');
-                          const isInline = !match;
-                          return !isInline ? (
-                            <SyntaxHighlighter
-                              style={prism as any}
-                              language={match[1]}
-                              PreTag="div"
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }}
-                    >
-                      {currentAnswer.replace(/\\n/g, '\n')}
-                    </ReactMarkdown>
-                    
+                    <ReactMarkdown>{currentAnswer}</ReactMarkdown>
                     {isStreaming && (
                       <Text 
                         as="span" 
@@ -1150,53 +1046,6 @@ const KnowledgePage: React.FC = () => {
                       </Text>
                     )}
                   </Box>
-
-                  {/* 信息来源 - 与普通问答保持一致的样式 */}
-                  {(!isStreaming && streamSources.length > 0) && (
-                    <Box mt={4}>
-                      <Heading size="sm" mb={3} color={sourceHeadingColor}>信息来源</Heading>
-                      <Flex wrap="wrap" gap={2}>
-                        {streamSources.map((source, index) => (
-                          <Box 
-                            key={index} 
-                            as="button"
-                            py={0.5}
-                            px={2}
-                            bg={sourceBadgeBg}
-                            border="1px solid"
-                            borderColor="transparent"
-                            borderRadius="full" 
-                            cursor="pointer" 
-                            onClick={() => viewSource(source)}
-                            _hover={{
-                              borderColor: hotCardHoverBorder,
-                              shadow: 'md'
-                            }}
-                            transition="all 0.2s"
-                            display="inline-flex"
-                            alignItems="center"
-                            minW="fit-content"
-                            maxW="240px"
-                          >
-                            <HStack spacing={1} align="center">
-                              <FiFileText size={10} color={sourceBadgeColor} />
-                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
-                                {source.title || '未知文档'}
-                              </Text>
-                              <Badge size="xs" fontSize="9px" bg={similarityBadgeBg} color={similarityBadgeColor} borderRadius="full">
-                                {(source.score * 100).toFixed(0)}%
-                              </Badge>
-                              {source.page && (
-                                <Badge size="xs" fontSize="9px" bg={cardBg} color={textColor} borderRadius="full">
-                                  p{source.page}
-                                </Badge>
-                              )}
-                            </HStack>
-                          </Box>
-                        ))}
-                      </Flex>
-                    </Box>
-                  )}
                 </Box>
               )}
             </CardBody>

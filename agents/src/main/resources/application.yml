@@ -85,11 +85,11 @@ logging:
   level:
     root: INFO
     org.xue.agents: DEBUG
-    # 关闭Spring Security的调试日志
-    org.springframework.security: WARN
+    # 暂时打开Spring Security的调试日志以排查问题
+    org.springframework.security: DEBUG
     org.springframework.boot.autoconfigure: WARN
-    # 关闭HTTP请求日志
-    org.springframework.web: WARN
+    # 打开Web请求日志以查看请求路径
+    org.springframework.web: DEBUG
 
 
 

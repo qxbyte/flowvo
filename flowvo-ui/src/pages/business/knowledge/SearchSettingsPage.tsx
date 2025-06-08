@@ -67,6 +67,10 @@ const SearchSettingsPage: React.FC = () => {
   const hoverBg = useColorModeValue('gray.50', '#303033');
   const inputBg = useColorModeValue('white', '#19191c');
   const pageBg = bgColor;
+  
+  // 下拉选项背景颜色 - 修复Hooks在CSS中使用的问题  
+  const selectOptionBg = useColorModeValue('white', '#2D3748');
+  const selectOptionColor = useColorModeValue('#2D3748', 'white');
 
   // 初始化加载设置
   useEffect(() => {
@@ -269,8 +273,8 @@ const SearchSettingsPage: React.FC = () => {
                         }}
                         css={{
                           '> option': {
-                            backgroundColor: useColorModeValue('white', '#2D3748'),
-                            color: useColorModeValue('#2D3748', 'white')
+                            backgroundColor: selectOptionBg,
+                            color: selectOptionColor
                           }
                         }}
                       >
@@ -349,8 +353,8 @@ const SearchSettingsPage: React.FC = () => {
                         }}
                         css={{
                           '> option': {
-                            backgroundColor: useColorModeValue('white', '#2D3748'),
-                            color: useColorModeValue('#2D3748', 'white')
+                            backgroundColor: selectOptionBg,
+                            color: selectOptionColor
                           }
                         }}
                       >
