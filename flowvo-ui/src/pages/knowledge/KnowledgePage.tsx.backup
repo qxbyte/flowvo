@@ -90,10 +90,187 @@ import {
   FiChevronDown
 } from 'react-icons/fi';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { prism, tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { knowledgeQaApi, type KnowledgeQaRequest, type KnowledgeQaResponse, type KnowledgeQaRecord, type PopularQuestion, type CategoryStatistics, type DocumentCategory, type SourceDocument } from '../../utils/api';
+
+// 自定义hook来管理所有颜色，解决hooks调用顺序问题
+const useKnowledgePageColors = () => {
+  // Junie的绿色主题色
+  const primaryColor = '#47e054';
+  const primaryDim = 'rgba(71, 224, 84, 0.8)';
+  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+
+  return {
+    // 基础颜色
+    bgColor: useColorModeValue('#f4f4f4', '#000000'),
+    cardBg: useColorModeValue('white', '#19191c'),
+    borderColor: useColorModeValue('gray.200', '#303033'),
+    textColor: useColorModeValue('gray.800', 'white'),
+    subTextColor: useColorModeValue('gray.600', 'rgba(255,255,255,0.7)'),
+    
+    // 主题色
+    primaryColor,
+    primaryDim,
+    primaryFog,
+    
+    // 高亮和背景色
+    highlightBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)'),
+    inputBg: useColorModeValue('white', '#19191c'),
+    answerBg: useColorModeValue('gray.50', '#303033'),
+    sourceBg: useColorModeValue('gray.50', '#303033'),
+    hoverBg: useColorModeValue('gray.50', '#303033'),
+    activeBg: useColorModeValue('gray.100', '#404040'),
+    mutedTextColor: useColorModeValue('gray.500', 'rgba(255,255,255,0.5)'),
+    
+    // 按钮颜色
+    buttonHoverBg: useColorModeValue('#3bcc47', '#52e658'),
+    cardHoverBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)'),
+    primaryButtonBg: useColorModeValue(primaryColor, primaryColor),
+    primaryButtonHoverBg: useColorModeValue('#3bcc47', '#52e658'),
+    primaryButtonActiveBg: useColorModeValue('#3bcc47', '#52e658'),
+    abortButtonBg: useColorModeValue('red.500', 'red.400'),
+    abortButtonHoverBg: useColorModeValue('red.600', 'red.500'),
+    
+    // 状态颜色
+    successColor: useColorModeValue(primaryColor, primaryColor),
+    warningColor: useColorModeValue('orange.500', 'orange.300'),
+    errorColor: useColorModeValue('red.500', 'red.300'),
+    
+    // 卡片样式
+    mainCardBg: useColorModeValue('white', 'gray.700'),
+    mainCardBorder: useColorModeValue('#dadce0', 'gray.600'),
+    mainCardShadow: useColorModeValue('0 2px 5px 1px rgba(64,60,67,.16)', '0 2px 5px 1px rgba(255,255,255,.08)'),
+    mainCardHoverShadow: useColorModeValue('0 2px 8px 1px rgba(64,60,67,.24)', '0 2px 8px 1px rgba(255,255,255,.12)'),
+    mainCardHoverBorder: useColorModeValue('#4285f4', 'blue.400'),
+    mainCardFocusShadow: useColorModeValue('0 2px 8px 1px rgba(64,60,67,.24)', '0 2px 8px 1px rgba(66,133,244,.3)'),
+    
+    // 占位符颜色
+    placeholderColor: useColorModeValue('#9aa0a6', 'gray.400'),
+    placeholderHoverBg: useColorModeValue('gray.100', 'gray.600'),
+    placeholderHoverColor: useColorModeValue('#5f6368', 'gray.300'),
+    placeholderActiveBg: useColorModeValue('gray.200', 'gray.500'),
+    
+    // 分类相关
+    categoryBg: useColorModeValue('white', 'gray.700'),
+    categoryActiveBg: useColorModeValue('blue.50', 'blue.900'),
+    categoryHoverBg: useColorModeValue('gray.100', 'gray.600'),
+    categoryBadgeBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)'),
+    categoryBadgeColor: useColorModeValue(primaryColor, primaryColor),
+    categoryBadgeHoverBg: useColorModeValue(primaryDim, 'rgba(71, 224, 84, 0.3)'),
+    categoryBadgeHoverColor: useColorModeValue('black', 'white'),
+    
+    // 搜索输入
+    searchInputColor: useColorModeValue('#3c4043', 'white'),
+    searchInputPlaceholder: useColorModeValue('#9aa0a6', 'gray.400'),
+    
+    // 工具提示
+    tooltipBg: useColorModeValue('gray.700', 'gray.300'),
+    tooltipColor: useColorModeValue('white', 'black'),
+    
+    // 流式模式
+    streamModeActiveColor: useColorModeValue('blue.600', 'blue.300'),
+    streamModeInactiveColor: useColorModeValue('gray.600', 'gray.400'),
+    streamModeActiveBg: useColorModeValue('blue.100', 'blue.800'),
+    streamModeActiveTextColor: useColorModeValue('blue.700', 'blue.200'),
+    streamModeInactiveTextColor: useColorModeValue('gray.700', 'gray.300'),
+    streamModeTextColor: useColorModeValue(primaryColor, primaryColor),
+    
+    // 图标和时钟
+    clockColor: useColorModeValue(primaryColor, primaryColor),
+    fileIconColor: useColorModeValue('#6B7280', '#9CA3AF'),
+    folderIconColor: useColorModeValue('#6B7280', '#9CA3AF'),
+    hotIconColor: useColorModeValue('#6B7280', '#9CA3AF'),
+    starColor: useColorModeValue('#ECC94B', '#F6E05E'),
+    
+    // 结果相关
+    resultCardShadow: useColorModeValue('sm', 'dark-lg'),
+    spinnerColor: useColorModeValue(primaryColor, primaryColor),
+    questionHeadingColor: useColorModeValue(primaryColor, primaryColor),
+    answerBadgeBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)'),
+    answerBadgeColor: useColorModeValue(primaryColor, primaryColor),
+    aiAnswerHeadingColor: useColorModeValue(primaryColor, primaryColor),
+    streamAnswerHeadingColor: useColorModeValue(primaryColor, primaryColor),
+    streamAnswerTextColor: useColorModeValue(primaryColor, primaryColor),
+    
+    // 反馈按钮
+    thumbsUpBorder: useColorModeValue(primaryColor, primaryColor),
+    thumbsUpColor: useColorModeValue(primaryColor, primaryColor),
+    thumbsUpHoverBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)'),
+    thumbsUpHoverBorder: useColorModeValue(primaryDim, primaryDim),
+    thumbsDownBorder: useColorModeValue('red.300', 'red.600'),
+    thumbsDownColor: useColorModeValue('red.600', 'red.300'),
+    thumbsDownHoverBg: useColorModeValue('red.50', 'red.800'),
+    thumbsDownHoverBorder: useColorModeValue('red.400', 'red.500'),
+    
+    // 来源相关
+    sourceHeadingColor: useColorModeValue(primaryColor, primaryColor),
+    sourceCardHoverBorder: useColorModeValue(primaryColor, primaryColor),
+    sourceCardHoverBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)'),
+    sourceCardShadow: useColorModeValue('md', 'dark-lg'),
+    sourceBadgeBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)'),
+    sourceBadgeColor: useColorModeValue(primaryColor, primaryColor),
+    categorySourceBadgeBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)'),
+    categorySourceBadgeColor: useColorModeValue(primaryColor, primaryColor),
+    
+    // 标签页
+    tabSelectedColor: useColorModeValue(primaryColor, primaryColor),
+    tabSelectedBorder: useColorModeValue(primaryColor, primaryColor),
+    
+    // 最近问题
+    recentCardHoverBorder: useColorModeValue(primaryColor, primaryColor),
+    recentQuestionColor: useColorModeValue(primaryColor, primaryColor),
+    recentCategoryBadgeBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)'),
+    recentCategoryBadgeColor: useColorModeValue(primaryColor, primaryColor),
+    
+    // 热门问题
+    hotCardHoverBorder: useColorModeValue(primaryColor, primaryColor),
+    hotRankBadgeBg: useColorModeValue('red.100', 'red.800'),
+    hotRankBadgeColor: useColorModeValue('red.700', 'red.200'),
+    hotQuestionHoverColor: useColorModeValue(primaryColor, primaryColor),
+    hotBadgeBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)'),
+    hotBadgeColor: useColorModeValue(primaryColor, primaryColor),
+    
+    // 统计相关
+    statCardHoverBorder: useColorModeValue(primaryColor, primaryColor),
+    statButtonBg: useColorModeValue(primaryColor, primaryColor),
+    statButtonHoverBg: useColorModeValue('#3bcc47', '#52e658'),
+    progressBg: useColorModeValue('gray.200', 'gray.600'),
+    
+    // Modal相关
+    modalOverlayBg: useColorModeValue('blackAlpha.300', 'blackAlpha.800'),
+    modalButtonBg: useColorModeValue(primaryColor, primaryColor),
+    modalButtonHoverBg: useColorModeValue('#3bcc47', '#52e658'),
+    greenButtonBorder: useColorModeValue(primaryColor, primaryColor),
+    greenButtonColor: useColorModeValue(primaryColor, primaryColor),
+    greenButtonHoverBg: useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)'),
+    greenButtonHoverBorder: useColorModeValue(primaryDim, primaryDim),
+    
+    // 表格
+    tableHeaderBg: useColorModeValue('gray.50', '#303033'),
+    
+    // 输入框交互
+    inputHoverBorder: useColorModeValue(primaryColor, primaryColor),
+    inputFocusBorder: useColorModeValue(primaryColor, primaryColor),
+    inputFocusShadow: `0 0 0 1px ${primaryColor}`,
+    
+    // Badge颜色映射
+    badgeColorMap: useColorModeValue(
+      {
+        'green': { bg: primaryFog, color: primaryColor },
+        'yellow': { bg: 'yellow.100', color: 'yellow.700' },
+        'red': { bg: 'red.100', color: 'red.700' },
+        'blue': { bg: primaryFog, color: primaryColor },
+        'gray': { bg: 'gray.100', color: 'gray.700' }
+      },
+      {
+        'green': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
+        'yellow': { bg: 'yellow.800', color: 'yellow.200' },
+        'red': { bg: 'red.800', color: 'red.200' },
+        'blue': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
+        'gray': { bg: 'gray.800', color: 'gray.200' }
+      }
+    )
+  };
+};
 
 const KnowledgePage: React.FC = () => {
   const [query, setQuery] = useState('');
@@ -101,10 +278,6 @@ const KnowledgePage: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [isStreamMode, setIsStreamMode] = useState(false); // 流式模式开关
   const [currentAnswer, setCurrentAnswer] = useState('');
-  const [streamSources, setStreamSources] = useState<SourceDocument[]>([]);
-  const [streamResponseTime, setStreamResponseTime] = useState<number>(0);
-  const [streamSimilarityScore, setStreamSimilarityScore] = useState<number>(0);
-  const [streamStartTime, setStreamStartTime] = useState<number>(0);
   const [qaResult, setQaResult] = useState<KnowledgeQaResponse | null>(null);
   const [recentQuestions, setRecentQuestions] = useState<KnowledgeQaRecord[]>([]);
   const [hotQuestions, setHotQuestions] = useState<PopularQuestion[]>([]);
@@ -129,182 +302,18 @@ const KnowledgePage: React.FC = () => {
   const [feedbackRating, setFeedbackRating] = useState<number>(5);
   const [feedbackComment, setFeedbackComment] = useState('');
   
-  // Junie风格的颜色配置
-  const bgColor = useColorModeValue('#f4f4f4', '#000000');
-  const cardBg = useColorModeValue('white', '#19191c');
-  const borderColor = useColorModeValue('gray.200', '#303033');
-  const textColor = useColorModeValue('gray.800', 'white');
-  const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
+  // 使用自定义hook获取所有颜色
+  const colors = useKnowledgePageColors();
   
-  // Junie的绿色主题色
-  const primaryColor = '#47e054';
-  const primaryDim = 'rgba(71, 224, 84, 0.8)';
-  const primaryFog = 'rgba(71, 224, 84, 0.2)';
-  
-  const highlightBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
-  const inputBg = useColorModeValue('white', '#19191c');
-  const answerBg = useColorModeValue('gray.50', '#303033');
-  const sourceBg = useColorModeValue('gray.50', '#303033');
-  
-  const hoverBg = useColorModeValue('gray.50', '#303033');
-  const activeBg = useColorModeValue('gray.100', '#404040');
-  const mutedTextColor = useColorModeValue('gray.500', 'rgba(255,255,255,0.5)');
-  const buttonHoverBg = useColorModeValue('#3bcc47', '#52e658');
-  const cardHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
-  const successColor = useColorModeValue(primaryColor, primaryColor);
-  const warningColor = useColorModeValue('orange.500', 'orange.300');
-  const errorColor = useColorModeValue('red.500', 'red.300');
-  
-  // 新增颜色变量，解决Hooks规则违反问题
-  const mainCardBg = useColorModeValue('white', 'gray.700');
-  const mainCardBorder = useColorModeValue('#dadce0', 'gray.600');
-  const mainCardShadow = useColorModeValue('0 2px 5px 1px rgba(64,60,67,.16)', '0 2px 5px 1px rgba(255,255,255,.08)');
-  const mainCardHoverShadow = useColorModeValue('0 2px 8px 1px rgba(64,60,67,.24)', '0 2px 8px 1px rgba(255,255,255,.12)');
-  const mainCardHoverBorder = useColorModeValue('#4285f4', 'blue.400');
-  const mainCardFocusShadow = useColorModeValue('0 2px 8px 1px rgba(64,60,67,.24)', '0 2px 8px 1px rgba(66,133,244,.3)');
-  
-  const placeholderColor = useColorModeValue('#9aa0a6', 'gray.400');
-  const placeholderHoverBg = useColorModeValue('gray.100', 'gray.600');
-  const placeholderHoverColor = useColorModeValue('#5f6368', 'gray.300');
-  const placeholderActiveBg = useColorModeValue('gray.200', 'gray.500');
-  
-  const categoryBg = useColorModeValue('white', 'gray.700');
-  const categoryActiveBg = useColorModeValue('blue.50', 'blue.900');
-  const categoryHoverBg = useColorModeValue('gray.100', 'gray.600');
-  
-  // 在渲染时计算
-  const allCategoryBg = selectedCategory === '' ? categoryActiveBg : 'transparent';
-  
-  const searchInputColor = useColorModeValue('#3c4043', 'white');
-  const searchInputPlaceholder = useColorModeValue('#9aa0a6', 'gray.400');
-  
-  const tooltipBg = useColorModeValue('gray.700', 'gray.300');
-  const tooltipColor = useColorModeValue('white', 'black');
-  
-  const streamModeActiveColor = useColorModeValue('blue.600', 'blue.300');
-  const streamModeInactiveColor = useColorModeValue('gray.600', 'gray.400');
-  const streamModeActiveBg = useColorModeValue('blue.100', 'blue.800');
-  const streamModeActiveTextColor = useColorModeValue('blue.700', 'blue.200');
-  const streamModeInactiveTextColor = useColorModeValue('gray.700', 'gray.300');
-  
-  const abortButtonBg = useColorModeValue('red.500', 'red.400');
-  const abortButtonHoverBg = useColorModeValue('red.600', 'red.500');
-  
-  const primaryButtonBg = useColorModeValue(primaryColor, primaryColor);
-  const primaryButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
-  const primaryButtonActiveBg = useColorModeValue('#3bcc47', '#52e658');
-  
-  const categoryBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
-  const categoryBadgeColor = useColorModeValue(primaryColor, primaryColor);
-  const categoryBadgeHoverBg = useColorModeValue(primaryDim, 'rgba(71, 224, 84, 0.3)');
-  const categoryBadgeHoverColor = useColorModeValue('black', 'white');
-  
-  const clockColor = useColorModeValue(primaryColor, primaryColor);
-  const streamModeTextColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const resultCardShadow = useColorModeValue('sm', 'dark-lg');
-  const spinnerColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const questionHeadingColor = useColorModeValue(primaryColor, primaryColor);
-  const answerBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
-  const answerBadgeColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const aiAnswerHeadingColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const thumbsUpBorder = useColorModeValue(primaryColor, primaryColor);
-  const thumbsUpColor = useColorModeValue(primaryColor, primaryColor);
-  const thumbsUpHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
-  const thumbsUpHoverBorder = useColorModeValue(primaryDim, primaryDim);
-  
-  const thumbsDownBorder = useColorModeValue('red.300', 'red.600');
-  const thumbsDownColor = useColorModeValue('red.600', 'red.300');
-  const thumbsDownHoverBg = useColorModeValue('red.50', 'red.800');
-  const thumbsDownHoverBorder = useColorModeValue('red.400', 'red.500');
-  
-  const sourceHeadingColor = useColorModeValue(primaryColor, primaryColor);
-  const sourceCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
-  const sourceCardHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
-  const sourceCardShadow = useColorModeValue('md', 'dark-lg');
-  
-  const fileIconColor = useColorModeValue('#6B7280', '#9CA3AF');
-  const sourceBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
-  const sourceBadgeColor = useColorModeValue(primaryColor, primaryColor);
-  const categorySourceBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
-  const categorySourceBadgeColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const streamAnswerHeadingColor = useColorModeValue(primaryColor, primaryColor);
-  const streamAnswerTextColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const tabSelectedColor = useColorModeValue(primaryColor, primaryColor);
-  const tabSelectedBorder = useColorModeValue(primaryColor, primaryColor);
-  
-  const recentCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
-  const recentQuestionColor = useColorModeValue(primaryColor, primaryColor);
-  const recentCategoryBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
-  const recentCategoryBadgeColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const starColor = useColorModeValue('#ECC94B', '#F6E05E');
-  
-  const hotCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
-  const hotRankBadgeBg = useColorModeValue('red.100', 'red.800');
-  const hotRankBadgeColor = useColorModeValue('red.700', 'red.200');
-  const hotQuestionHoverColor = useColorModeValue(primaryColor, primaryColor);
-  const hotIconColor = useColorModeValue('#6B7280', '#9CA3AF');
-  const hotBadgeBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.2)');
-  const hotBadgeColor = useColorModeValue(primaryColor, primaryColor);
-  
-  const statCardHoverBorder = useColorModeValue(primaryColor, primaryColor);
-  const folderIconColor = useColorModeValue('#6B7280', '#9CA3AF');
-  const statButtonBg = useColorModeValue(primaryColor, primaryColor);
-  const statButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
-  
-  // 进度条颜色
-  const progressBg = useColorModeValue('gray.200', 'gray.600');
-  
-  // Modal 相关颜色
-  const modalOverlayBg = useColorModeValue('blackAlpha.300', 'blackAlpha.800');
-  const modalButtonBg = useColorModeValue(primaryColor, primaryColor);
-  const modalButtonHoverBg = useColorModeValue('#3bcc47', '#52e658');
-  const greenButtonBorder = useColorModeValue(primaryColor, primaryColor);
-  const greenButtonColor = useColorModeValue(primaryColor, primaryColor);
-  const greenButtonHoverBg = useColorModeValue(primaryFog, 'rgba(71, 224, 84, 0.1)');
-  const greenButtonHoverBorder = useColorModeValue(primaryDim, primaryDim);
-  
-  // 表格相关颜色
-  const tableHeaderBg = useColorModeValue('gray.50', '#303033');
-  
-  // 输入框交互颜色
-  const inputHoverBorder = useColorModeValue(primaryColor, primaryColor);
-  const inputFocusBorder = useColorModeValue(primaryColor, primaryColor);
-  const inputFocusShadow = `0 0 0 1px ${primaryColor}`;
-  
-  // Badge颜色预定义映射表 - 修复Hooks调用顺序问题
-  const badgeColorMap = useColorModeValue(
-    {
-      'green': { bg: primaryFog, color: primaryColor },
-      'yellow': { bg: 'yellow.100', color: 'yellow.700' },
-      'red': { bg: 'red.100', color: 'red.700' },
-      'blue': { bg: primaryFog, color: primaryColor },
-      'gray': { bg: 'gray.100', color: 'gray.700' }
-    },
-    {
-      'green': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
-      'yellow': { bg: 'yellow.800', color: 'yellow.200' },
-      'red': { bg: 'red.800', color: 'red.200' },
-      'blue': { bg: 'rgba(71, 224, 84, 0.2)', color: primaryColor },
-      'gray': { bg: 'gray.800', color: 'gray.200' }
-    }
-  );
+  // 计算动态颜色
+  const allCategoryBg = selectedCategory === '' ? colors.categoryActiveBg : 'transparent';
 
-  // 代码块背景颜色 - 修复Hooks在CSS中使用的问题
-  const codeBlockBg = useColorModeValue('#f7f7f7', '#2d2d2d');
-  
   // 获取Badge颜色的函数 - 现在不包含Hooks调用
   const getBadgeColors = (status: string) => {
     const colorKey = getStatusColor(status);
-    return badgeColorMap[colorKey] || badgeColorMap['gray'];
+    return colors.badgeColorMap[colorKey] || colors.badgeColorMap['gray'];
   };
-  
+
   // 获取用户信息
   const getUserId = () => {
     const userInfo = localStorage.getItem('userInfo');
@@ -425,13 +434,6 @@ const KnowledgePage: React.FC = () => {
     setIsStreaming(true);
     setQaResult(null);
     setCurrentAnswer('');
-    setStreamSources([]);
-    setStreamResponseTime(0);
-    setStreamSimilarityScore(0);
-    
-    // 记录开始时间
-    const startTime = Date.now();
-    setStreamStartTime(startTime);
 
     // 创建新的中止控制器
     const abortController = new AbortController();
@@ -448,6 +450,7 @@ const KnowledgePage: React.FC = () => {
         temperature: temperature
       };
 
+      console.log('发送流式问答请求:', request);
       await knowledgeQaApi.askQuestionStream(
         request,
         (chunk: string) => {
@@ -455,17 +458,6 @@ const KnowledgePage: React.FC = () => {
         },
         abortController.signal
       );
-      
-      // 流式完成后，进行同步查询获取源文档信息
-      try {
-        const syncResult = await knowledgeQaApi.askQuestion(request);
-        setStreamSources(syncResult.data.sources);
-        setStreamSimilarityScore(syncResult.data.similarityScore);
-        setStreamResponseTime(Date.now() - startTime);
-      } catch (syncError) {
-        console.warn('获取源文档信息失败:', syncError);
-        setStreamResponseTime(Date.now() - startTime);
-      }
       
       toast({
         title: "流式问答完成",
@@ -531,19 +523,10 @@ const KnowledgePage: React.FC = () => {
 
   // 提交反馈
   const submitFeedback = async () => {
-    // 检查是否有问答结果或流式回答
-    if (!qaResult && !currentAnswer) return;
+    if (!qaResult) return;
 
     try {
-      if (qaResult) {
-        // 普通问答反馈
-        await knowledgeQaApi.submitFeedback(qaResult.id, feedbackRating, feedbackComment);
-      } else {
-        // 流式回答反馈 - 这里可能需要创建一个临时记录或使用其他方式
-        // 暂时使用一个占位符ID，实际应该根据后端实现调整
-        console.log('流式回答反馈:', { rating: feedbackRating, comment: feedbackComment, answer: currentAnswer });
-      }
-      
+      await knowledgeQaApi.submitFeedback(qaResult.id, feedbackRating, feedbackComment);
       toast({
         title: "反馈提交成功",
         description: "感谢您的反馈",
@@ -630,9 +613,9 @@ const KnowledgePage: React.FC = () => {
   };
 
   return (
-    <Box minH="100%" height="100%" p={0} display="flex" flexDirection="column" bg={bgColor}>
+    <Box minH="100%" height="100%" p={0} display="flex" flexDirection="column" bg={colors.bgColor}>
       <Container maxW="container.xl" flex="1" py={6}>
-        <Heading size="lg" mb={6} color={textColor}>知识库问答</Heading>
+        <Heading size="lg" mb={6} color={colors.textColor}>知识库问答</Heading>
 
         {/* 搜索区域 */}
         <Box maxW="800px" mx="auto" mb={8}>
@@ -642,18 +625,18 @@ const KnowledgePage: React.FC = () => {
               position="relative"
               maxW="584px"
               mx="auto"
-              bg={mainCardBg}
+              bg={colors.mainCardBg}
               borderRadius="full"
               border="1px solid"
-              borderColor={mainCardBorder}
-              boxShadow={mainCardShadow}
+              borderColor={colors.mainCardBorder}
+              boxShadow={colors.mainCardShadow}
               _hover={{
-                boxShadow: mainCardHoverShadow,
-                borderColor: mainCardHoverBorder
+                boxShadow: colors.mainCardHoverShadow,
+                borderColor: colors.mainCardHoverBorder
               }}
               _focusWithin={{
-                borderColor: mainCardHoverBorder,
-                boxShadow: mainCardFocusShadow
+                borderColor: colors.mainCardHoverBorder,
+                boxShadow: colors.mainCardFocusShadow
               }}
               transition="all 0.2s ease"
             >
@@ -674,13 +657,13 @@ const KnowledgePage: React.FC = () => {
                     minW="auto"
                     px={2}
                     h="auto"
-                    color={placeholderColor}
+                    color={colors.placeholderColor}
                     _hover={{
-                      bg: placeholderHoverBg,
-                      color: placeholderHoverColor
+                      bg: colors.placeholderHoverBg,
+                      color: colors.placeholderHoverColor
                     }}
                     _active={{
-                      bg: placeholderActiveBg
+                      bg: colors.placeholderActiveBg
                     }}
                     fontSize="sm"
                   >
@@ -690,27 +673,27 @@ const KnowledgePage: React.FC = () => {
                     }
                   </MenuButton>
                   <MenuList
-                    bg={categoryBg}
-                    borderColor={borderColor}
+                    bg={colors.categoryBg}
+                    borderColor={colors.borderColor}
                     boxShadow="lg"
                   >
                     <MenuItem
                       onClick={() => setSelectedCategory('')}
                       bg={allCategoryBg}
-                      _hover={{ bg: categoryHoverBg }}
-                      color={textColor}
+                      _hover={{ bg: colors.categoryHoverBg }}
+                      color={colors.textColor}
                     >
                       全部分类
                     </MenuItem>
                     {categories.map((cat) => {
-                      const selectedBg = selectedCategory === cat.id ? categoryActiveBg : 'transparent';
+                      const selectedBg = selectedCategory === cat.id ? colors.categoryActiveBg : 'transparent';
                       return (
                         <MenuItem
                           key={cat.id}
                           onClick={() => setSelectedCategory(cat.id)}
                           bg={selectedBg}
-                          _hover={{ bg: categoryHoverBg }}
-                          color={textColor}
+                          _hover={{ bg: colors.categoryHoverBg }}
+                          color={colors.textColor}
                         >
                           {cat.name}
                         </MenuItem>
@@ -733,9 +716,9 @@ const KnowledgePage: React.FC = () => {
                     pr="160px"
                     h="44px"
                     fontSize="16px"
-                    color={searchInputColor}
+                    color={colors.searchInputColor}
                     _placeholder={{
-                      color: searchInputPlaceholder
+                      color: colors.searchInputPlaceholder
                     }}
                     _focus={{
                       outline: 'none',
@@ -757,7 +740,7 @@ const KnowledgePage: React.FC = () => {
                 zIndex={3}
               >
                 {/* 流式模式切换图标 - 优化颜色 */}
-                <Tooltip label="流式回答模式" bg={tooltipBg} color={tooltipColor}>
+                <Tooltip label="流式回答模式" bg={colors.tooltipBg} color={colors.tooltipColor}>
                   <IconButton
                     aria-label="流式模式"
                     icon={<FiClock />}
@@ -768,10 +751,10 @@ const KnowledgePage: React.FC = () => {
                     h="32px"
                     w="32px"
                     onClick={() => setIsStreamMode(!isStreamMode)}
-                    color={isStreamMode ? streamModeActiveColor : streamModeInactiveColor}
+                    color={isStreamMode ? colors.streamModeActiveColor : colors.streamModeInactiveColor}
                     _hover={{
-                      bg: isStreamMode ? streamModeActiveBg : hoverBg,
-                      color: isStreamMode ? streamModeActiveTextColor : streamModeInactiveTextColor
+                      bg: isStreamMode ? colors.streamModeActiveBg : colors.hoverBg,
+                      color: isStreamMode ? colors.streamModeActiveTextColor : colors.streamModeInactiveTextColor
                     }}
                   />
                 </Tooltip>
@@ -786,9 +769,9 @@ const KnowledgePage: React.FC = () => {
                     onClick={isStreaming ? handleAbortStream : undefined}
                     disabled={!isStreaming}
                     px={4}
-                    bg={abortButtonBg}
+                    bg={colors.abortButtonBg}
                     _hover={{
-                      bg: abortButtonHoverBg
+                      bg: colors.abortButtonHoverBg
                     }}
                     pointerEvents="auto"
                   >
@@ -809,12 +792,12 @@ const KnowledgePage: React.FC = () => {
                     }}
                     px={4}
                     rightIcon={<FiSend />}
-                    bg={primaryButtonBg}
+                    bg={colors.primaryButtonBg}
                     _hover={{
-                      bg: primaryButtonHoverBg
+                      bg: colors.primaryButtonHoverBg
                     }}
                     _active={{
-                      bg: primaryButtonActiveBg
+                      bg: colors.primaryButtonActiveBg
                     }}
                     pointerEvents="auto"
                     cursor="pointer"
@@ -829,7 +812,7 @@ const KnowledgePage: React.FC = () => {
           {/* 热门问题和流式模式提示 - 优化颜色 */}
           <Flex justify="center" mt={4} wrap="wrap" gap={4}>
             <HStack spacing={2}>
-              <Text fontSize="sm" color={mutedTextColor}>热门问题:</Text>
+              <Text fontSize="sm" color={colors.mutedTextColor}>热门问题:</Text>
               {hotQuestions.slice(0, 3).map((q) => (
                   <Tag 
                   key={q.id}
@@ -838,11 +821,11 @@ const KnowledgePage: React.FC = () => {
                     cursor="pointer"
                   onClick={() => useHotQuestion(q.representativeQuestion)}
                   borderRadius="full"
-                  bg={categoryBadgeBg}
-                  color={categoryBadgeColor}
+                  bg={colors.categoryBadgeBg}
+                  color={colors.categoryBadgeColor}
                   _hover={{
-                    bg: categoryBadgeHoverBg,
-                    color: categoryBadgeHoverColor,
+                    bg: colors.categoryBadgeHoverBg,
+                    color: colors.categoryBadgeHoverColor,
                     transform: 'translateY(-1px)'
                   }}
                   transition="all 0.2s ease"
@@ -856,8 +839,8 @@ const KnowledgePage: React.FC = () => {
             
             {isStreamMode && (
               <HStack spacing={2}>
-                <FiClock color={clockColor} />
-                <Text fontSize="sm" color={streamModeTextColor}>流式回答模式已开启</Text>
+                <FiClock color={colors.clockColor} />
+                <Text fontSize="sm" color={colors.streamModeTextColor}>流式回答模式已开启</Text>
               </HStack>
             )}
               </Flex>
@@ -865,15 +848,15 @@ const KnowledgePage: React.FC = () => {
 
         {/* 问答结果 - 优化颜色 */}
         {(qaResult || currentAnswer || isLoading || isStreaming) && (
-          <Card bg={cardBg} borderWidth="1px" borderColor={borderColor} borderRadius="xl" mb={6} boxShadow={resultCardShadow}>
+          <Card bg={colors.cardBg} borderWidth="1px" borderColor={colors.borderColor} borderRadius="xl" mb={6} boxShadow={colors.resultCardShadow}>
             <CardBody>
-              <Heading size="md" mb={4} color={textColor}>回答结果</Heading>
+              <Heading size="md" mb={4} color={colors.textColor}>回答结果</Heading>
               
               {(isLoading || isStreaming) && (
                 <Flex align="center" justify="center" py={8}>
                   <VStack>
-                    <Spinner size="lg" color={spinnerColor} />
-                    <Text color={mutedTextColor}>
+                    <Spinner size="lg" color={colors.spinnerColor} />
+                    <Text color={colors.mutedTextColor}>
                       {isLoading ? '正在分析您的问题...' : '正在生成回答...'}
                     </Text>
                   </VStack>
@@ -885,24 +868,24 @@ const KnowledgePage: React.FC = () => {
                 <VStack align="stretch" spacing={4}>
                 <Box>
                     <Flex justify="space-between" align="center" mb={2}>
-                      <Heading size="sm" color={questionHeadingColor}>问题</Heading>
-                      <Badge colorScheme="green" bg={answerBadgeBg} color={answerBadgeColor}>
+                      <Heading size="sm" color={colors.questionHeadingColor}>问题</Heading>
+                      <Badge colorScheme="green" bg={colors.answerBadgeBg} color={colors.answerBadgeColor}>
                         {qaResult.status}
                       </Badge>
                     </Flex>
-                    <Text p={3} bg={highlightBg} borderRadius="md" color={textColor}>
+                    <Text p={3} bg={colors.highlightBg} borderRadius="md" color={colors.textColor}>
                       {qaResult.question}
                   </Text>
                 </Box>
 
                   <Box>
                     <Flex justify="space-between" align="center" mb={2}>
-                      <Heading size="sm" color={aiAnswerHeadingColor}>AI回答</Heading>
+                      <Heading size="sm" color={colors.aiAnswerHeadingColor}>AI回答</Heading>
                       <HStack>
-                        <Text fontSize="xs" color={mutedTextColor}>
+                        <Text fontSize="xs" color={colors.mutedTextColor}>
                           响应时间: {qaResult.responseTimeMs}ms
                         </Text>
-                        <Text fontSize="xs" color={mutedTextColor}>
+                        <Text fontSize="xs" color={colors.mutedTextColor}>
                           相似度: {(qaResult.similarityScore * 100).toFixed(1)}%
                         </Text>
                 <IconButton
@@ -912,11 +895,11 @@ const KnowledgePage: React.FC = () => {
                           colorScheme="green"
                           variant="outline"
                           onClick={() => copyToClipboard(qaResult.answer)}
-                          borderColor={thumbsUpBorder}
-                          color={thumbsUpColor}
+                          borderColor={colors.thumbsUpBorder}
+                          color={colors.thumbsUpColor}
                           _hover={{
-                            bg: thumbsUpHoverBg,
-                            borderColor: thumbsUpHoverBorder
+                            bg: colors.thumbsUpHoverBg,
+                            borderColor: colors.thumbsUpHoverBorder
                           }}
                         />
                         <IconButton
@@ -926,20 +909,20 @@ const KnowledgePage: React.FC = () => {
                           colorScheme="green"
                           variant="outline"
                           onClick={onFeedbackOpen}
-                          borderColor={thumbsDownBorder}
-                          color={thumbsDownColor}
+                          borderColor={colors.thumbsDownBorder}
+                          color={colors.thumbsDownColor}
                           _hover={{
-                            bg: thumbsDownHoverBg,
-                            borderColor: thumbsDownHoverBorder
+                            bg: colors.thumbsDownHoverBg,
+                            borderColor: colors.thumbsDownHoverBorder
                           }}
                 />
                       </HStack>
               </Flex>
                     <Box 
                       p={4} 
-                      bg={sourceBg} 
+                      bg={colors.sourceBg} 
                       borderRadius="md" 
-                      color={textColor}
+                      color={colors.textColor}
                       overflow="hidden"
                       wordBreak="break-word"
                       css={{
@@ -957,13 +940,13 @@ const KnowledgePage: React.FC = () => {
                         },
                         '& pre': {
                           overflowX: 'auto',
-                          backgroundColor: codeBlockBg,
+                          backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                           padding: '1rem',
                           borderRadius: '0.375rem',
                           marginBottom: '1rem'
                         },
                         '& code': {
-                          backgroundColor: codeBlockBg,
+                          backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                           padding: '0.125rem 0.25rem',
                           borderRadius: '0.25rem',
                           fontSize: '0.875rem'
@@ -977,7 +960,7 @@ const KnowledgePage: React.FC = () => {
                   {/* 信息来源 - 优化颜色 */}
                   {qaResult.sources && qaResult.sources.length > 0 && (
                     <Box>
-                      <Heading size="sm" mb={3} color={sourceHeadingColor}>信息来源</Heading>
+                      <Heading size="sm" mb={3} color={colors.sourceHeadingColor}>信息来源</Heading>
                       <Flex wrap="wrap" gap={2}>
                         {qaResult.sources.map((source, index) => (
                           <Box 
@@ -985,36 +968,39 @@ const KnowledgePage: React.FC = () => {
                             as="button"
                             py={1}
                             px={2}
-                            bg={sourceBadgeBg}
-                            borderRadius="full" 
+                            bg={colors.cardBg}
+                            border="1px solid" 
+                            borderColor={colors.borderColor}
+                            borderRadius="lg" 
                             cursor="pointer" 
                             onClick={() => viewSource(source)}
                             _hover={{
-                              bg: sourceCardHoverBg,
+                              borderColor: colors.sourceCardHoverBorder,
+                              bg: colors.sourceCardHoverBg,
                               transform: 'translateY(-1px)',
-                              shadow: 'md'
+                              shadow: colors.sourceCardShadow
                             }}
                             transition="all 0.2s ease"
                             display="inline-flex"
                             alignItems="center"
                             minW="fit-content"
-                            maxW="240px"
+                            maxW="300px"
                           >
-                            <HStack spacing={1} align="center">
-                              <FiFileText size={10} color={sourceBadgeColor} />
-                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
+                            <HStack spacing={1.5} align="center">
+                              <FiFileText size={12} color={colors.fileIconColor} />
+                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={colors.textColor} maxW="150px">
                                 {source.title || '未知文档'}
-                              </Text>
-                              <Badge size="xs" fontSize="9px" bg={categorySourceBadgeBg} color={categorySourceBadgeColor} borderRadius="full">
+                </Text>
+                              <Badge size="sm" fontSize="10px" bg={colors.sourceBadgeBg} color={colors.sourceBadgeColor}>
                                 {(source.score * 100).toFixed(0)}%
                               </Badge>
                               {source.page && (
-                                <Badge size="xs" fontSize="9px" bg={cardBg} color={textColor} borderRadius="full">
+                                <Badge size="sm" fontSize="10px" bg={colors.categorySourceBadgeBg} color={colors.categorySourceBadgeColor}>
                                   p{source.page}
                                 </Badge>
                               )}
                             </HStack>
-                          </Box>
+              </Box>
                         ))}
                       </Flex>
                     </Box>
@@ -1025,50 +1011,12 @@ const KnowledgePage: React.FC = () => {
               {/* 流式回答结果 */}
               {currentAnswer && !qaResult && (
                 <Box>
-                  <Flex justify="space-between" align="center" mb={2}>
-                    <Heading size="sm" color={aiAnswerHeadingColor}>AI回答 (实时)</Heading>
-                    <HStack>
-                      <Text fontSize="xs" color={mutedTextColor}>
-                        响应时间: {streamResponseTime}ms
-                      </Text>
-                      <Text fontSize="xs" color={mutedTextColor}>
-                        相似度: {(streamSimilarityScore * 100).toFixed(1)}%
-                      </Text>
-                      <IconButton
-                        aria-label="复制回答"
-                        icon={<FiClipboard />}
-                        size="xs"
-                        colorScheme="green"
-                        variant="outline"
-                        onClick={() => copyToClipboard(currentAnswer.replace(/\\n/g, '\n'))}
-                        borderColor={thumbsUpBorder}
-                        color={thumbsUpColor}
-                        _hover={{
-                          bg: thumbsUpHoverBg,
-                          borderColor: thumbsUpHoverBorder
-                        }}
-                      />
-                      <IconButton
-                        aria-label="反馈"
-                        icon={<FiThumbsUp />}
-                        size="xs"
-                        colorScheme="green"
-                        variant="outline"
-                        onClick={onFeedbackOpen}
-                        borderColor={thumbsDownBorder}
-                        color={thumbsDownColor}
-                        _hover={{
-                          bg: thumbsDownHoverBg,
-                          borderColor: thumbsDownHoverBorder
-                        }}
-                      />
-                    </HStack>
-                  </Flex>
+                  <Heading size="sm" mb={3} color={colors.streamAnswerHeadingColor}>AI回答 (实时)</Heading>
                   <Box 
                     p={4} 
-                    bg={sourceBg} 
+                    bg={colors.sourceBg} 
                     borderRadius="md" 
-                    color={textColor}
+                    color={colors.textColor}
                     overflow="hidden"
                     wordBreak="break-word"
                     css={{
@@ -1086,48 +1034,24 @@ const KnowledgePage: React.FC = () => {
                       },
                       '& pre': {
                         overflowX: 'auto',
-                        backgroundColor: codeBlockBg,
+                        backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                         padding: '1rem',
                         borderRadius: '0.375rem',
                         marginBottom: '1rem'
                       },
                       '& code': {
-                        backgroundColor: codeBlockBg,
+                        backgroundColor: useColorModeValue('#f7f7f7', '#2d2d2d'),
                         padding: '0.125rem 0.25rem',
                         borderRadius: '0.25rem',
                         fontSize: '0.875rem'
                       }
                     }}
                   >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code: ({ className, children, ...props }) => {
-                          const match = /language-(\w+)/.exec(className || '');
-                          const isInline = !match;
-                          return !isInline ? (
-                            <SyntaxHighlighter
-                              style={prism as any}
-                              language={match[1]}
-                              PreTag="div"
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        },
-                      }}
-                    >
-                      {currentAnswer.replace(/\\n/g, '\n')}
-                    </ReactMarkdown>
-                    
+                    <ReactMarkdown>{currentAnswer}</ReactMarkdown>
                     {isStreaming && (
                       <Text 
                         as="span" 
-                        color={streamAnswerTextColor} 
+                        color={colors.streamAnswerTextColor} 
                         fontWeight="bold"
                         sx={{
                           animation: 'blink 1s infinite',
@@ -1141,52 +1065,6 @@ const KnowledgePage: React.FC = () => {
                       </Text>
                     )}
                   </Box>
-
-                  {/* 信息来源 - 与普通问答保持一致的样式 */}
-                  {(!isStreaming && streamSources.length > 0) && (
-                    <Box mt={4}>
-                      <Heading size="sm" mb={3} color={sourceHeadingColor}>信息来源</Heading>
-                      <Flex wrap="wrap" gap={2}>
-                        {streamSources.map((source, index) => (
-                          <Box 
-                            key={index} 
-                            as="button"
-                            py={1}
-                            px={2}
-                            bg={sourceBadgeBg}
-                            borderRadius="full" 
-                            cursor="pointer" 
-                            onClick={() => viewSource(source)}
-                            _hover={{
-                              bg: sourceCardHoverBg,
-                              transform: 'translateY(-1px)',
-                              shadow: 'md'
-                            }}
-                            transition="all 0.2s ease"
-                            display="inline-flex"
-                            alignItems="center"
-                            minW="fit-content"
-                            maxW="240px"
-                          >
-                            <HStack spacing={1} align="center">
-                              <FiFileText size={10} color={sourceBadgeColor} />
-                              <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
-                                {source.title || '未知文档'}
-                              </Text>
-                              <Badge size="xs" fontSize="9px" bg={categorySourceBadgeBg} color={categorySourceBadgeColor} borderRadius="full">
-                                {(source.score * 100).toFixed(0)}%
-                              </Badge>
-                              {source.page && (
-                                <Badge size="xs" fontSize="9px" bg={cardBg} color={textColor} borderRadius="full">
-                                  p{source.page}
-                                </Badge>
-                              )}
-                            </HStack>
-                          </Box>
-                        ))}
-                      </Flex>
-                    </Box>
-                  )}
                 </Box>
               )}
             </CardBody>
@@ -1195,10 +1073,10 @@ const KnowledgePage: React.FC = () => {
 
         {/* Tabs区域 - 优化颜色 */}
         <Tabs colorScheme="blue">
-          <TabList borderColor={borderColor}>
-            <Tab color={mutedTextColor} _selected={{ color: tabSelectedColor, borderColor: tabSelectedBorder }}>最近提问</Tab>
-            <Tab color={mutedTextColor} _selected={{ color: tabSelectedColor, borderColor: tabSelectedBorder }}>热门问题</Tab>
-            <Tab color={mutedTextColor} _selected={{ color: tabSelectedColor, borderColor: tabSelectedBorder }}>知识库分类</Tab>
+          <TabList borderColor={colors.borderColor}>
+            <Tab color={colors.mutedTextColor} _selected={{ color: colors.tabSelectedColor, borderColor: colors.tabSelectedBorder }}>最近提问</Tab>
+            <Tab color={colors.mutedTextColor} _selected={{ color: colors.tabSelectedColor, borderColor: colors.tabSelectedBorder }}>热门问题</Tab>
+            <Tab color={colors.mutedTextColor} _selected={{ color: colors.tabSelectedColor, borderColor: colors.tabSelectedBorder }}>知识库分类</Tab>
           </TabList>
 
           <TabPanels>

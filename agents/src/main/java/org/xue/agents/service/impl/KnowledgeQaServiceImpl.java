@@ -191,7 +191,15 @@ public class KnowledgeQaServiceImpl implements KnowledgeQaService {
                         .doOnNext(chunk -> {
                             log.debug("接收到流式内容块: {}", chunk);
                             fullAnswer.append(chunk);
-                            sink.next(chunk);
+                            
+                            // 处理换行符：确保换行符能正确传输到前端
+                            String processedChunk = chunk;
+                            if (chunk != null) {
+                                // 将可能的换行符规范化
+                                processedChunk = chunk.replace("\n", "\\n");
+                            }
+                            
+                            sink.next(processedChunk);
                         })
                         .doOnComplete(() -> {
                             try {
