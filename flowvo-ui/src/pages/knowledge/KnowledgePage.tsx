@@ -299,6 +299,10 @@ const KnowledgePage: React.FC = () => {
   // 代码块背景颜色 - 修复Hooks在CSS中使用的问题
   const codeBlockBg = useColorModeValue('#f7f7f7', '#2d2d2d');
   
+  // 相似度Badge颜色 - 橙色主题
+  const similarityBadgeBg = useColorModeValue('orange.100', 'orange.800');
+  const similarityBadgeColor = useColorModeValue('orange.700', 'orange.200');
+  
   // 获取Badge颜色的函数 - 现在不包含Hooks调用
   const getBadgeColors = (status: string) => {
     const colorKey = getStatusColor(status);
@@ -666,29 +670,33 @@ const KnowledgePage: React.FC = () => {
                 zIndex={2}
               >
                 <Menu>
-                  <MenuButton
-                    as={Button}
-                    variant="ghost"
-                    size="sm"
-                    rightIcon={<FiChevronDown />}
-                    minW="auto"
-                    px={2}
-                    h="auto"
-                    color={placeholderColor}
-                    _hover={{
-                      bg: placeholderHoverBg,
-                      color: placeholderHoverColor
-                    }}
-                    _active={{
-                      bg: placeholderActiveBg
-                    }}
-                    fontSize="sm"
-                  >
-                    {selectedCategory 
+                  <Tooltip 
+                    label={selectedCategory 
                       ? categories.find(cat => cat.id === selectedCategory)?.name || '全部分类'
                       : '全部分类'
-                    }
-                  </MenuButton>
+                    } 
+                    bg={tooltipBg} 
+                    color={tooltipColor}
+                  >
+                    <MenuButton
+                      as={IconButton}
+                      icon={<FiChevronDown />}
+                      variant="ghost"
+                      size="sm"
+                      minW="auto"
+                      h="32px"
+                      w="32px"
+                      isRound
+                      color={placeholderColor}
+                      _hover={{
+                        bg: placeholderHoverBg,
+                        color: placeholderHoverColor
+                      }}
+                      _active={{
+                        bg: placeholderActiveBg
+                      }}
+                    />
+                  </Tooltip>
                   <MenuList
                     bg={categoryBg}
                     borderColor={borderColor}
@@ -729,7 +737,7 @@ const KnowledgePage: React.FC = () => {
                     bg="transparent"
                     border="none"
                     borderRadius="full"
-                    pl="120px"
+                    pl="60px"
                     pr="160px"
                     h="44px"
                     fontSize="16px"
@@ -983,18 +991,19 @@ const KnowledgePage: React.FC = () => {
                           <Box 
                             key={index} 
                             as="button"
-                            py={1}
+                            py={0.5}
                             px={2}
                             bg={sourceBadgeBg}
+                            border="1px solid"
+                            borderColor="transparent"
                             borderRadius="full" 
                             cursor="pointer" 
                             onClick={() => viewSource(source)}
                             _hover={{
-                              bg: sourceCardHoverBg,
-                              transform: 'translateY(-1px)',
+                              borderColor: hotCardHoverBorder,
                               shadow: 'md'
                             }}
-                            transition="all 0.2s ease"
+                            transition="all 0.2s"
                             display="inline-flex"
                             alignItems="center"
                             minW="fit-content"
@@ -1005,7 +1014,7 @@ const KnowledgePage: React.FC = () => {
                               <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
                                 {source.title || '未知文档'}
                               </Text>
-                              <Badge size="xs" fontSize="9px" bg={categorySourceBadgeBg} color={categorySourceBadgeColor} borderRadius="full">
+                              <Badge size="xs" fontSize="9px" bg={similarityBadgeBg} color={similarityBadgeColor} borderRadius="full">
                                 {(source.score * 100).toFixed(0)}%
                               </Badge>
                               {source.page && (
@@ -1151,18 +1160,19 @@ const KnowledgePage: React.FC = () => {
                           <Box 
                             key={index} 
                             as="button"
-                            py={1}
+                            py={0.5}
                             px={2}
                             bg={sourceBadgeBg}
+                            border="1px solid"
+                            borderColor="transparent"
                             borderRadius="full" 
                             cursor="pointer" 
                             onClick={() => viewSource(source)}
                             _hover={{
-                              bg: sourceCardHoverBg,
-                              transform: 'translateY(-1px)',
+                              borderColor: hotCardHoverBorder,
                               shadow: 'md'
                             }}
-                            transition="all 0.2s ease"
+                            transition="all 0.2s"
                             display="inline-flex"
                             alignItems="center"
                             minW="fit-content"
@@ -1173,7 +1183,7 @@ const KnowledgePage: React.FC = () => {
                               <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
                                 {source.title || '未知文档'}
                               </Text>
-                              <Badge size="xs" fontSize="9px" bg={categorySourceBadgeBg} color={categorySourceBadgeColor} borderRadius="full">
+                              <Badge size="xs" fontSize="9px" bg={similarityBadgeBg} color={similarityBadgeColor} borderRadius="full">
                                 {(source.score * 100).toFixed(0)}%
                               </Badge>
                               {source.page && (

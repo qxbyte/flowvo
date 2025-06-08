@@ -1,5 +1,121 @@
 # CHANGELOG - 项目更新日志
 
+## v1.6.36 - 2025-01-30
+### 🎨 UI调整 - 搜索框间距和分类选择图标优化
+- **搜索框间距优化**：
+  - **减少左侧留白**：输入框左侧padding从`pl="120px"`调整为`pl="60px"`
+  - 解决用户反馈的"搜索框输入文本前留白太多"问题
+  - 保持合适的视觉间距，确保与左侧分类选择按钮不冲突
+
+- **分类选择图标恢复**：
+  - **图标更换**：从文件夹图标`<FiFolder />`改回向下箭头`<FiChevronDown />`
+  - 响应用户偏好，使用更直观的下拉选择器图标
+  - 保持图标按钮的所有功能特性（工具提示、圆形设计、32x32px规格）
+
+- **技术实现**：
+  ```typescript
+  // 搜索框左侧间距调整
+  <Input pl="60px" /* 其他属性保持不变 */ />
+  
+  // 分类选择图标恢复
+  <MenuButton
+    as={IconButton}
+    icon={<FiChevronDown />}  // 恢复下拉箭头
+    isRound
+    h="32px" w="32px"
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/pages/knowledge/KnowledgePage.tsx` - 调整搜索框间距和分类选择图标
+
+- **用户体验**：
+  - ✅ 搜索框左侧留白减少，输入区域更宽裕
+  - ✅ 分类选择使用更直观的向下箭头图标
+  - ✅ 保持搜索框整体美观性和功能性
+  - ✅ 图标按钮交互和工具提示功能完整
+  - ✅ 在暗色和浅色模式下都有良好显示效果
+
+## v1.6.35 - 2025-01-30
+### 🎨 UI优化 - 信息来源高度调整和分类选择图标化
+- **信息来源元素优化**：
+  - **高度减小**：垂直内边距从`py={1}`调整为`py={0.5}`，使元素更紧凑
+  - **相似度Badge颜色改进**：从绿色主题改为橙色主题，更好地区分不同类型的信息
+    - 浅色模式：`orange.100`背景，`orange.700`文字
+    - 暗色模式：`orange.800`背景，`orange.200`文字
+  - 确保在两种模式下都有良好的可读性和视觉对比
+
+- **搜索框分类选择简化**：
+  - **图标化设计**：将文字按钮改为文件夹图标`<FiFolder />`
+  - **工具提示显示**：悬浮时显示当前选择的分类名称
+  - **圆形按钮**：使用`isRound`属性，与其他图标按钮保持一致
+  - **尺寸统一**：32x32px规格，与流式模式按钮相同
+
+- **技术实现**：
+  ```typescript
+  // 相似度Badge新颜色
+  const similarityBadgeBg = useColorModeValue('orange.100', 'orange.800');
+  const similarityBadgeColor = useColorModeValue('orange.700', 'orange.200');
+  
+  // 分类选择图标化
+  <Tooltip label={当前分类名称}>
+    <MenuButton as={IconButton} icon={<FiFolder />} isRound />
+  </Tooltip>
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/pages/knowledge/KnowledgePage.tsx` - 信息来源样式和分类选择界面优化
+
+- **用户体验**：
+  - ✅ 信息来源元素更紧凑，占用高度减少
+  - ✅ 橙色相似度标签，视觉层次更清晰
+  - ✅ 分类选择更简洁，只显示图标
+  - ✅ 工具提示显示当前选择状态
+  - ✅ 统一的圆形图标按钮设计
+  - ✅ 保持所有原有功能和响应性
+
+## v1.6.34 - 2025-01-30
+### 🎨 UI统一 - 信息来源悬浮效果与热门问题保持一致
+- **悬浮效果统一**：将信息来源元素的鼠标悬浮效果调整为与热门问题相同
+  - **移除背景色变化**：悬浮时不再改变背景色（`bg: sourceCardHoverBg`）
+  - **移除位移动画**：取消`transform: 'translateY(-1px)'`向上移动效果
+  - **添加边框效果**：添加透明边框，悬浮时显示`hotCardHoverBorder`颜色
+  - **保持阴影效果**：继续使用`shadow: 'md'`阴影效果
+
+- **技术实现**：
+  ```typescript
+  // 修改前：复杂的悬浮效果
+  _hover={{
+    bg: sourceCardHoverBg,
+    transform: 'translateY(-1px)',
+    shadow: 'md'
+  }}
+  
+  // 修改后：与热门问题一致的简洁效果
+  border="1px solid"
+  borderColor="transparent"
+  _hover={{
+    borderColor: hotCardHoverBorder,
+    shadow: 'md'
+  }}
+  ```
+
+- **一致性改进**：
+  - 过渡动画时间：统一为`transition="all 0.2s"`
+  - 边框颜色：使用相同的`hotCardHoverBorder`变量
+  - 阴影效果：都使用`shadow: 'md'`
+  - 确保普通问答和流式问答的信息来源悬浮效果完全一致
+
+- **修复文件**：
+  - `flowvo-ui/src/pages/knowledge/KnowledgePage.tsx` - 统一信息来源悬浮效果
+
+- **用户体验**：
+  - ✅ 信息来源悬浮效果与热门问题保持一致
+  - ✅ 更简洁的交互动画，减少视觉干扰
+  - ✅ 统一的边框颜色变化和阴影效果
+  - ✅ 保持标签样式的美观性和功能性
+  - ✅ 在暗色和浅色模式下都有良好的视觉反馈
+
 ## v1.6.33 - 2025-01-30  
 ### 🎨 UI优化 - 信息来源标签样式美化
 - **样式改进**：优化信息来源元素的视觉效果，使其更紧凑、美观
