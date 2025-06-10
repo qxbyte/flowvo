@@ -541,7 +541,7 @@ const KnowledgePage: React.FC = () => {
     try {
       if (qaResult) {
         // 普通问答反馈
-        await knowledgeQaApi.submitFeedback(qaResult.id, feedbackRating, feedbackComment);
+      await knowledgeQaApi.submitFeedback(qaResult.id, feedbackRating, feedbackComment);
       } else {
         // 流式回答反馈 - 这里可能需要创建一个临时记录或使用其他方式
         // 暂时使用一个占位符ID，实际应该根据后端实现调整
@@ -678,23 +678,23 @@ const KnowledgePage: React.FC = () => {
                     bg={tooltipBg} 
                     color={tooltipColor}
                   >
-                    <MenuButton
+                  <MenuButton
                       as={IconButton}
                       icon={<FiChevronDown />}
-                      variant="ghost"
-                      size="sm"
-                      minW="auto"
+                    variant="ghost"
+                    size="sm"
+                    minW="auto"
                       h="32px"
                       w="32px"
                       isRound
-                      color={placeholderColor}
-                      _hover={{
-                        bg: placeholderHoverBg,
-                        color: placeholderHoverColor
-                      }}
-                      _active={{
-                        bg: placeholderActiveBg
-                      }}
+                    color={placeholderColor}
+                    _hover={{
+                      bg: placeholderHoverBg,
+                      color: placeholderHoverColor
+                    }}
+                    _active={{
+                      bg: placeholderActiveBg
+                    }}
                     />
                   </Tooltip>
                   <MenuList
@@ -838,46 +838,46 @@ const KnowledgePage: React.FC = () => {
           <Box maxW="100%" overflow="hidden" mt={4}>
             <Flex justify="center" wrap="wrap" gap={4}>
               <VStack spacing={2} align="center" maxW="100%">
-                <Text fontSize="sm" color={mutedTextColor}>热门问题:</Text>
+              <Text fontSize="sm" color={mutedTextColor}>热门问题:</Text>
                 <Flex wrap="wrap" justify="center" gap={2} maxW="100%">
-                  {hotQuestions.slice(0, 3).map((q) => (
-                    <Tag 
-                      key={q.id}
-                      size="sm" 
-                      colorScheme="blue" 
-                      cursor="pointer"
-                      onClick={() => useHotQuestion(q.representativeQuestion)}
-                      borderRadius="full"
-                      bg={categoryBadgeBg}
-                      color={categoryBadgeColor}
-                      _hover={{
-                        bg: categoryBadgeHoverBg,
-                        color: categoryBadgeHoverColor,
-                        transform: 'translateY(-1px)'
-                      }}
-                      transition="all 0.2s ease"
+              {hotQuestions.slice(0, 3).map((q) => (
+                  <Tag 
+                  key={q.id}
+                    size="sm" 
+                    colorScheme="blue" 
+                    cursor="pointer"
+                  onClick={() => useHotQuestion(q.representativeQuestion)}
+                  borderRadius="full"
+                  bg={categoryBadgeBg}
+                  color={categoryBadgeColor}
+                  _hover={{
+                    bg: categoryBadgeHoverBg,
+                    color: categoryBadgeHoverColor,
+                    transform: 'translateY(-1px)'
+                  }}
+                  transition="all 0.2s ease"
                       maxW="200px"
                       textOverflow="ellipsis"
                       overflow="hidden"
                       whiteSpace="nowrap"
-                    >
+                  >
                       {q.representativeQuestion.length > 12 
                         ? q.representativeQuestion.substring(0, 12) + '...' 
-                        : q.representativeQuestion}
-                    </Tag>
-                  ))}
+                    : q.representativeQuestion}
+                  </Tag>
+                ))}
                 </Flex>
               </VStack>
             </Flex>
           </Box>
-          
-          {isStreamMode && (
+            
+            {isStreamMode && (
             <Flex justify="center" mt={2}>
               <HStack spacing={2}>
                 <FiClock color={clockColor} />
                 <Text fontSize="sm" color={streamModeTextColor}>流式回答模式已开启</Text>
               </HStack>
-            </Flex>
+              </Flex>
           )}
         </Box>
 
@@ -1004,7 +1004,7 @@ const KnowledgePage: React.FC = () => {
                             py={0.5}
                             px={2}
                             bg={sourceBadgeBg}
-                            border="1px solid"
+                            border="1px solid" 
                             borderColor="transparent"
                             borderRadius="full" 
                             cursor="pointer" 
@@ -1023,7 +1023,7 @@ const KnowledgePage: React.FC = () => {
                               <FiFileText size={10} color={sourceBadgeColor} />
                               <Text fontSize="xs" fontWeight="medium" noOfLines={1} color={sourceBadgeColor} maxW="120px">
                                 {source.title || '未知文档'}
-                              </Text>
+                </Text>
                               <Badge size="xs" fontSize="9px" bg={similarityBadgeBg} color={similarityBadgeColor} borderRadius="full">
                                 {(source.score * 100).toFixed(0)}%
                               </Badge>
@@ -1033,7 +1033,7 @@ const KnowledgePage: React.FC = () => {
                                 </Badge>
                               )}
                             </HStack>
-                          </Box>
+              </Box>
                         ))}
                       </Flex>
                     </Box>

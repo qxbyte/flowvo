@@ -3,19 +3,13 @@ import {
   Box,
   Flex,
   Input,
+  Textarea,
   IconButton,
   Text,
   VStack,
-  CloseButton,
   useColorModeValue,
-  Heading,
   Divider,
-  Fade,
   Tooltip,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
   Button,
   useToast,
   Popover,
@@ -34,9 +28,10 @@ import {
   ModalFooter,
   ModalBody,
   keyframes,
-  ScaleFade
+  ScaleFade,
+  Image
 } from '@chakra-ui/react';
-import { FiSend, FiChevronDown, FiPlusCircle, FiEdit2, FiTrash2, FiMessageSquare, FiCheck, FiX } from 'react-icons/fi';
+import { FiSend, FiChevronDown, FiPlusCircle, FiEdit2, FiTrash2, FiMessageSquare, FiCheck, FiX, FiImage, FiPaperclip, FiChevronUp, FiClock } from 'react-icons/fi';
 import ChatMessage from './ChatMessage';
 import TypewriterEffect from './TypewriterEffect';
 import { chatApi } from '../utils/api';
@@ -95,9 +90,10 @@ interface AIChatProps {
   isOpen: boolean;
   onClose: () => void;
   source?: string;
+  onToggle?: (isOpen: boolean) => void;
 }
 
-const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' }) => {
+const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business', onToggle }) => {
   // 使用source='business'，确保调用的是ChatController而非PixelChatController
   const [messages, setMessages] = useState<Message[]>([]);
   
@@ -110,24 +106,43 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [conversationToDelete, setConversationToDelete] = useState<Conversation | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const editableInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [selectedMcp, setSelectedMcp] = useState('MCP Server');
+  const [isMcpDropdownOpen, setIsMcpDropdownOpen] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 450, height: window.innerHeight - 120 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState<string>('');
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ url: string; index: number } | null>(null);
+  
+  const mcpOptions = [
+    'MCP Server',
+    'File System MCP',
+    'MySQL MCP',
+    'MongoDB MCP',
+    'Redis MCP'
+  ];
   
   // Junie风格的颜色配置
   const bgColor = useColorModeValue('white', '#19191c');
   const borderColor = useColorModeValue('gray.200', '#303033');
   const subTextColor = useColorModeValue('gray.600', 'rgba(255,255,255,0.7)');
   
-  // Junie的绿色主题色
-  const primaryColor = '#47e054';
-  const primaryFog = 'rgba(71, 224, 84, 0.2)';
+  // Junie绿色主题色
+  const primaryColor = useColorModeValue('green.600', 'green.300');
+  const primaryHoverColor = useColorModeValue('green.700', 'green.200');
+  const primaryBgColor = useColorModeValue('green.50', 'green.900');
+  const primaryBorderColor = useColorModeValue('green.300', 'green.600');
   
-  const hoverBg = useColorModeValue('gray.50', '#303033');
-  const inputBg = useColorModeValue('white', '#19191c');
+  // 主题色配置（已移至内联使用）
   
   const [loading, setLoading] = useState(false);
   
@@ -171,12 +186,14 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
     setIsDragging(false);
   };
 
-  // 每次打开窗口时重置位置
+  // 每次打开窗口时重置位置并通知父组件
   useEffect(() => {
     if (isOpen) {
       setPosition({ x: 0, y: 0 });
+      setWindowSize({ width: 450, height: window.innerHeight - 120 });
     }
-  }, [isOpen]);
+    onToggle?.(isOpen);
+  }, [isOpen, onToggle]);
 
   useEffect(() => {
     if (isDragging) {
@@ -212,9 +229,9 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
   }, [isOpen]);
   
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && textareaRef.current) {
       setTimeout(() => {
-        inputRef.current?.focus();
+        textareaRef.current?.focus();
       }, 100);
     }
   }, [isOpen]);
@@ -744,6 +761,171 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
     setNewConversationTitle('');
   };
   
+  // 处理文件上传
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setAttachments(prev => [...prev, ...Array.from(files)]);
+    }
+  };
+  
+  // 删除附件
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // 处理粘贴事件
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    const files: File[] = [];
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+    
+    if (files.length > 0) {
+      setAttachments(prev => [...prev, ...files]);
+    }
+  };
+  
+  // 处理拖拽事件
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+  
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+  
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      setAttachments(prev => [...prev, ...files]);
+    }
+  };
+  
+  // 自动调整输入框高度
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 150; // 最大高度限制
+      const minHeight = 48; // 最小高度限制
+      textareaRef.current.style.height = `${Math.max(minHeight, Math.min(scrollHeight, maxHeight))}px`;
+    }
+  };
+  
+  // 监听输入变化调整高度
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputValue]);
+  
+  // 获取鼠标位置相对于窗口边缘的调整方向
+  const getResizeDirection = (e: React.MouseEvent, rect: DOMRect) => {
+    const { clientX, clientY } = e;
+    const { left, top, right, bottom } = rect;
+    const threshold = 5; // 边框检测阈值
+    
+    let direction = '';
+    if (clientY - top <= threshold) direction += 'n';
+    if (bottom - clientY <= threshold) direction += 's';
+    if (clientX - left <= threshold) direction += 'w';
+    if (right - clientX <= threshold) direction += 'e';
+    
+    return direction;
+  };
+  
+  // 获取对应的鼠标指针样式
+  const getCursorStyle = (direction: string) => {
+    switch (direction) {
+      case 'n':
+      case 's':
+        return 'ns-resize';
+      case 'e':
+      case 'w':
+        return 'ew-resize';
+      case 'ne':
+      case 'sw':
+        return 'nesw-resize';
+      case 'nw':
+      case 'se':
+        return 'nwse-resize';
+      default:
+        return 'default';
+    }
+  };
+  
+  // 处理窗口大小调整
+  const handleResizeStart = (e: React.MouseEvent) => {
+    if (resizeRef.current) {
+      const rect = resizeRef.current.getBoundingClientRect();
+      const direction = getResizeDirection(e, rect);
+      if (direction) {
+        setIsResizing(true);
+        setResizeDirection(direction);
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }
+  };
+  
+  const handleResize = (e: MouseEvent) => {
+    if (isResizing && resizeRef.current) {
+      const rect = resizeRef.current.getBoundingClientRect();
+      let newWidth = windowSize.width;
+      let newHeight = windowSize.height;
+      
+      // 根据调整方向计算新尺寸
+      if (resizeDirection.includes('e')) {
+        newWidth = Math.max(350, e.clientX - rect.left);
+      }
+      if (resizeDirection.includes('w')) {
+        newWidth = Math.max(350, rect.right - e.clientX);
+      }
+      if (resizeDirection.includes('s')) {
+        newHeight = Math.max(300, e.clientY - rect.top);
+      }
+      if (resizeDirection.includes('n')) {
+        newHeight = Math.max(300, rect.bottom - e.clientY);
+      }
+      
+      setWindowSize({ width: newWidth, height: newHeight });
+    }
+  };
+  
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+    setResizeDirection('');
+  };
+  
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleResize);
+      window.addEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = getCursorStyle(resizeDirection);
+    } else {
+      window.removeEventListener('mousemove', handleResize);
+      window.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'default';
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleResize);
+      window.removeEventListener('mouseup', handleResizeEnd);
+      document.body.style.cursor = 'default';
+    };
+  }, [isResizing, resizeDirection]);
+  
   if (!isOpen) return null;
   
   return (
@@ -759,25 +941,36 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
             : `${macScaleOutKeyframes} 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)`,
         }}
       >
-      <Box
-        position="fixed"
-        bottom="100px"
-        right="24px"
-          width={{ base: "80%", sm: "400px" }}
-          height={{ base: "70vh", sm: "75vh" }}
-          maxHeight={{ base: "500px", sm: "650px" }}
-          maxWidth="calc(100vw - 48px)"
-        bg={bgColor}
+        <Box
+          ref={resizeRef}
+          position="fixed"
+          bottom="20px"
+          right="20px"
+          width={`${windowSize.width}px`}
+          height={`${windowSize.height}px`}
+          bg={bgColor}
           boxShadow="xl"
-        borderRadius="16px"
-        zIndex={998}
-        overflow="hidden"
-        display="flex"
-        flexDirection="column"
-          borderWidth="2px"
+          borderRadius="12px"
+          zIndex={998}
+          overflow="hidden"
+          display="flex"
+          flexDirection="column"
+          borderWidth="1px"
           borderColor={isTyping ? "transparent" : borderColor}
           transform={`translate(${position.x}px, ${position.y}px)`}
-          transition="all 0.2s ease"
+          transition={isDragging || isResizing ? "none" : "all 0.2s ease"}
+          onMouseMove={(e) => {
+            if (!isResizing && resizeRef.current) {
+              const rect = resizeRef.current.getBoundingClientRect();
+              const direction = getResizeDirection(e, rect);
+              if (direction) {
+                e.currentTarget.style.cursor = getCursorStyle(direction);
+              } else {
+                e.currentTarget.style.cursor = 'default';
+              }
+            }
+          }}
+          onMouseDown={handleResizeStart}
           sx={{
             ...(isTyping && {
               borderWidth: '0',
@@ -802,146 +995,184 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
             />
           )}
           
-          {/* 聊天头部 - 可拖动区域 */}
-        <Flex 
+          {/* 头部工具栏 */}
+          <Flex 
             p={2} 
-          borderBottomWidth="1px" 
-          borderColor={borderColor} 
-          justify="space-between" 
-          align="center"
+            borderBottomWidth="1px" 
+            borderColor={borderColor} 
+            justify="space-between" 
+            align="center"
             cursor="move"
             ref={dragRef}
             onMouseDown={handleMouseDown}
             userSelect="none"
           >
-            {/* 对话选择下拉框 */}
-            <Popover
-              isOpen={isDropdownOpen}
-              onClose={() => setIsDropdownOpen(false)}
-              placement="bottom-start"
-              closeOnBlur={true}
-            >
-              <PopoverTrigger>
-                <Button 
-                  rightIcon={loading ? <Spinner size="sm" /> : <FiChevronDown />} 
+            <HStack spacing={1}>
+              {/* 新建对话图标按钮 */}
+              <IconButton
+                size="xs"
                 variant="ghost"
-                  fontSize="sm" 
-                  fontWeight="bold"
-                  onClick={(e) => {
-                    e.stopPropagation(); // 防止触发拖动
-                    setIsDropdownOpen(!isDropdownOpen);
-                  }}
-                  textAlign="left"
-                  width="auto"
-                  maxW="250px"
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                  isLoading={loading}
-                size="sm"
-                >
-                  {currentConversation?.title || 'AI对话'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent width="250px" boxShadow="lg">
-                <PopoverArrow />
-                <PopoverBody p={0}>
-                  <VStack align="stretch" spacing={0} maxH="300px" overflowY="auto">
-                    {/* 新建对话按钮 */}
-                    {isCreatingConversation ? (
-                      <Flex p={2} borderBottomWidth="1px" borderColor={borderColor}>
-                        <InputGroup size="sm">
-                          <Input 
-                            placeholder="输入对话名称" 
-                            value={newConversationTitle}
-                            onChange={(e) => setNewConversationTitle(e.target.value)}
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') submitNewConversation();
-                              if (e.key === 'Escape') cancelNewConversation();
-                            }}
-                            fontSize="sm"
+                icon={<FiPlusCircle size={14} />}
+                aria-label="新建对话"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCreateConversation();
+                }}
+                color={primaryColor}
+                _hover={{
+                  color: primaryHoverColor
+                }}
+                _focus={{
+                  boxShadow: `0 0 0 1px ${primaryBorderColor}`
+                }}
               />
-                          <InputRightElement width="4.5rem">
-                            <HStack spacing={1}>
-                              <IconButton
-                                aria-label="确认"
-                                icon={<FiCheck />}
-                                size="xs"
-                                onClick={submitNewConversation}
-                                isLoading={loading}
-                              />
-                              <IconButton
-                                aria-label="取消"
-                                icon={<FiX />}
-                                size="xs"
-                                onClick={cancelNewConversation}
-                                isDisabled={loading}
-                              />
-                            </HStack>
-                          </InputRightElement>
-                        </InputGroup>
-          </Flex>
-                    ) : (
-                      <Flex 
-                        p={2} 
-                        cursor="pointer" 
-                        _hover={{ bg: hoverBg }}
-                        align="center"
-                        onClick={handleCreateConversation}
-            borderBottomWidth="1px"
-            borderColor={borderColor}
-                      >
-                        <FiPlusCircle size={15} />
-                        <Text ml={2} fontWeight="medium" fontSize="sm">新建对话</Text>
-                      </Flex>
-                    )}
-                    
-                    {/* 对话列表加载中 */}
-                    {loading && conversations.length === 0 ? (
-                      <Flex justify="center" py={4}>
-                        <Spinner size="sm" />
-                        <Text ml={2} fontSize="sm" color={subTextColor}>加载对话列表...</Text>
-                      </Flex>
-                    ) : null}
-                    
-                    {/* 对话列表为空提示 */}
-                    {!loading && conversations.length === 0 ? (
-                      <Flex direction="column" align="center" justify="center" py={4} px={2} textAlign="center">
-                                        <Text fontSize="sm" color={subTextColor}>没有对话记录</Text>
-                <Text fontSize="xs" color={subTextColor} mt={1}>点击"新建对话"创建您的第一个对话</Text>
-            </Flex>
-                    ) : null}
-                    
-                    {/* 对话列表 */}
-                    {conversations.map(conv => (
-                  <Flex
-                    key={conv.id}
-                    p={2}
-                        cursor="pointer"
-                                    bg={currentConversation?.id === conv.id ? primaryFog : 'transparent'}
-                _hover={{ bg: currentConversation?.id === conv.id ? primaryFog : hoverBg }}
-                        align="center"
-                    justify="space-between"
-                        borderBottomWidth="1px"
-                        borderColor={borderColor}
-                    onClick={() => {
-                          if (editingConversationId !== conv.id) {
-                      setCurrentConversation(conv);
-                      fetchMessages(conv.id);
-                            setIsDropdownOpen(false);
-                          }
+
+              {/* 历史记录图标按钮 */}
+              <Popover
+                isOpen={isDropdownOpen}
+                onClose={() => setIsDropdownOpen(false)}
+                placement="bottom-start"
+                closeOnBlur={true}
+              >
+                <PopoverTrigger>
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<FiClock size={14} />}
+                    aria-label="历史记录"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsDropdownOpen(!isDropdownOpen);
                     }}
-                  >
-                        <Flex align="center" flex={1} overflow="hidden">
-                          <FiMessageSquare size={14} style={{ flexShrink: 0 }} />
-                          {editingConversationId === conv.id ? (
-                            <InputGroup size="sm" ml={2} flex={1}>
+                    color={useColorModeValue('gray.600', 'gray.300')}
+                    _hover={{
+                      color: useColorModeValue('gray.700', 'gray.200')
+                    }}
+                    _focus={{
+                      boxShadow: `0 0 0 1px ${useColorModeValue('gray.300', 'gray.600')}`
+                    }}
+                    isLoading={loading}
+                  />
+                </PopoverTrigger>
+                <PopoverContent width="280px" boxShadow="xl" borderRadius="10px">
+                  <PopoverArrow />
+                  <PopoverBody p={0}>
+                    <VStack align="stretch" spacing={0} maxH="350px" overflowY="auto">
+                      {/* 新建对话输入区 */}
+                      {isCreatingConversation && (
+                        <Box p={3} borderBottomWidth="1px" borderColor={borderColor}>
+                          <Text fontSize="xs" fontWeight="semibold" mb={2} color={useColorModeValue('gray.700', 'gray.200')}>
+                            创建新对话
+                          </Text>
+                          <InputGroup size="xs">
+                                                    <Input 
+                          placeholder="输入对话标题（可选）" 
+                          value={newConversationTitle}
+                          onChange={(e) => setNewConversationTitle(e.target.value)}
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') submitNewConversation();
+                            if (e.key === 'Escape') cancelNewConversation();
+                          }}
+                          fontSize="xs"
+                          borderRadius="6px"
+                          _focus={{
+                            borderColor: primaryBorderColor,
+                            boxShadow: `0 0 0 1px ${primaryBorderColor}`
+                          }}
+                        />
+                            <InputRightElement width="3.5rem">
+                              <HStack spacing={0.5}>
+                                <IconButton
+                                  aria-label="确认创建"
+                                  icon={<FiCheck size={10} />}
+                                  size="2xs"
+                                  onClick={submitNewConversation}
+                                  isLoading={loading}
+                                  colorScheme="green"
+                                  _focus={{
+                                    boxShadow: `0 0 0 1px ${primaryBorderColor}`
+                                  }}
+                                />
+                                <IconButton
+                                  aria-label="取消"
+                                  icon={<FiX size={10} />}
+                                  size="2xs"
+                                  onClick={cancelNewConversation}
+                                  isDisabled={loading}
+                                  _focus={{
+                                    boxShadow: `0 0 0 1px ${useColorModeValue('gray.300', 'gray.600')}`
+                                  }}
+                                />
+                              </HStack>
+                            </InputRightElement>
+                          </InputGroup>
+                        </Box>
+                      )}
+                      
+                      {/* 对话列表标题 */}
+                      <Box p={2} borderBottomWidth="1px" borderColor={borderColor}>
+                        <Text fontSize="xs" fontWeight="semibold" color={useColorModeValue('gray.700', 'gray.200')}>
+                          对话历史 {conversations.length > 0 && `(${conversations.length})`}
+                        </Text>
+                      </Box>
+                      
+                      {/* 加载状态 */}
+                      {loading && conversations.length === 0 ? (
+                        <Flex justify="center" py={4}>
+                          <Spinner size="xs" color="blue.500" />
+                          <Text ml={2} fontSize="xs" color={subTextColor}>加载中...</Text>
+                        </Flex>
+                      ) : null}
+                      
+                      {/* 空状态 */}
+                      {!loading && conversations.length === 0 ? (
+                        <Flex direction="column" align="center" justify="center" py={6} px={3}>
+                          <Text fontSize="xs" color={subTextColor} mb={1}>暂无对话记录</Text>
+                          <Text fontSize="2xs" color={subTextColor}>创建新对话开始使用</Text>
+                        </Flex>
+                      ) : null}
+                      
+                      {/* 对话列表 */}
+                      {conversations.map(conv => (
+                        <Flex
+                          key={conv.id}
+                          p={2}
+                          cursor="pointer"
+                          bg={currentConversation?.id === conv.id ? primaryBgColor : 'transparent'}
+                                                      _hover={{ 
+                              bg: currentConversation?.id === conv.id 
+                                ? useColorModeValue('green.100', 'green.800')
+                                : useColorModeValue('gray.50', 'gray.700')
+                            }}
+                          align="center"
+                          justify="space-between"
+                          borderBottomWidth="1px"
+                          borderColor={borderColor}
+                          onClick={() => {
+                            if (editingConversationId !== conv.id) {
+                              setCurrentConversation(conv);
+                              fetchMessages(conv.id);
+                              setIsDropdownOpen(false);
+                            }
+                          }}
+                        >
+                          <Flex align="center" flex={1} overflow="hidden">
+                            <Box 
+                              w="4px" 
+                              h="4px" 
+                              borderRadius="full" 
+                              bg={currentConversation?.id === conv.id ? "blue.500" : "gray.400"}
+                              mr={2}
+                              flexShrink={0}
+                            />
+                            {editingConversationId === conv.id ? (
                               <Input 
                                 defaultValue={conv.title}
                                 ref={editableInputRef}
                                 autoFocus
-                                fontSize="sm"
+                                fontSize="xs"
+                                size="xs"
                                 onBlur={(e) => {
                                   if (e.target.value.trim()) {
                                     renameConversation(conv.id, e.target.value);
@@ -961,98 +1192,134 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                                     setEditingConversationId(null);
                                   }
                                 }}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                            </InputGroup>
-                          ) : (
-                            <Text ml={2} noOfLines={1} flex={1} fontSize="sm">{conv.title}</Text>
-                          )}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <VStack align="start" spacing={0} flex={1} overflow="hidden">
+                                <Text 
+                                  noOfLines={1} 
+                                  fontSize="xs" 
+                                  fontWeight={currentConversation?.id === conv.id ? "medium" : "normal"}
+                                  color={currentConversation?.id === conv.id ? "blue.600" : useColorModeValue('gray.800', 'gray.200')}
+                                >
+                                  {conv.title}
+                                </Text>
+                                <Text fontSize="2xs" color={subTextColor}>
+                                  {new Date(conv.createdAt).toLocaleDateString()}
+                                </Text>
+                              </VStack>
+                            )}
+                          </Flex>
+                          
+                          <HStack spacing={0.5}>
+                            <Tooltip label="重命名">
+                              <IconButton
+                                aria-label="重命名"
+                                icon={<FiEdit2 size={10} />}
+                                size="2xs"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingConversationId(conv.id);
+                                  setTimeout(() => {
+                                    editableInputRef.current?.focus();
+                                  }, 0);
+                                }}
+                              />
+                            </Tooltip>
+                            <Tooltip label="删除">
+                              <IconButton
+                                aria-label="删除"
+                                icon={<FiTrash2 size={10} />}
+                                size="2xs"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConversationToDelete(conv);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                _hover={{
+                                  color: 'red.500'
+                                }}
+                              />
+                            </Tooltip>
+                          </HStack>
                         </Flex>
-                        
-                        <HStack spacing={1} opacity={0.7}>
-                          <Tooltip label="重命名" placement="top">
-                            <IconButton
-                              aria-label="重命名"
-                              icon={<FiEdit2 size={12} />}
-                              size="xs"
-                              variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                                setEditingConversationId(conv.id);
-                                setTimeout(() => {
-                                  editableInputRef.current?.focus();
-                                }, 0);
-                              }}
-                            />
-                          </Tooltip>
-                          <Tooltip label="删除" placement="top">
-                            <IconButton
-                              aria-label="删除"
-                              icon={<FiTrash2 size={12} />}
-                              size="xs"
-                              variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                                setConversationToDelete(conv);
-                                setIsDeleteDialogOpen(true);
-                          }}
-                            />
-                          </Tooltip>
-                        </HStack>
-                  </Flex>
-                    ))}
-            </VStack>
-                </PopoverBody>
-              </PopoverContent>
-            </Popover>
+                      ))}
+                    </VStack>
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+            </HStack>
             
-            <CloseButton onClick={onClose} size="sm" />
+            <IconButton
+              onClick={onClose}
+              aria-label="关闭"
+              icon={<FiX size={14} />}
+              size="xs"
+              variant="ghost"
+              color={useColorModeValue('gray.500', 'gray.400')}
+              _hover={{
+                color: useColorModeValue('gray.700', 'gray.200')
+              }}
+              _focus={{
+                boxShadow: `0 0 0 1px ${useColorModeValue('gray.300', 'gray.600')}`
+              }}
+            />
           </Flex>
         
-        {/* 聊天消息区域 */}
-        <Box 
-          flex="1" 
-          overflowY="auto" 
-            p={{ base: 2, sm: 3 }}
-          sx={{
-            '&::-webkit-scrollbar': {
-                width: '4px',
-              borderRadius: '8px',
-              backgroundColor: 'rgba(0, 0, 0, 0.05)'
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: 'rgba(0, 0, 0, 0.1)',
-              borderRadius: '8px'
-            }
-          }}
-        >
+          {/* 对话区域 */}
+          <Box 
+            flex="1" 
+            overflowY="auto" 
+            p={3}
+            sx={{
+              '&::-webkit-scrollbar': {
+                width: '3px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: useColorModeValue('rgba(0, 0, 0, 0.2)', 'rgba(255, 255, 255, 0.2)'),
+                borderRadius: '3px',
+              }
+            }}
+          >
             <VStack spacing={2} align="stretch">
               {messages.length > 0 ? (
                 messages.map(message => (
-              <ChatMessage
-                key={message.id}
-                content={message.content}
-                sender={message.sender}
-              />
+                  <ChatMessage
+                    key={message.id}
+                    content={message.content}
+                    sender={message.sender}
+                  />
                 ))
               ) : !isAuthenticated ? (
                 <Flex 
                   direction="column" 
                   align="center" 
                   justify="center" 
-                  h="100%" 
-                  color={subTextColor}
-                  pt={8}
+                  h="200px" 
+                  textAlign="center"
                   gap={2}
                 >
-                  <Text fontSize="sm" fontWeight="medium">您当前未登录，但可以尝试使用AI对话功能</Text>
-                  <Text fontSize="xs" color={subTextColor}>登录后可以保存您的对话历史</Text>
+                  <Text fontSize="sm" fontWeight="semibold" color={useColorModeValue('gray.700', 'gray.200')}>
+                    欢迎使用智能编程助手 AI Assistant
+                  </Text>
+                  <Text fontSize="xs" color={subTextColor}>
+                    您当前未登录，可以体验对话功能
+                  </Text>
+                  <Text fontSize="xs" color={subTextColor}>
+                    登录后可以保存对话历史
+                  </Text>
                   <Button 
-                    size="sm" 
+                    size="xs" 
                     colorScheme="blue" 
+                    borderRadius="full"
                     onClick={() => window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname)}
                   >
-                    去登录
+                    立即登录
                   </Button>
                 </Flex>
               ) : (
@@ -1060,105 +1327,321 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                   direction="column" 
                   align="center" 
                   justify="center" 
-                  h="100%" 
-                  color={subTextColor}
-                  pt={8}
+                  h="200px" 
+                  textAlign="center"
+                  gap={2}
                 >
-                  <Text fontSize="sm">欢迎使用AI对话，开始输入您的问题吧！</Text>
+                  <Text fontSize="sm" fontWeight="semibold" color={useColorModeValue('gray.700', 'gray.200')}>
+                    开始新的对话
+                  </Text>
+                  <Text fontSize="xs" color={subTextColor}>
+                    点击"新建对话"或直接输入问题开始
+                  </Text>
                 </Flex>
               )}
             
-              {/* 回复加载气泡 */}
-            {isTyping && (
-              <ChatMessage 
-                  content={<TypewriterEffect text="..." />} 
-                sender="assistant" 
-              />
-            )}
-            
-            <div ref={messagesEndRef} />
-          </VStack>
-        </Box>
-        
-        <Divider />
-        
-        {/* 输入区域 */}
-          <Flex p={{ base: 2, sm: 2 }} borderTopWidth="1px" borderColor={borderColor} align="center">
-            <InputGroup size="sm">
-          <Input
-            placeholder={isAuthenticated ? "请输入内容..." : "输入您想问的问题..."}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            variant="filled"
-            fontSize="sm"
-            ref={inputRef}
-            borderRadius="full"
-            pl={3}
-            pr={8}
-            py={3}
-            h="32px"
-            minH="32px"
-            bg={inputBg}
-            _hover={{
-              bg: hoverBg
-            }}
-            _focus={{
-              bg: inputBg,
-              borderColor: primaryColor,
-              boxShadow: `0 0 0 1px ${primaryColor}`
-            }}
-            isDisabled={false}
-            sx={{
-              transition: 'all 0.2s ease-in-out'
-            }}
-          />
-              <InputRightElement width="3rem" h="100%" pr={1}>
-          <IconButton
-            aria-label="发送消息"
-                  icon={<FiSend size={14} />}
-            onClick={handleSendMessage}
-            isDisabled={!inputValue.trim()}
-            colorScheme="blue"
-            borderRadius="full"
-                  size="xs"
-                  variant="ghost"
-                  color={primaryColor}
-                  _hover={{
-                    bg: primaryFog,
-                    transform: 'translateX(2px)'
-                  }}
-                  transition="all 0.2s"
+              {/* 正在输入提示 */}
+              {isTyping && (
+                <ChatMessage 
+                  content={<TypewriterEffect text="正在思考中..." />} 
+                  sender="assistant" 
                 />
-              </InputRightElement>
-            </InputGroup>
-        </Flex>
+              )}
+            
+              <div ref={messagesEndRef} />
+            </VStack>
+          </Box>
+        
+          <Divider />
+        
+          {/* 输入区域 */}
+          <Box p={3} borderTopWidth="1px" borderColor={borderColor}>
+            
+            {/* 统一的输入框区域（包含附件和输入） */}
+            <Box
+              borderRadius="16px"
+              borderWidth="1px"
+              borderColor={useColorModeValue('gray.200', '#404040')}
+              bg={useColorModeValue('gray.50', '#2a2a2a')}
+              _hover={{
+                borderColor: useColorModeValue('gray.300', '#505050'),
+              }}
+              _focusWithin={{
+                borderColor: primaryBorderColor,
+                boxShadow: `0 0 0 1px ${primaryBorderColor}`,
+                bg: useColorModeValue('white', '#2a2a2a')
+              }}
+              overflow="hidden"
+            >
+              {/* 附件显示区域 */}
+              {attachments.length > 0 && (
+                <Box px={3} pt={2} pb={1} borderBottomWidth="1px" borderColor={useColorModeValue('gray.200', '#404040')}>
+                  <Flex wrap="wrap" gap={1}>
+                    {attachments.map((file, index) => {
+                      const isImage = file.type.startsWith('image/');
+                      return (
+                        <Popover
+                          key={index}
+                          isOpen={previewImage?.index === index}
+                          onClose={() => setPreviewImage(null)}
+                          placement="top"
+                          closeOnBlur={true}
+                        >
+                          <PopoverTrigger>
+                            <Flex
+                              align="center"
+                              bg={useColorModeValue('white', '#404040')}
+                              borderRadius="12px"
+                              px={2}
+                              py="0.1px"
+                              fontSize="2xs"
+                              border="1px solid"
+                              borderColor={useColorModeValue('gray.200', '#505050')}
+                              cursor={isImage ? 'pointer' : 'default'}
+                              _hover={isImage ? {
+                                bg: primaryBgColor,
+                                borderColor: primaryBorderColor
+                              } : {}}
+                              _focus={isImage ? {
+                                boxShadow: `0 0 0 1px ${primaryBorderColor}`
+                              } : {}}
+                              onClick={() => {
+                                if (isImage) {
+                                  setPreviewImage({ 
+                                    url: URL.createObjectURL(file), 
+                                    index 
+                                  });
+                                }
+                              }}
+                            >
+                              {isImage ? <FiImage size={10} /> : <FiPaperclip size={10} />}
+                              <Text ml={1} maxW="80px" noOfLines={1}>
+                                {file.name}
+                              </Text>
+                              <IconButton
+                                aria-label="删除附件"
+                                icon={<FiX size={8} />}
+                                size="2xs"
+                                variant="ghost"
+                                ml={1}
+                                color={useColorModeValue('red.500', 'red.400')}
+                                _hover={{
+                                  color: useColorModeValue('red.600', 'red.500'),
+                                  bg: useColorModeValue('red.50', 'red.900')
+                                }}
+                                _focus={{
+                                  boxShadow: `0 0 0 1px ${useColorModeValue('red.300', 'red.600')}`
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeAttachment(index);
+                                }}
+                              />
+                            </Flex>
+                          </PopoverTrigger>
+                          {isImage && previewImage?.index === index && (
+                            <PopoverContent width="200px" boxShadow="lg">
+                              <PopoverArrow />
+                              <PopoverBody p={2}>
+                                <Image
+                                  src={previewImage.url}
+                                  alt={file.name}
+                                  width="100%"
+                                  maxH="150px"
+                                  objectFit="contain"
+                                  borderRadius="4px"
+                                />
+                                <Text fontSize="xs" mt={1} textAlign="center" noOfLines={1}>
+                                  {file.name}
+                                </Text>
+                              </PopoverBody>
+                            </PopoverContent>
+                          )}
+                        </Popover>
+                      );
+                    })}
+                  </Flex>
+                </Box>
+              )}
+              
+              {/* 输入框底部控制区域 */}
+              <Flex align="flex-start" justify="space-between">
+                {/* 左侧：MCP选择器 */}
+                <HStack spacing={1} alignSelf="flex-start" pt={2}>
+                  <Popover
+                    isOpen={isMcpDropdownOpen}
+                    onClose={() => setIsMcpDropdownOpen(false)}
+                    placement="top"
+                    closeOnBlur={true}
+                  >
+                    <PopoverTrigger>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        onClick={() => setIsMcpDropdownOpen(!isMcpDropdownOpen)}
+                        borderRadius="full"
+                        fontSize="2xs"
+                        px={2}
+                        h="24px"
+                        borderColor={useColorModeValue('gray.300', '#505050')}
+                        color={useColorModeValue('gray.600', 'gray.300')}
+                        _hover={{
+                          borderColor: primaryBorderColor,
+                          color: primaryColor
+                        }}
+                        _focus={{
+                          boxShadow: `0 0 0 1px ${primaryBorderColor}`
+                        }}
+                      >
+                        {selectedMcp}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent width="200px" boxShadow="lg" borderRadius="8px">
+                      <PopoverArrow />
+                      <PopoverBody p={1}>
+                        <VStack align="stretch" spacing={0}>
+                          {mcpOptions.map((option) => (
+                            <Button
+                              key={option}
+                              size="xs"
+                              variant="ghost"
+                              justifyContent="flex-start"
+                              fontSize="2xs"
+                              p={2}
+                              h="auto"
+                              onClick={() => {
+                                setSelectedMcp(option);
+                                setIsMcpDropdownOpen(false);
+                              }}
+                              bg={selectedMcp === option ? primaryBgColor : 'transparent'}
+                              color={selectedMcp === option ? primaryColor : useColorModeValue('gray.700', 'gray.200')}
+                              _hover={{
+                                bg: useColorModeValue('gray.100', 'gray.700')
+                              }}
+                            >
+                              {option}
+                            </Button>
+                          ))}
+                        </VStack>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+                </HStack>
+                
+                {/* 中间：输入框 */}
+                <Textarea
+                  placeholder="发送消息气泡"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onPaste={handlePaste}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  variant="unstyled"
+                  fontSize="xs"
+                  ref={textareaRef}
+                  px={3}
+                  pt={2}
+                  pb={1}
+                  minH="48px"
+                  maxH="150px"
+                  resize="none"
+                  overflow="hidden"
+                  flex={1}
+                  _focus={{ outline: 'none' }}
+                  bg={isDragOver ? primaryBgColor : 'transparent'}
+                  transition="background-color 0.2s"
+                />
+                
+                {/* 右侧：上传按钮和发送按钮 */}
+                <HStack spacing={1} alignSelf="flex-end" pb={1}>
+                  {/* 上传按钮 */}
+                  <Input
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                    style={{ display: 'none' }}
+                    id="file-upload"
+                  />
+                  <IconButton
+                    as="label"
+                    htmlFor="file-upload"
+                    aria-label="添加附件"
+                    icon={<FiPaperclip size={12} />}
+                    size="xs"
+                    variant="ghost"
+                    color={useColorModeValue('gray.500', 'gray.400')}
+                    _hover={{
+                      color: useColorModeValue('gray.700', 'gray.200')
+                    }}
+                    _focus={{
+                      boxShadow: `0 0 0 1px ${useColorModeValue('gray.300', 'gray.600')}`
+                    }}
+                    cursor="pointer"
+                  />
+                  
+                  {/* 发送按钮 */}
+                  <IconButton
+                    aria-label="发送消息"
+                    icon={<FiChevronUp size={14} />}
+                    onClick={handleSendMessage}
+                    isDisabled={!inputValue.trim()}
+                    size="xs"
+                    borderRadius="full"
+                    bg={inputValue.trim() ? primaryColor : useColorModeValue('gray.300', 'gray.600')}
+                    color={inputValue.trim() ? 'white' : useColorModeValue('gray.500', 'gray.400')}
+                    _hover={{
+                      bg: inputValue.trim() ? primaryHoverColor : useColorModeValue('gray.400', 'gray.500'),
+                      transform: inputValue.trim() ? 'scale(1.05)' : 'none'
+                    }}
+                    _focus={{
+                      boxShadow: inputValue.trim() ? `0 0 0 1px ${primaryBorderColor}` : `0 0 0 1px ${useColorModeValue('gray.300', 'gray.600')}`
+                    }}
+                    _active={{
+                      transform: inputValue.trim() ? 'scale(0.95)' : 'none'
+                    }}
+                    transition="all 0.2s"
+                  />
+                </HStack>
+              </Flex>
+            </Box>
+            
+            {/* 状态提示 */}
+            {!isAuthenticated && (
+              <Text fontSize="2xs" color={subTextColor} mt={1} textAlign="center">
+                未登录状态下的对话不会被保存
+              </Text>
+            )}
+          </Box>
+          
         </Box>
       </ScaleFade>
       
-      {/* 删除对话确认弹窗 */}
+      {/* 删除确认弹窗 */}
       <Modal
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         isCentered
-        size="sm"
+        size="xs"
       >
         <ModalOverlay />
-        <ModalContent borderRadius="16px" fontSize="sm">
-          <ModalHeader fontWeight="bold" fontSize="md">删除对话</ModalHeader>
-          <ModalBody pb={4}>
-            <Text fontSize="sm">
-              确定要删除对话 <Text as="span" fontWeight="bold">{conversationToDelete?.title}</Text> 吗？此操作不可撤销。
+        <ModalContent borderRadius="12px">
+          <ModalHeader fontWeight="semibold" fontSize="sm">删除对话</ModalHeader>
+          <ModalBody pb={3}>
+            <Text fontSize="xs">
+              确定要删除对话 <Text as="span" fontWeight="semibold">{conversationToDelete?.title}</Text> 吗？
+            </Text>
+            <Text fontSize="2xs" color={subTextColor} mt={1}>
+              此操作不可撤销
             </Text>
           </ModalBody>
           <ModalFooter>
-            <Button mr={3} onClick={() => setIsDeleteDialogOpen(false)} size="sm">
-                取消
+            <Button mr={2} onClick={() => setIsDeleteDialogOpen(false)} size="xs">
+              取消
             </Button>
             <Button
-              bg="red.500" 
-              color="white" 
-              _hover={{ bg: "red.600" }} 
+              colorScheme="red"
               onClick={() => {
                 if (conversationToDelete) {
                   deleteConversation(conversationToDelete.id);
@@ -1166,7 +1649,7 @@ const AIChat: React.FC<AIChatProps> = ({ isOpen, onClose, source = 'business' })
                 }
               }}
               isLoading={loading}
-              size="sm"
+              size="xs"
             >
               确认删除
             </Button>

@@ -160,7 +160,7 @@ const FloatingChatButton: React.FC<FloatingChatButtonProps> = ({ onClick, isOpen
       >
         {/* 本地图片图标 */}
         <Image
-          src={isOpen ? "/chat.png" : "/chat_.png"}
+                          src="/chat.png"
           alt="聊天图标"
           width="40px"
           height="40px"

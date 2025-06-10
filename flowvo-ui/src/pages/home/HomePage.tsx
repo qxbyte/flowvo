@@ -456,7 +456,7 @@ const HomePage: React.FC = () => {
                     { icon: FiCpu, title: 'AI Assistant', desc: '智能编程伙伴，理解您的项目上下文' },
                     { icon: FiZap, title: 'Code Generation', desc: '生成高质量代码片段和完整功能' },
                     { icon: FiMessageCircle, title: 'Interactive Chat', desc: '实时对话式编程协助体验' },
-                    { icon: FiServer, title: 'MCP', desc: 'Model Context Protocol，多源数据采集处理' }
+                    { icon: FiServer, title: 'MCP', desc: 'Model Context Protocol，支持第三方MCP 接入以及自定义MCP Server' }
                   ].map((item, index) => (
                     <HStack 
                       key={index} 

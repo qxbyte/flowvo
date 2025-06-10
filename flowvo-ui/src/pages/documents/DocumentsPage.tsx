@@ -476,7 +476,7 @@ const DocumentsPage: React.FC = () => {
               <Td maxW="300px">
                 <HStack spacing={3} maxW="100%">
                   <Box flexShrink={0}>
-                    <IconComponent size={20} color={textColor} />
+                  <IconComponent size={20} color={textColor} />
                   </Box>
                   <VStack align="start" spacing={0} flex="1" minW="0">
                     <Text 

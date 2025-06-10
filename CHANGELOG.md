@@ -1,5 +1,705 @@
 # CHANGELOG - 项目更新日志
 
+## v1.6.48 - 2025-01-30
+### 📐 输入框高度与布局优化 - 提升输入体验
+- **输入框高度增加**：
+  - **高度提升**：最小高度从40px增加到48px，提供更舒适的输入空间
+  - **自动调整优化**：增强自动高度调整逻辑，确保最小高度约束
+  - **视觉对齐**：增加输入框顶部和底部内边距，确保文字与按钮元素齐平
+
+- **文字对齐优化**：
+  - **垂直对齐**：调整输入框内边距(pt=2, pb=1)，确保输入内容与附件按钮、MCP选择器齐平
+  - **基线对齐**：输入文字的首个字符与左右两侧按钮元素在视觉上保持一致
+  - **布局协调**：所有输入区域元素在垂直方向上形成视觉平衡
+
+- **功能命名更新**：
+  - **MCP Server**：将"智能编程助手"重命名为"MCP Server"，更准确反映功能定位
+  - **选项同步**：下拉选择器中的第一个选项同步更改为"MCP Server"
+  - **默认值更新**：初始化默认选中"MCP Server"
+
+- **按钮位置调整**：
+  - **位置互换**：MCP Server选择器从右侧移至左侧，附件按钮从左侧移至右侧
+  - **布局重构**：左侧MCP选择器与输入框顶部对齐，右侧附件+发送按钮与底部对齐
+  - **三栏优化**：左侧MCP控制、中间输入区域、右侧文件控制的清晰分工
+
+- **技术实现要点**：
+  ```typescript
+  // 高度调整逻辑
+  const adjustTextareaHeight = () => {
+    const minHeight = 48; // 最小高度提升至48px
+    const maxHeight = 150;
+    textareaRef.current.style.height = `${Math.max(minHeight, Math.min(scrollHeight, maxHeight))}px`;
+  };
+  
+  // 输入框对齐样式
+  <Textarea
+    minH="48px" maxH="150px"
+    pt={2} pb={1} px={3}  // 优化内边距确保对齐
+  />
+  
+  // 布局重构
+  <Flex align="flex-start" justify="space-between">
+    {/* 左侧：MCP选择器 */}
+    <HStack alignSelf="flex-start" pt={2}>
+      <Button>MCP Server</Button>
+    </HStack>
+    
+    {/* 中间：输入框 */}
+    <Textarea flex={1} />
+    
+    {/* 右侧：附件+发送 */}
+    <HStack alignSelf="flex-end" pb={1}>
+      <IconButton />
+    </HStack>
+  </Flex>
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 输入框高度、对齐和布局优化
+
+- **用户体验提升**：
+  - ✅ 输入框高度增加，文字输入更舒适
+  - ✅ 文字与按钮元素完美对齐，视觉更统一
+  - ✅ MCP Server命名更准确，功能定位清晰
+  - ✅ 按钮布局更合理，左侧模型控制、右侧文件操作
+  - ✅ 保持绿色主题和所有交互功能
+
+## v1.6.47 - 2025-01-30
+### 🎛️ 输入框内集成控制按钮 - 统一交互界面
+- **控制按钮内置化**：
+  - **上传按钮内置**：将文件上传按钮从外部移动到输入框内左侧
+  - **MCP选择器内置**：将智能编程助手选择器移动到输入框内右侧
+  - **三栏布局**：左侧上传按钮、中间输入框、右侧MCP+发送按钮
+  - **统一界面**：所有控制元素都在输入框内，界面更整洁
+
+- **关闭按钮标准化**：
+  - **尺寸统一**：关闭按钮改为IconButton，与新建对话和历史记录按钮相同大小
+  - **图标一致**：使用FiX图标，保持图标风格统一
+  - **交互优化**：添加悬浮和焦点状态效果
+  - **视觉平衡**：头部按钮区域视觉更平衡
+
+- **输入框布局重构**：
+  - **弹性布局**：使用Flex布局，输入框占据中间弹性空间
+  - **对齐优化**：所有控制按钮底部对齐，视觉更整齐
+  - **间距调整**：各元素间距合理，不会相互挤压
+  - **响应式设计**：输入框自动适应剩余空间
+
+- **交互体验提升**：
+  - **操作集中**：所有输入相关操作都在同一区域
+  - **视觉清晰**：功能分区明确，左侧文件、中间输入、右侧控制
+  - **空间优化**：去除了独立的控制行，节省垂直空间
+  - **一致性**：所有按钮风格和行为保持一致
+
+- **技术实现要点**：
+  ```typescript
+  // 三栏布局结构
+  <Flex align="flex-end" justify="space-between">
+    {/* 左侧：上传按钮 */}
+    <HStack spacing={1} alignSelf="flex-end" pb={1}>
+      <IconButton as="label" htmlFor="file-upload" />
+    </HStack>
+    
+    {/* 中间：输入框 */}
+    <Textarea flex={1} px={3} />
+    
+    {/* 右侧：MCP选择器和发送按钮 */}
+    <HStack spacing={1} alignSelf="flex-end" pb={1}>
+      <Popover>
+        <Button size="xs" h="24px">{selectedMcp}</Button>
+      </Popover>
+      <IconButton aria-label="发送消息" />
+    </HStack>
+  </Flex>
+  
+  // 标准化关闭按钮
+  <IconButton
+    icon={<FiX size={14} />}
+    size="xs" variant="ghost"
+    _hover={{ color: 'gray.700' }}
+    _focus={{ boxShadow: '0 0 0 1px gray.300' }}
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 输入框布局重构和按钮标准化
+
+- **用户体验升级**：
+  - ✅ 所有输入控制集中在输入框内，操作更直观
+  - ✅ 界面更简洁，减少视觉干扰
+  - ✅ 按钮尺寸统一，视觉更协调
+  - ✅ 节省垂直空间，输入区域更宽敞
+  - ✅ 功能分区清晰，用户操作流程更自然
+  - ✅ 保持所有原有功能和绿色主题风格
+
+## v1.6.46 - 2025-01-30
+### 🔧 附件布局微调 - 进一步紧凑化设计
+- **附件元素进一步紧凑**：
+  - **垂直内边距优化**：附件标签的垂直内边距从2px进一步减少到1px
+  - **最小化高度**：附件标签现在更紧密地包裹文字内容，减少不必要的空白
+  - **保持可点击性**：在减少内边距的同时，确保附件仍然易于点击和交互
+
+- **分隔线位置调整**：
+  - **附件区域下边距**：从`py={2}`改为`pt={2} pb={1}`，下边距从8px减少到4px
+  - **分隔线上移**：通过减少附件区域的下边距，使分隔线向上移动4px
+  - **视觉平衡**：为输入区域提供更多空间，同时保持附件区域的紧凑性
+
+- **空间优化效果**：
+  - **更紧凑的附件显示**：附件标签占用最少的垂直空间
+  - **更大的输入区域**：分隔线上移后，输入区域获得更多可用空间
+  - **视觉层次优化**：附件和输入区域的空间分配更合理
+
+- **技术实现**：
+  ```typescript
+  // 附件元素样式
+  <Flex
+    px={2} py="1px"  // 垂直内边距从2px减少到1px
+    borderRadius="12px"
+    fontSize="2xs"
+  />
+  
+  // 附件区域布局
+  <Box 
+    px={3} pt={2} pb={1}  // 下边距从8px减少到4px
+    borderBottomWidth="1px"
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 附件布局微调
+
+- **用户体验提升**：
+  - ✅ 附件标签更加紧凑，节省垂直空间
+  - ✅ 分隔线位置更合理，输入区域更宽敞
+  - ✅ 保持所有交互功能和视觉效果
+  - ✅ 整体布局更加精致和平衡
+
+## v1.6.45 - 2025-01-30
+### 🎨 界面细节优化 - 绿色主题与紧凑布局
+- **Junie绿色主题色彩**：
+  - **主色调升级**：从蓝色主题改为Junie风格的绿色主题
+  - **按钮颜色**：新建对话按钮使用绿色（green.600/green.300）
+  - **选中状态**：对话列表选中项使用绿色背景
+  - **交互反馈**：悬浮和焦点状态使用绿色高亮
+  - **发送按钮**：发送按钮使用绿色主题色
+
+- **焦点边框优化**：
+  - **细边框设计**：所有焦点边框改为1px细线，去除过粗的边框
+  - **统一样式**：所有可交互元素使用一致的焦点边框样式
+  - **绿色焦点**：焦点边框使用绿色主题色，视觉更统一
+  - **精准控制**：使用`boxShadow: 0 0 0 1px`实现精确的1px边框
+
+- **附件元素紧凑化**：
+  - **高度优化**：移除固定高度限制（minH/maxH），让附件标签自然包裹内容
+  - **间距调整**：垂直内边距从4px调整为2px，更紧凑
+  - **圆角增强**：边框圆角增加到12px，更加圆润
+  - **布局优化**：附件区域内边距调整为px=3, py=2
+
+- **输入区域扩展**：
+  - **输入框高度**：最小高度从32px增加到40px，最大高度从120px增加到150px
+  - **区域间距**：输入区域内边距从8px增加到12px，提供更大空间
+  - **分隔线调整**：通过增加附件区域内边距，使分隔线位置更合理
+  - **自适应增强**：输入框最大高度增加30px，支持更多文本输入
+
+- **交互体验提升**：
+  - **颜色一致性**：所有绿色元素使用统一的色彩变量
+  - **状态反馈**：悬浮、焦点、选中状态都有清晰的视觉反馈
+  - **拖拽反馈**：拖拽文件时使用绿色背景高亮
+  - **按钮状态**：确认按钮使用绿色方案，取消按钮保持灰色
+
+- **技术实现要点**：
+  ```typescript
+  // 绿色主题色变量
+  const primaryColor = useColorModeValue('green.600', 'green.300');
+  const primaryHoverColor = useColorModeValue('green.700', 'green.200');
+  const primaryBgColor = useColorModeValue('green.50', 'green.900');
+  const primaryBorderColor = useColorModeValue('green.300', 'green.600');
+  
+  // 统一的焦点样式
+  _focus={{
+    boxShadow: `0 0 0 1px ${primaryBorderColor}`
+  }}
+  
+  // 紧凑的附件样式
+  <Flex
+    borderRadius="12px"
+    px={2} py="2px"
+    fontSize="2xs"
+    cursor={isImage ? 'pointer' : 'default'}
+  />
+  
+  // 扩展的输入区域
+  minH="40px" maxH="150px"
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 主题色和布局优化
+
+- **视觉效果升级**：
+  - ✅ 采用Junie品牌绿色，界面更具识别性
+  - ✅ 细边框设计，现代化视觉体验
+  - ✅ 紧凑的附件标签，节省空间
+  - ✅ 更大的输入区域，提升输入体验
+  - ✅ 统一的色彩系统，视觉更和谐
+  - ✅ 保持暗色模式完美适配
+
+## v1.6.44 - 2025-01-30
+### 🔧 图片预览优化 - 小窗口预览替代大弹窗
+
+## v1.6.43 - 2025-01-30
+### 🎯 交互体验优化 - 边框拖拽调整与图片预览功能
+- **智能边框调整**：
+  - **移除右下角手柄**：取消原有的右下角三角形调整手柄
+  - **边框拖拽调整**：鼠标移动到窗口边框时自动显示调整光标
+  - **多方向支持**：支持上下左右及四个角落的8个方向调整
+  - **动态光标**：根据调整方向显示对应的光标样式（ns-resize、ew-resize、nwse-resize、nesw-resize）
+  - **实时预览**：拖拽过程中窗口尺寸实时变化，即时反馈
+
+- **图片附件优化**：
+  - **统一标签样式**：图片附件不再显示预览缩略图，改为统一的标签形式
+  - **图标区分**：图片文件使用图片图标（FiImage），其他文件使用纸夹图标（FiPaperclip）
+  - **点击预览**：点击图片附件标签弹出专用的预览模态框
+  - **预览窗口**：模态框最大80%视窗尺寸，图片自适应容器大小，保持比例
+
+- **按钮样式精简**：
+  - **移除背景框**：新建对话和历史记录按钮悬浮时不显示圆形背景
+  - **保留颜色变化**：仍保持颜色渐变效果，提供视觉反馈
+  - **简洁设计**：更符合现代扁平化设计理念
+
+- **交互逻辑优化**：
+  - **事件冲突处理**：调整大小时禁用其他鼠标事件，避免冲突
+  - **边界检测**：5像素边框检测阈值，确保精确的拖拽体验
+  - **最小尺寸限制**：宽度最小350px，高度最小300px，保证可用性
+
+- **技术实现亮点**：
+  ```typescript
+  // 边框方向检测
+  const getResizeDirection = (e: React.MouseEvent, rect: DOMRect) => {
+    const { clientX, clientY } = e;
+    const { left, top, right, bottom } = rect;
+    const threshold = 5;
+    
+    let direction = '';
+    if (clientY - top <= threshold) direction += 'n';
+    if (bottom - clientY <= threshold) direction += 's';
+    if (clientX - left <= threshold) direction += 'w';
+    if (right - clientX <= threshold) direction += 'e';
+    
+    return direction;
+  };
+  
+  // 动态光标样式
+  const getCursorStyle = (direction: string) => {
+    switch (direction) {
+      case 'n': case 's': return 'ns-resize';
+      case 'e': case 'w': return 'ew-resize';
+      case 'ne': case 'sw': return 'nesw-resize';
+      case 'nw': case 'se': return 'nwse-resize';
+      default: return 'default';
+    }
+  };
+  
+  // 图片预览模态框
+  <Modal isOpen={!!previewImage} size="xl" isCentered>
+    <ModalContent maxW="80vw" maxH="80vh">
+      <Image
+        src={previewImage}
+        maxW="100%" maxH="70vh"
+        objectFit="contain"
+      />
+    </ModalContent>
+  </Modal>
+  
+  // 附件标签统一样式
+  <Flex
+    cursor={isImage ? 'pointer' : 'default'}
+    _hover={isImage ? { 
+      bg: 'blue.50', 
+      borderColor: 'blue.300' 
+    } : {}}
+    onClick={() => isImage && setPreviewImage(url)}
+  >
+    {isImage ? <FiImage /> : <FiPaperclip />}
+    <Text>{file.name}</Text>
+  </Flex>
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 主要功能实现
+
+- **用户体验升级**：
+  - ✅ 更自然的窗口调整方式，符合桌面应用习惯
+  - ✅ 统一的附件标签设计，界面更整洁
+  - ✅ 点击预览图片，操作更直观
+  - ✅ 简洁的按钮样式，减少视觉干扰
+  - ✅ 精确的边框检测，拖拽体验更流畅
+  - ✅ 保持所有原有功能和暗色模式适配
+
+## v1.6.42 - 2025-01-30
+### 📝 智能输入框改造 - 自适应高度与拖拽粘贴功能
+- **自适应输入框**：
+  - **组件升级**：从单行Input升级为多行Textarea，支持换行输入
+  - **自动高度调整**：根据输入内容自动调整高度，最小32px，最大120px
+  - **智能滚动**：超过最大高度时内部滚动，确保内容可见
+  - **实时调整**：每次输入变化立即调整高度，无延迟
+
+- **拖拽上传功能**：
+  - **文件拖拽**：支持直接拖拽文件到输入框区域
+  - **视觉反馈**：拖拽悬浮时输入框背景色变化提示
+  - **多文件支持**：一次可拖拽多个文件，自动添加到附件列表
+  - **即时响应**：拖拽完成立即显示在附件区域
+
+- **粘贴图片功能**：
+  - **剪贴板图片**：支持从剪贴板直接粘贴图片（Ctrl+V）
+  - **自动识别**：智能识别粘贴内容中的图片文件
+  - **多图片支持**：支持同时粘贴多张图片
+  - **无缝集成**：粘贴的图片直接添加到附件系统
+
+- **增强的附件预览**：
+  - **图片预览**：图片文件显示50x50像素缩略图预览
+  - **文件图标**：非图片文件显示纸夹图标和文件名
+  - **删除按钮优化**：右上角红色圆形删除按钮，位置更直观
+  - **卡片式布局**：每个附件独立卡片，带边框和阴影效果
+
+- **界面图标优化**：
+  - **历史记录图标**：从`FiImage`更改为`FiClock`，更符合功能语义
+  - **一致性设计**：保持所有图标的视觉一致性和大小统一
+  - **悬浮效果**：按钮悬浮时的颜色变化更自然
+
+- **交互体验提升**：
+  - **拖拽视觉反馈**：拖拽文件时输入框背景色变化（蓝色高亮）
+  - **平滑过渡**：所有状态变化都有0.2s的平滑过渡动画
+  - **焦点管理**：保持输入框的焦点状态和光标位置
+  - **防止冲突**：拖拽事件不会影响其他交互功能
+
+- **技术实现要点**：
+  ```typescript
+  // 自适应高度
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 120;
+      textareaRef.current.style.height = `${Math.min(scrollHeight, maxHeight)}px`;
+    }
+  };
+  
+  // 拖拽处理
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      setAttachments(prev => [...prev, ...files]);
+    }
+  };
+  
+  // 粘贴处理
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData.items;
+    const files: File[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+    if (files.length > 0) {
+      setAttachments(prev => [...prev, ...files]);
+    }
+  };
+  
+  // 图片预览
+  const isImage = file.type.startsWith('image/');
+  <Image
+    src={URL.createObjectURL(file)}
+    w="50px" h="50px"
+    objectFit="cover"
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 输入框改造和拖拽功能实现
+
+- **用户体验升级**：
+  - ✅ 支持多行文本输入，适应长文本编写
+  - ✅ 拖拽文件到输入框，上传更便捷
+  - ✅ 粘贴图片功能，支持截图直接粘贴
+  - ✅ 图片附件实时预览，内容可视化
+  - ✅ 智能高度调整，节省空间同时保证可用性
+  - ✅ 视觉反馈丰富，操作状态清晰
+  - ✅ 保持所有原有功能和暗色模式适配
+
+## v1.6.41 - 2025-01-30
+### 🚀 AI对话窗口全屏化改造 - 可调整大小的沉浸式体验
+- **全屏化窗口设计**：
+  - **窗口高度**：默认高度调整为`window.innerHeight - 120`，几乎占满整个页面
+  - **底部对齐**：窗口底部与页面底部齐平，位置从`bottom="100px"`调整为`bottom="20px"`
+  - **宽度优化**：默认宽度增加到450px，提供更宽敞的对话空间
+  - **动态尺寸**：初始化时根据窗口高度自动调整大小
+
+- **可调整大小功能**：
+  - **拖拽调整**：右下角添加专用的调整大小手柄
+  - **最小尺寸限制**：最小宽度350px，最小高度300px，确保可用性
+  - **实时调整**：鼠标拖拽实时调整窗口大小，无延迟响应
+  - **视觉反馈**：调整手柄有悬浮效果和专用的三线条纹图案
+
+- **智能按钮控制**：
+  - **动态显示**：打开对话窗口时，浮动聊天按钮自动隐藏
+  - **状态同步**：关闭对话窗口时，浮动按钮重新显示
+  - **简化图标**：移除双状态图标，统一使用单一的chat.png图标
+  - **回调机制**：通过onToggle回调实现父子组件状态同步
+
+- **输入区域重新设计**：
+  - **功能按钮布局**：上传按钮和MCP选择器放在同一行，左右分布
+  - **统一输入框**：附件显示区域和文本输入框合并为单一容器
+  - **边框一体化**：外层统一边框，内部分区明确
+  - **焦点状态**：使用`_focusWithin`实现整体容器焦点效果
+
+- **交互体验优化**：
+  - **平滑过渡**：调整大小和拖拽时禁用过渡动画，避免卡顿
+  - **位置重置**：每次打开窗口自动重置位置和大小
+  - **响应式处理**：根据窗口大小变化动态调整对话窗口尺寸
+
+- **技术实现亮点**：
+  ```typescript
+  // 可调整大小功能
+  const [windowSize, setWindowSize] = useState({ 
+    width: 450, 
+    height: window.innerHeight - 120 
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  
+  // 智能按钮控制
+  interface AIChatProps {
+    onToggle?: (isOpen: boolean) => void;
+  }
+  
+  // 统一输入框设计
+  <Box
+    borderRadius="16px"
+    borderWidth="1px"
+    _focusWithin={{
+      borderColor: 'blue.400',
+      boxShadow: '0 0 0 1px #3182ce'
+    }}
+  >
+    {/* 附件区域 */}
+    {/* 输入框 */}
+  </Box>
+  
+  // 调整大小手柄
+  <Box
+    position="absolute"
+    bottom="0" right="0"
+    cursor="se-resize"
+    onMouseDown={handleResizeStart}
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 主要功能实现
+  - `flowvo-ui/src/layouts/MainLayout.tsx` - 按钮状态控制
+  - `flowvo-ui/src/components/FloatingChatButton.tsx` - 图标简化
+
+- **用户体验升级**：
+  - ✅ 全屏化对话体验，更沉浸的交互
+  - ✅ 可自由调整窗口大小，适应不同使用需求
+  - ✅ 智能按钮显示/隐藏，避免界面冗余
+  - ✅ 统一的输入框设计，更清晰的视觉层次
+  - ✅ 底部对齐设计，更好的空间利用
+  - ✅ 平滑的交互动画和即时响应
+  - ✅ 保持所有原有功能和暗色模式适配
+
+## v1.6.40 - 2025-01-30
+### 🎨 AI对话界面紧凑化改造 - 全面缩小尺寸和添加新功能
+- **全面尺寸缩小**：
+  - **窗口尺寸调整**：宽度从400px减小到380px，高度从550px减小到500px
+  - **圆角优化**：边框圆角从16px调整为12px，整体更紧凑
+  - **字体缩小**：所有文本从sm/md尺寸统一缩小到xs/2xs尺寸
+  - **按钮尺寸**：所有按钮从sm尺寸缩小到xs/2xs尺寸
+  - **间距压缩**：padding和spacing全面减小，提高空间利用率
+
+- **头部工具栏简化**：
+  - **纯图标按钮**：新建对话和历史记录按钮移除文字，只保留图标
+  - **图标更换**：历史记录按钮图标从MessageSquare改为Image图标
+  - **尺寸缩小**：按钮从sm尺寸缩小到xs尺寸，图标从默认缩小到14px
+  - **间距调整**：按钮间距从spacing={2}调整为spacing={1}
+
+- **对话列表优化**：
+  - **弹窗尺寸**：宽度从320px调整为280px，高度从400px调整为350px
+  - **状态指示器**：圆点从6px缩小到4px
+  - **字体层级**：标题从sm缩小到xs，日期从xs缩小到2xs
+  - **操作按钮**：编辑和删除按钮从xs缩小到2xs，图标从12px缩小到10px
+
+- **输入区域全新设计**：
+  - **附件功能**：
+    - 添加文件上传功能，支持多文件选择
+    - 附件显示在输入框上方的独立区域
+    - 每个附件显示文件名和删除按钮
+    - 附件采用紧凑的卡片式设计，支持长文件名截断
+  - **输入框改造**：
+    - 高度从40px缩小到32px，边框半径从full调整为16px
+    - 字体从sm缩小到xs，padding压缩为pl={3} pr={10}
+    - 左侧添加附件按钮，使用回形针图标
+  - **发送按钮重设计**：
+    - 图标从Send改为ChevronUp（向上箭头）
+    - 颜色方案：有内容时黑色背景白色图标，无内容时灰色
+    - 尺寸从sm缩小到xs，保持圆形设计
+
+- **MCP选择器新增**：
+  - **位置布局**：位于输入框下方中央位置
+  - **按钮设计**：圆润的outline按钮，高度仅20px
+  - **选项列表**：包含智能编程助手、File System MCP、MySQL MCP等5个选项
+  - **弹窗样式**：200px宽度，紧凑的选项列表设计
+  - **状态指示**：当前选中项高亮显示
+
+- **对话区域优化**：
+  - **内容区缩小**：padding从p={4}调整为p={3}
+  - **滚动条细化**：宽度从4px缩小到3px
+  - **欢迎界面**：高度从250px缩小到200px，文字从md/sm缩小到sm/xs
+  - **间距调整**：消息间距从spacing={3}调整为spacing={2}
+
+- **模态弹窗适配**：
+  - **删除确认弹窗**：尺寸从sm调整为xs
+  - **字体统一**：标题从lg缩小到sm，内容从sm缩小到xs
+  - **边框圆角**：从16px调整为12px，保持整体一致性
+
+- **技术实现亮点**：
+  ```typescript
+  // 附件功能
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      setAttachments(prev => [...prev, ...Array.from(files)]);
+    }
+  };
+  
+  // MCP选择器
+  const [selectedMcp, setSelectedMcp] = useState('智能编程助手');
+  const mcpOptions = ['智能编程助手', 'File System MCP', 'MySQL MCP', ...];
+  
+  // 新发送按钮样式
+  <IconButton
+    icon={<FiChevronUp size={14} />}
+    bg={inputValue.trim() ? useColorModeValue('black', 'white') : 'gray.300'}
+    color={inputValue.trim() ? useColorModeValue('white', 'black') : 'gray.500'}
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 全面重构界面尺寸和功能
+
+- **用户体验升级**：
+  - ✅ 更紧凑的界面设计，占用屏幕空间更少
+  - ✅ 纯图标操作，界面更简洁专业
+  - ✅ 文件附件功能，支持多媒体对话
+  - ✅ MCP模型选择，灵活切换不同AI能力
+  - ✅ 全新发送按钮设计，视觉效果更现代
+  - ✅ 完整的暗色模式适配
+  - ✅ 保持所有原有功能和API调用逻辑
+
+## v1.6.39 - 2025-01-30
+### 🎨 AI对话界面完全重构 - 完全模仿截图设计
+- **完全按照截图设计**：
+  - **精确复制截图布局**：严格按照用户提供截图的每个细节进行重构
+  - **头部工具栏**：左侧"新建对话"和"历史记录"按钮，右侧关闭按钮
+  - **窗口尺寸**：宽度400px，高度550px，圆角16px，阴影xl效果
+  - **间距和排版**：精确匹配截图中的padding、spacing和字体大小
+
+- **新建对话功能改进**：
+  - **独立按钮设计**：使用蓝色主题的幽灵按钮，配置`FiPlusCircle`图标
+  - **颜色主题**：
+    - 浅色模式：`blue.600`文字，悬浮时`blue.50`背景和`blue.700`文字
+    - 暗色模式：`blue.300`文字，悬浮时`blue.900`背景和`blue.200`文字
+  - **一键创建**：点击按钮直接显示输入框，流程更简化
+
+- **历史记录界面重构**：
+  - **标题统计**：显示"对话历史 (数量)"格式，直观展示历史记录数量
+  - **状态指示器**：每个对话前添加圆点状态指示器（当前对话蓝色，其他灰色）
+  - **详细信息显示**：对话标题下方显示创建日期
+  - **增强的悬浮效果**：
+    - 当前对话：`blue.50`到`blue.100`（浅色）/ `blue.900`到`blue.800`（暗色）
+    - 其他对话：`gray.50`到`gray.100`（浅色）/ `gray.700`到`gray.600`（暗色）
+
+- **输入区域精确重构**：
+  - **截图风格输入框**：高度40px，完全圆角设计，匹配截图样式
+  - **占位符文本**：严格使用"发送消息气泡"，完全按照截图显示
+  - **背景颜色方案**：
+    - 浅色模式：`gray.50`默认背景，聚焦时白色背景
+    - 暗色模式：`#2a2a2a`背景，保持一致的深色主题
+  - **发送按钮设计**：
+    - 圆形按钮，动态颜色变化
+    - 有内容时蓝色激活，无内容时灰色禁用
+    - 微妙的缩放动画效果
+
+- **消息显示区域优化**：
+  - **背景区分**：使用浅灰色背景区分消息区域和输入区域
+  - **滚动条美化**：
+    - 宽度增加到6px
+    - 透明背景
+    - 动态颜色：`rgba(0,0,0,0.2)`(浅色) / `rgba(255,255,255,0.2)`(暗色)
+    - 悬浮时透明度增加到0.3
+  - **欢迎界面重设计**：
+    - 大标题 + 副标题的层次结构
+    - 登录状态：显示"开始新的对话"，引导使用
+    - 未登录状态：显示"欢迎使用AI助手"，提供登录按钮
+
+- **加载状态改进**：
+  - **智能提示文本**：从"..."改为"正在思考中..."，更人性化
+  - **加载动画**：History按钮的加载状态使用蓝色主题Spinner
+
+- **响应式设计升级**：
+  - **窗口尺寸**：宽度从400px增加到420px，高度从75vh调整到600px
+  - **最大高度**：从650px增加到700px，为更多内容提供空间
+  - **移动端适配**：85%宽度（原80%），最大高度550px，确保在小屏设备上的良好体验
+
+- **暗色模式兼容性**：
+  - 所有新增元素都配置了完整的暗色模式颜色方案
+  - 按钮悬浮效果在两种模式下都有良好的对比度
+  - 状态提示文本在底部显示，不影响主要交互区域
+
+- **技术实现**：
+  ```typescript
+  // 新的按钮布局
+  <HStack spacing={3}>
+    <Button leftIcon={<FiPlusCircle />} onClick={handleCreateConversation}>
+      新建对话
+    </Button>
+    <Button leftIcon={<FiMessageSquare />} rightIcon={<FiChevronDown />}>
+      历史记录
+    </Button>
+  </HStack>
+  
+  // 状态指示器
+  <Box 
+    w="8px" h="8px" 
+    borderRadius="full" 
+    bg={currentConversation?.id === conv.id ? "blue.500" : "gray.300"}
+  />
+  
+  // 动态发送按钮
+  <IconButton
+    bg={inputValue.trim() ? 'blue.500' : 'gray.300'}
+    _hover={{
+      transform: inputValue.trim() ? 'scale(1.05)' : 'none'
+    }}
+  />
+  ```
+
+- **修复文件**：
+  - `flowvo-ui/src/components/AIChat.tsx` - 完整重构界面布局和交互逻辑
+
+- **用户体验**：
+  - ✅ 更直观的新建对话和历史记录操作
+  - ✅ 现代化的气泡式输入框设计
+  - ✅ 丰富的视觉反馈和动画效果
+  - ✅ 完善的暗色模式支持
+  - ✅ 更好的响应式布局适配
+  - ✅ 人性化的加载和状态提示
+  - ✅ 保持所有原有功能和API调用逻辑
+
 ## v1.6.38 - 2025-01-30
 ### 🐛 布局修复 - 内容超出边框问题
 - **知识库问答页面优化**：
