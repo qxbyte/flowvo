@@ -13,6 +13,7 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [shouldShowButton, setShouldShowButton] = useState(true);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const isMobile = useBreakpointValue({ base: true, md: false });
 
@@ -50,14 +51,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </Box>
 
       {/* AI聊天助手 */}
-      <FloatingChatButton
-        onClick={() => setIsChatOpen(!isChatOpen)}
-        isOpen={isChatOpen}
-      />
+      {shouldShowButton && (
+        <FloatingChatButton
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          isOpen={isChatOpen}
+        />
+      )}
       <AIChat
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         source="business"
+        onToggle={(open) => setShouldShowButton(!open)}
       />
     </Box>
   );

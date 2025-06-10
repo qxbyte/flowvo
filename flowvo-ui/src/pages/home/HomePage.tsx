@@ -26,7 +26,17 @@ import {
   FiArrowRight,
   FiZap,
   FiStar,
-  FiTrendingUp
+  FiTrendingUp,
+  FiCpu,
+  FiMessageCircle,
+  FiBarChart,
+  FiShoppingCart,
+  FiPackage,
+  FiUsers,
+  FiTruck,
+  FiHome,
+  FiActivity,
+  FiServer
 } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import PixelChatDemo from '../../components/PixelChatDemo';
@@ -202,7 +212,10 @@ const HomePage: React.FC = () => {
                 }}
                 transition="all 0.2s ease"
               >
-                🚀 AI 驱动
+                <HStack spacing={2}>
+                  <Icon as={FiZap} boxSize="3" />
+                  <Text>AI 驱动</Text>
+                </HStack>
               </Badge>
               <Badge
                 px={4}
@@ -275,7 +288,7 @@ const HomePage: React.FC = () => {
                 lineHeight="1.7"
                 opacity="0.8"
               >
-                帮助您高效管理信息并获取洞见。利用先进的AI技术，从您的知识库中提取精准信息，无需手动搜索。
+                帮助您高效管理信息并获取洞见。利用先进的AI技术，从您的知识库中提取精准信息，无需手动搜索，以及通用MCP Server接入。
               </Text>
             </VStack>
 
@@ -371,7 +384,10 @@ const HomePage: React.FC = () => {
                 border="1px solid"
                 borderColor={primaryColor}
               >
-                🤖 智能对话体验
+                <HStack spacing={2}>
+                  <Icon as={FiActivity} boxSize="3" />
+                  <Text>智能对话体验</Text>
+                </HStack>
               </Badge>
               
               <Heading 
@@ -437,9 +453,10 @@ const HomePage: React.FC = () => {
                 {/* 功能特点 */}
                 <VStack spacing={4} align={{ base: 'center', lg: 'flex-start' }} w="full">
                   {[
-                    { icon: '🧠', title: 'AI Assistant', desc: '智能编程伙伴，理解您的项目上下文' },
-                    { icon: '⚡', title: 'Code Generation', desc: '生成高质量代码片段和完整功能' },
-                    { icon: '💬', title: 'Interactive Chat', desc: '实时对话式编程协助体验' }
+                    { icon: FiCpu, title: 'AI Assistant', desc: '智能编程伙伴，理解您的项目上下文' },
+                    { icon: FiZap, title: 'Code Generation', desc: '生成高质量代码片段和完整功能' },
+                    { icon: FiMessageCircle, title: 'Interactive Chat', desc: '实时对话式编程协助体验' },
+                    { icon: FiServer, title: 'MCP', desc: 'Model Context Protocol，支持第三方MCP 接入以及自定义MCP Server' }
                   ].map((item, index) => (
                     <HStack 
                       key={index} 
@@ -453,8 +470,11 @@ const HomePage: React.FC = () => {
                         bg={primaryFog}
                         borderRadius="lg"
                         fontSize="lg"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
                       >
-                        {item.icon}
+                        <Icon as={item.icon} boxSize="4" color={primaryColor} />
                       </Box>
                       <VStack align="flex-start" spacing={1} flex="1">
                         <Text fontWeight="bold" color={textColor} fontSize="md">
@@ -1265,12 +1285,12 @@ const HomePage: React.FC = () => {
                       {/* 功能模块网格 */}
                       <SimpleGrid columns={2} spacing={2} w="full" flex="1">
                         {[
-                          { name: '首页', icon: '📊', color: 'blue.400' },
-                          { name: '订单管理', icon: '🛒', color: 'green.400' },
-                          { name: '数据分析', icon: '📈', color: 'purple.400' },
-                          { name: '库存管理', icon: '📦', color: 'orange.400' },
-                          { name: '客户管理', icon: '👥', color: 'teal.400' },
-                          { name: '物流配送', icon: '🚚', color: 'red.400' }
+                          { name: '首页', icon: FiHome, color: 'blue.400' },
+                          { name: '订单管理', icon: FiShoppingCart, color: 'green.400' },
+                          { name: '数据分析', icon: FiBarChart, color: 'purple.400' },
+                          { name: '库存管理', icon: FiPackage, color: 'orange.400' },
+                          { name: '客户管理', icon: FiUsers, color: 'teal.400' },
+                          { name: '物流配送', icon: FiTruck, color: 'red.400' }
                         ].map((module, i) => (
                           <Box
                             key={i}
@@ -1284,7 +1304,7 @@ const HomePage: React.FC = () => {
                             transition="all 0.2s"
                           >
                             <VStack spacing={1}>
-                              <Text fontSize="lg">{module.icon}</Text>
+                              <Icon as={module.icon} boxSize="5" color={module.color} />
                               <Text color="white" fontSize="xs" fontWeight="bold" textAlign="center">
                                 {module.name}
                               </Text>
