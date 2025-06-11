@@ -25,6 +25,8 @@ import org.xue.agents.embed.EmbeddingClient;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.annotation.PostConstruct;
+import org.xue.agents.util.IdUtil;
+
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -173,7 +175,7 @@ public class DocumentServiceImpl implements DocumentService {
         log.info("开始上传文档: {}，向量化模式: {}", request.getName(), embeddingConfig.getType());
         
         // 1. 生成文档ID
-        String documentId = UUID.randomUUID().toString();
+        String documentId = IdUtil.randomId(20);
         
         try {
             // 2. 创建文档实体
