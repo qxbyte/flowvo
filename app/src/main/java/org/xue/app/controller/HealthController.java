@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.xue.app.feign.DocumentClient;
+// import org.xue.app.feign.DocumentClient; // 已移除
 import org.xue.app.service.DocumentManagementService;
 
 import java.util.HashMap;
@@ -23,13 +23,10 @@ import java.util.Map;
 public class HealthController {
 
     private final DocumentManagementService documentManagementService;
-    private final DocumentClient documentClient;
 
     @Autowired
-    public HealthController(DocumentManagementService documentManagementService, 
-                           DocumentClient documentClient) {
+    public HealthController(DocumentManagementService documentManagementService) {
         this.documentManagementService = documentManagementService;
-        this.documentClient = documentClient;
     }
 
     /**
@@ -40,17 +37,12 @@ public class HealthController {
         Map<String, Object> response = new HashMap<>();
         
         try {
-            // 检查DocumentManagementService
+            // 检查DocumentManagementService（本地服务）
             List<String> supportedTypes = documentManagementService.getSupportedFileTypes();
             response.put("documentService", "OK - " + supportedTypes.size() + " supported types");
             
-            // 检查与agents服务的连通性（可选）
-            try {
-                // 这里不实际调用agents服务，只检查Feign client是否注入成功
-                response.put("agentsClient", "OK - Feign client configured");
-            } catch (Exception e) {
-                response.put("agentsClient", "WARNING - " + e.getMessage());
-            }
+            // 不再检查agents服务连通性，因为已经解耦
+            response.put("agentsClient", "DECOUPLED - Agents service is now independent");
             
             response.put("status", "UP");
             response.put("service", "app");

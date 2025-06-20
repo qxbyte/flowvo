@@ -75,7 +75,7 @@ public class OrderServiceImpl implements OrderService {
         order.setCustomerName(orderCreateDTO.getCustomerName());
         order.setAmount(orderCreateDTO.getAmount());
         order.setStatus(orderCreateDTO.getStatus());
-        
+        order.setUserId(orderCreateDTO.getUserId());
         Order savedOrder = orderRepository.save(order);
         return convertToDTO(savedOrder);
     }
