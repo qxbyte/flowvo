@@ -1,6 +1,6 @@
 package org.xue.app.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/orders")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class OrderController {
-    
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private AuthService authService;
+
+    private final OrderService orderService;
+
+    private final AuthService authService;
 
     /**
      * 获取当前用户ID

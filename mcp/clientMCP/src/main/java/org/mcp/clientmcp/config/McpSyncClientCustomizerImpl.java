@@ -10,7 +10,7 @@ import java.time.Duration;
 
 /**
  * MCP同步客户端定制器
- * 
+
  * 用于自定义MCP同步客户端的配置
  */
 @Slf4j
@@ -28,19 +28,13 @@ public abstract class McpSyncClientCustomizerImpl implements McpSyncClientCustom
         spec.requestTimeout(Duration.ofMillis(connectionTimeoutMs));
         
         // 添加工具变更监听器
-        spec.toolsChangeConsumer(toolsView -> {
-            log.info("🔄 MCP工具列表已更新: {} 个工具可用", toolsView.size());
-        });
+        spec.toolsChangeConsumer(toolsView -> log.info("🔄 MCP工具列表已更新: {} 个工具可用", toolsView.size()));
         
         // 添加根变更监听器
-        spec.toolsChangeConsumer(rootsView -> {
-            log.info("🔄 MCP根列表已更新: {} 个根可用", rootsView.size());
-        });
+        spec.toolsChangeConsumer(rootsView -> log.info("🔄 MCP根列表已更新: {} 个根可用", rootsView.size()));
         
         // 添加提示词变更监听器
-        spec.promptsChangeConsumer(promptsView -> {
-            log.info("🔄 MCP提示词列表已更新: {} 个提示词可用", promptsView.size());
-        });
+        spec.promptsChangeConsumer(promptsView -> log.info("🔄 MCP提示词列表已更新: {} 个提示词可用", promptsView.size()));
         
         log.info("✅ MCP同步客户端配置完成: {}", serverConfigurationName);
     }

@@ -5,12 +5,12 @@ import io.milvus.param.ConnectParam;
 import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.ai.embedding.TokenCountBatchingStrategy;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.milvus.MilvusVectorStore;
 import org.springframework.ai.zhipuai.ZhiPuAiEmbeddingModel;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * 向量存储配置类
- * 
+
  * 根据embedding.type配置精确选择嵌入模型：
  * - embedding.type=OPENAI -> 使用OpenAiEmbeddingModel
  * - embedding.type=ZHIPUAI -> 使用ZhiPuAiEmbeddingModel  
@@ -115,23 +115,19 @@ public class VectorStoreConfig {
 				.initializeSchema(true);
 
         switch (embeddingType) {
-            case OPENAI:
+            case OPENAI -> {
                 builder.collectionName("doc_chunk");
                 builder.embeddingDimension(1536);
-                break;
-
-            case ZHIPUAI:
+            }
+            case ZHIPUAI -> {
                 builder.collectionName("doc_chunk_2048");
                 builder.embeddingDimension(2048);
-                break;
-
-            case EXTERNAL:
+            }
+            case EXTERNAL -> {
                 builder.collectionName("doc_chunk_768");
                 builder.embeddingDimension(768);
-                break;
-
-            default:
-                break;
+            }
+            default -> {}
         }
 
         return builder.build();
@@ -184,8 +180,9 @@ public class VectorStoreConfig {
             this.embeddingClient = embeddingClient;
         }
         
+        @NotNull
         @Override
-        public float[] embed(String text) {
+        public float[] embed(@NotNull String text) {
             try {
                 List<Float> embedding = embeddingClient.embedOne(text);
                 float[] result = new float[embedding.size()];
@@ -198,13 +195,16 @@ public class VectorStoreConfig {
             }
         }
         
+        @NotNull
         @Override
         public float[] embed(Document document) {
+            assert document.getText() != null;
             return embed(document.getText());
         }
         
+        @NotNull
         @Override
-        public EmbeddingResponse call(org.springframework.ai.embedding.EmbeddingRequest request) {
+        public EmbeddingResponse call(@NotNull org.springframework.ai.embedding.EmbeddingRequest request) {
             // 简化实现，实际项目中需要完整实现
             throw new UnsupportedOperationException("请使用embed()方法");
         }
