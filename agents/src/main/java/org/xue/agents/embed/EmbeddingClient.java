@@ -25,12 +25,10 @@ public class EmbeddingClient {
 
     private final String baseUrl;
     private final RestTemplate restTemplate;
-    private final EmbeddingConfig embeddingConfig;
 
     @Autowired
     public EmbeddingClient(RestTemplate restTemplate, EmbeddingConfig embeddingConfig) {
         this.restTemplate = restTemplate;
-        this.embeddingConfig = embeddingConfig;
         this.baseUrl = embeddingConfig.getExternal().getUrl();
         log.info("外部向量化服务客户端已启用，服务地址: {}", baseUrl);
     }

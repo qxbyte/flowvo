@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * ChatClient配置类
- * 
+
  * 🎯 功能：
  * - 确保ChatClient Bean可用
  * - 支持Spring AI OpenAI自动配置

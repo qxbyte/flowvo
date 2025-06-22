@@ -2,7 +2,6 @@ package org.xue.app.config;
 
 import feign.Logger;
 import feign.RequestInterceptor;
-import feign.RequestTemplate;
 import feign.codec.Decoder;
 import feign.codec.Encoder;
 import org.springframework.beans.factory.ObjectFactory;
@@ -59,24 +58,21 @@ public class FeignConfig {
      */
     @Bean
     public RequestInterceptor authorizationRequestInterceptor() {
-        return new RequestInterceptor() {
-            @Override
-            public void apply(RequestTemplate template) {
-                ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-                if (requestAttributes != null) {
-                    HttpServletRequest request = requestAttributes.getRequest();
-                    // 从当前请求中获取Authorization头
-                    String authorization = request.getHeader("Authorization");
-                    if (authorization != null && !authorization.isEmpty()) {
-                        // 将Authorization头添加到Feign请求中
-                        template.header("Authorization", authorization);
-                        System.out.println("App Feign拦截器添加了认证信息到请求: " + template.url());
-                    } else {
-                        System.out.println("App Feign拦截器未找到Authorization头: " + template.url());
-                    }
+        return template -> {
+            ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (requestAttributes != null) {
+                HttpServletRequest request = requestAttributes.getRequest();
+                // 从当前请求中获取Authorization头
+                String authorization = request.getHeader("Authorization");
+                if (authorization != null && !authorization.isEmpty()) {
+                    // 将Authorization头添加到Feign请求中
+                    template.header("Authorization", authorization);
+                    System.out.println("App Feign拦截器添加了认证信息到请求: " + template.url());
                 } else {
-                    System.out.println("App Feign拦截器未找到请求上下文: " + template.url());
+                    System.out.println("App Feign拦截器未找到Authorization头: " + template.url());
                 }
+            } else {
+                System.out.println("App Feign拦截器未找到请求上下文: " + template.url());
             }
         };
     }

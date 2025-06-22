@@ -1,6 +1,6 @@
 package org.xue.app.service.impl;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,10 +29,10 @@ import jakarta.persistence.criteria.Predicate;
  * 订单服务实现类
  */
 @Service
+@RequiredArgsConstructor
 public class OrderServiceImpl implements OrderService {
-    
-    @Autowired
-    private OrderRepository orderRepository;
+
+    private final OrderRepository orderRepository;
     
     /**
      * 日期时间格式化器
