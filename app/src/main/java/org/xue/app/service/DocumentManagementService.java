@@ -40,8 +40,8 @@ public class DocumentManagementService {
     public Document uploadDocument(MultipartFile file, String userId, String description, List<String> tags) {
         log.warn("uploadDocument method is deprecated, please use agents service directly");
         throw new UnsupportedOperationException("文档上传功能已移至agents服务，请直接调用agents服务的接口");
-    }
-
+            }
+            
     /**
      * 获取支持的文件类型
      * 使用本地的DocumentParserService
@@ -55,7 +55,7 @@ public class DocumentManagementService {
             return Collections.emptyList();
         }
     }
-
+    
     /**
      * 删除文档
      * 注意：此方法已废弃，请直接调用agents服务
@@ -84,8 +84,8 @@ public class DocumentManagementService {
     public Document getDocument(String documentId, String userId) {
         log.warn("getDocument method is deprecated, please use agents service directly");
         throw new UnsupportedOperationException("文档获取功能已移至agents服务，请直接调用agents服务的接口");
-    }
-
+            }
+            
     /**
      * 获取用户文档
      * 注意：此方法已废弃，请直接调用agents服务
@@ -94,8 +94,8 @@ public class DocumentManagementService {
     public List<Document> getUserDocuments(String userId) {
         log.warn("getUserDocuments method is deprecated, please use agents service directly");
         throw new UnsupportedOperationException("文档查询功能已移至agents服务，请直接调用agents服务的接口");
-    }
-
+            }
+            
     /**
      * 搜索文档
      * 注意：此方法已废弃，请直接调用agents服务
@@ -115,7 +115,7 @@ public class DocumentManagementService {
         log.warn("reprocessDocument method is deprecated, please use agents service directly");
         throw new UnsupportedOperationException("文档重新处理功能已移至agents服务，请直接调用agents服务的接口");
     }
-
+    
     /**
      * 解析文档内容
      */
@@ -137,7 +137,7 @@ public class DocumentManagementService {
             }
         }
     }
-
+    
     /**
      * 检查文件类型是否支持
      */
