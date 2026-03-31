@@ -64,7 +64,7 @@ public class PromptsService {
         return result;
     }
 
-    // 快捷方法：获取知识库提示词
+    // 便捷方法：获取知识库提示词
     public String getChatKnowledgeBasePrompt(String context, String question) {
         return formatPrompt(chatKnowledgeBasePrompt, "context", context, "question", question);
     }
